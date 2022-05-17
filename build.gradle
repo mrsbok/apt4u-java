@@ -5,6 +5,13 @@ plugins {
     id 'war'
 }
 
+// 아래 모두 추가 내용
+apply plugin: 'war'
+bootWar {
+    archiveName("ROOT.war")
+}
+
+
 group = 'kr.co.thefc'
 version = '1.0.0'
 sourceCompatibility = '11'
