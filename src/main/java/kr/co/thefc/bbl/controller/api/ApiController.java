@@ -15,7 +15,6 @@ import java.util.Set;
 @Slf4j
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost")
 public class ApiController {
     @Autowired
     private DBConnService dbConnService;
