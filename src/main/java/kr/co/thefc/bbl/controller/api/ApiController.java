@@ -6,10 +6,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +15,7 @@ import java.util.Set;
 @Slf4j
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost")
 public class ApiController {
     @Autowired
     private DBConnService dbConnService;
