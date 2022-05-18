@@ -6,7 +6,18 @@
     </select>
 
     <select id="getPTLessionVouchars" resultType="java.util.HashMap">
+        select idx as index,
+        from product
+    </select>
+
+    <select id="getPTLessionVoucharsDetail" resultType="java.util.HashMap">
         select *
         from product
+        where idx=#{idx}
+    </select>
+
+    <select id="getPTTrainers" resultType="java.util.HashMap">
+        select *
+        from pt_trainer_info_basic
     </select>
 </mapper>
