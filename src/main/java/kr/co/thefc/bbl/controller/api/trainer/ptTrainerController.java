@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("trainer")
+@RequestMapping("api")
 @Api(description = "트레이너 정보 관리")
 public class ptTrainerController {
 	Logger log;
@@ -24,7 +24,7 @@ public class ptTrainerController {
 	public PtTrainerService ptTrainerService;
 
 	@ApiOperation(value = "트레이너 등록",notes = "트레이너 등록")
-	@PostMapping("register")
+	@PostMapping("trainer/register")
 	public HashMap ptRegister(
 			@RequestBody PtTrainerForm ptTrainerForm)  {
 
@@ -33,7 +33,7 @@ public class ptTrainerController {
 
 
 	@ApiOperation(value = "트레이너 상세정보 등록",notes = "트레이너 상세정보 등록")
-	@PostMapping("proflie-register")
+	@PostMapping("trainer/proflie-register")
 	public HashMap ptTrainerProfileRegister(
 			@RequestBody PtTrainerDetailForm ptTrainerDetailForm)   {
 
