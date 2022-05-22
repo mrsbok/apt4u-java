@@ -40,6 +40,11 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
     implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
+
+    //정윤철 2022-05-18추가
+    implementation("com.squareup.retrofit2:converter-gson:2.7.1")
+    implementation 'commons-io:commons-io:2.6'
+
 }
 
 tasks.named('test') {
