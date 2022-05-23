@@ -164,8 +164,8 @@
     </select>
 
     <insert id="addShoppingItems">
-        insert into users_shopping_basket (user_index, product_index, product_category, quantity, seleted_date)
-        values (#{userIndex}, #{productIndex}, #{productCategory}, #{quantity}, now())
+        insert into users_shopping_basket (user_index, product_index, product_category, quantity)
+        values (#{userIndex}, #{productIndex}, #{productCategory}, #{quantity})
     </insert>
 
     <delete id="deleteShoppingItems">
@@ -182,8 +182,8 @@
     </select>
 
     <insert id="addUserPick">
-        insert into users_pick (user_index, item_category, picked_item, picked_date)
-        values (#{userIndex}, #{category}, #{pickItemIndex}, now())
+        insert into users_pick (user_index, item_category, picked_item)
+        values (#{userIndex}, #{category}, #{pickItemIndex})
     </insert>
 
     <delete id="deleteUserPick">
