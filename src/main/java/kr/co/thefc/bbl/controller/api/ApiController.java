@@ -1,6 +1,6 @@
 package kr.co.thefc.bbl.controller.api;
 
-import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiOperation;
 import kr.co.thefc.bbl.service.DBConnService;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -32,6 +32,7 @@ public class ApiController {
     }
 
     @RequestMapping(value="/getPTLessionVouchars", method = RequestMethod.POST)
+    @ApiOperation(value = "PT 상품 목록 조회", notes = "PT 상품 목록")
     public HashMap getPTLessionVouchars(@RequestBody String data) {
         log.info("####getPTLessionVouchars##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -324,81 +325,81 @@ public class ApiController {
     }
 
     // 찜
-    @RequestMapping(value="/getUserPick", method = RequestMethod.POST)
-    public HashMap getUserPick(@RequestBody String data) {
-        log.info("####getUserPick##### : " + data);
-        HashMap rtnVal = new HashMap();
+//    @RequestMapping(value="/getUserPick", method = RequestMethod.POST)
+//    public HashMap getUserPick(@RequestBody String data) {
+//        log.info("####getUserPick##### : " + data);
+//        HashMap rtnVal = new HashMap();
+//
+//        JSONParser parser = new JSONParser();
+//        String error = null;
+//
+//        try{
+//            JSONObject jsonData = (JSONObject) parser.parse(data);
+//
+//            HashMap map = new HashMap();
+//            Set set = jsonData.keySet();
+//            jsonData.forEach((key, value) -> map.put(key,value));
+//
+//            List<HashMap> list = dbConnService.select("getUserPick", map);
+//
+//            // productInfo || PTTrainer || store
+//            HashMap infos = new HashMap();
+//            infos.put("", list);
+//
+//            rtnVal.put("infos", infos);
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//            error = "정보를 파싱하지 못했습니다.";
+//        }
+//
+//        if (error!=null) {
+//            rtnVal.put("result", false);
+//        }
+//        else {
+//            rtnVal.put("result", true);
+//        }
+//        rtnVal.put("errorMsg", error);
+//
+//        return rtnVal;
+//    }
 
-        JSONParser parser = new JSONParser();
-        String error = null;
-
-        try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-
-            HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
-
-            List<HashMap> list = dbConnService.select("getUserPick", map);
-
-            // productInfo || PTTrainer || store
-            HashMap infos = new HashMap();
-            infos.put("", list);
-
-            rtnVal.put("infos", infos);
-        } catch (ParseException e) {
-            e.printStackTrace();
-            error = "정보를 파싱하지 못했습니다.";
-        }
-
-        if (error!=null) {
-            rtnVal.put("result", false);
-        }
-        else {
-            rtnVal.put("result", true);
-        }
-        rtnVal.put("errorMsg", error);
-
-        return rtnVal;
-    }
-
-    @RequestMapping(value="/getUserPickDetail", method = RequestMethod.POST)
-    public HashMap getUserPickDetail(@RequestBody String data) {
-        log.info("####getUserPickDetail##### : " + data);
-        HashMap rtnVal = new HashMap();
-
-        JSONParser parser = new JSONParser();
-        String error = null;
-
-        try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-
-            HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
-
-            List<HashMap> list = dbConnService.select("getUserPickDetail", map);
-
-            // productInfo || PTTrainer || store
-            HashMap infos = new HashMap();
-            infos.put("", list);
-
-            rtnVal.put("infos", infos);
-        } catch (ParseException e) {
-            e.printStackTrace();
-            error = "정보를 파싱하지 못했습니다.";
-        }
-
-        if (error!=null) {
-            rtnVal.put("result", false);
-        }
-        else {
-            rtnVal.put("result", true);
-        }
-        rtnVal.put("errorMsg", error);
-
-        return rtnVal;
-    }
+//    @RequestMapping(value="/getUserPickDetail", method = RequestMethod.POST)
+//    public HashMap getUserPickDetail(@RequestBody String data) {
+//        log.info("####getUserPickDetail##### : " + data);
+//        HashMap rtnVal = new HashMap();
+//
+//        JSONParser parser = new JSONParser();
+//        String error = null;
+//
+//        try{
+//            JSONObject jsonData = (JSONObject) parser.parse(data);
+//
+//            HashMap map = new HashMap();
+//            Set set = jsonData.keySet();
+//            jsonData.forEach((key, value) -> map.put(key,value));
+//
+//            List<HashMap> list = dbConnService.select("getUserPickDetail", map);
+//
+//            // productInfo || PTTrainer || store
+//            HashMap infos = new HashMap();
+//            infos.put("", list);
+//
+//            rtnVal.put("infos", infos);
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//            error = "정보를 파싱하지 못했습니다.";
+//        }
+//
+//        if (error!=null) {
+//            rtnVal.put("result", false);
+//        }
+//        else {
+//            rtnVal.put("result", true);
+//        }
+//        rtnVal.put("errorMsg", error);
+//
+//        return rtnVal;
+//    }
 
     @RequestMapping(value="/addUserPick", method = RequestMethod.POST)
     public HashMap addUserPick(@RequestBody String data) {
