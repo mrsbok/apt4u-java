@@ -12,20 +12,20 @@
             p.product_type as productType,
             p.price,
             p.discount,
-            p.store_index as storeIndex,
+            p.store_idx as storeIndex,
             s.store_name as storeName,
-            p.seller_index as sellerIndex,
+            p.seller_idx as sellerIndex,
             t.pt_trainer_name as sellerName
         from
             product as p
         left join
                 pt_trainer_info_basic as t
         on
-            p.seller_index = t.pt_trainer_idx
+            p.seller_idx = t.pt_trainer_idx
         left join
                 stores_info_basic as s
         on
-            p.store_index = s.idx
+            p.store_idx = s.store_idx
     </select>
 
     <select id="getPTLessionVoucharsDetail" resultType="java.util.HashMap">
@@ -35,9 +35,9 @@
             p.product_type as productType,
             p.price,
             p.discount,
-            p.store_index as storeIndex,
+            p.store_idx as storeIndex,
             s.store_name as storeName,
-            p.seller_index as sellerIndex,
+            p.seller_idx as sellerIndex,
             t.pt_trainer_name as sellerName,
             p.registered_date as registeredDate,
             pv.voucher_type as voucherType,
@@ -48,11 +48,11 @@
         left join
             pt_trainer_info_basic as t
         on
-            p.seller_index = t.pt_trainer_idx
+            p.seller_idx = t.pt_trainer_idx
         left join
             stores_info_basic as s
         on
-            p.store_index = s.idx
+            p.store_idx = s.idx
         left join
             product_pt_voucher_details as pv
         on
@@ -75,11 +75,11 @@
         left join
             stores_info_basic as s
         on
-            p.affilated_center = s.store_index
+            p.affilated_center = s.idx
         left join
             pt_trainer_info_details as ptid
         on
-            p.pt_trainer_idx = ptid.pt_trainer_index
+            p.pt_trainer_idx = ptid.idx
     </select>
 
     <select id="getPTTrainerDetail" resultType="java.util.HashMap">
@@ -98,11 +98,11 @@
                 left join
             stores_info_basic as s
             on
-                p.affilated_center = s.store_index
+                p.affilated_center = s.store_idx
                 left join
             pt_trainer_info_details as ptid
             on
-                p.pt_trainer_idx = ptid.pt_trainer_index
+                p.pt_trainer_idx = ptid.pt_trainer_idx
         where
             p.pt_trainer_idx = #{idx}
     </select>
@@ -116,7 +116,7 @@
         from
             pt_trainer_work_experience as ptwe
         where
-            ptwe.pt_trainer_index = #{idx}
+            ptwe.pt_trainer_idx = #{idx}
     </select>
 
     <select id="getPTTrainerDetail_awardWinning" resultType="java.util.HashMap">
@@ -128,7 +128,7 @@
         from
             pt_trainer_award_winning as ptaw
         where
-            ptaw.pt_trainer_index = #{idx}
+            ptaw.pt_trainer_idx = #{idx}
     </select>
 
     <select id="getPTTrainerDetail_qualification" resultType="java.util.HashMap">
@@ -146,25 +146,25 @@
         select
             usb.product_category as category,
             usb.idx,
-            usb.user_index as userIndex,
+            usb.user_idx as userIndex,
             usb.quantity,
             usb.seleted_date as selectedDate,
-            usb.product_index as productIndex,
+            usb.product_idx as productIndex,
             p.name,
             p.price,
-            p.store_index as storeIndex,
+            p.store_idx as storeIndex,
             sib.store_name as storeName,
-            p.seller_index as sellerIndex,
+            p.seller_idx as sellerIndex,
             ptib.pt_trainer_name as sellerName
         from users_shopping_basket as usb
-        left join product as p on usb.product_index = p.idx
-        left join stores_info_basic as sib on p.store_index = sib.store_index
-        left join pt_trainer_info_basic as ptib on p.seller_index = ptib.pt_trainer_idx
-        where user_index = #{userIndex}
+        left join product as p on usb.product_idx = p.idx
+        left join stores_info_basic as sib on p.store_idx = sib.store_idx
+        left join pt_trainer_info_basic as ptib on p.seller_idx = ptib.pt_trainer_idx
+        where user_idx = #{userIndex}
     </select>
 
     <insert id="addShoppingItems">
-        insert into users_shopping_basket (user_index, product_index, product_category, quantity)
+        insert into users_shopping_basket (user_idx, product_idx, product_category, quantity)
         values (#{userIndex}, #{productIndex}, #{productCategory}, #{quantity})
     </insert>
 
@@ -182,7 +182,7 @@
     </select>
 
     <insert id="addUserPick">
-        insert into users_pick (user_index, item_category, picked_item)
+        insert into users_pick (user_idx, item_category, picked_item)
         values (#{userIndex}, #{category}, #{pickItemIndex})
     </insert>
 
