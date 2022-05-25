@@ -12,20 +12,20 @@
             p.product_type as productType,
             p.price,
             p.discount,
-            p.store_index as storeIndex,
+            p.store_idx as storeIdx,
             s.store_name as storeName,
-            p.seller_index as sellerIndex,
+            p.seller_idx as sellerIdx,
             t.pt_trainer_name as sellerName
         from
             product as p
         left join
-                pt_trainer_info_basic as t
+            pt_trainer_info_basic as t
         on
-            p.seller_index = t.pt_trainer_idx
+            p.seller_idx = t.pt_trainer_idx
         left join
                 stores_info_basic as s
         on
-            p.store_index = s.idx
+            p.store_idx = s.store_idx
     </select>
 
     <select id="getPTLessionVoucharsDetail" resultType="java.util.HashMap">
@@ -35,24 +35,25 @@
             p.product_type as productType,
             p.price,
             p.discount,
-            p.store_index as storeIndex,
+            p.description,
+            p.store_idx as storeIdx,
             s.store_name as storeName,
-            p.seller_index as sellerIndex,
+            p.seller_idx as sellerIdx,
             t.pt_trainer_name as sellerName,
             p.registered_date as registeredDate,
             pv.voucher_type as voucherType,
-            pv.use_termYN as userTermYN,
-            pv.use_term as userTerm
+            pv.use_termYN as useTermYN,
+            pv.use_term as useTerm
         from
             product as p
         left join
             pt_trainer_info_basic as t
         on
-            p.seller_index = t.pt_trainer_idx
+            p.seller_idx = t.pt_trainer_idx
         left join
             stores_info_basic as s
         on
-            p.store_index = s.idx
+            p.store_idx = s.store_idx
         left join
             product_pt_voucher_details as pv
         on
@@ -66,7 +67,7 @@
             p.pt_trainer_idx as idx,
             p.pt_trainer_name as name,
             p.gender,
-            p.affilated_center as affilatedCenterIndex,
+            p.affilated_center as affilatedCenterIdx,
             s.store_name as affilatedCenterName,
             ptid.profile_photo as profilePhoto,
             ptid.profile_photo_file_pass as profilePhotoFilepass
@@ -75,11 +76,11 @@
         left join
             stores_info_basic as s
         on
-            p.affilated_center = s.store_index
+            p.affilated_center = s.store_idx
         left join
             pt_trainer_info_details as ptid
         on
-            p.pt_trainer_idx = ptid.pt_trainer_index
+            p.pt_trainer_idx = ptid.pt_trainer_idx
     </select>
 
     <select id="getPTTrainerDetail" resultType="java.util.HashMap">
@@ -88,7 +89,7 @@
             p.pt_trainer_name as name,
             p.gender,
             ROUND((TO_DAYS(NOW()) -  to_days(STR_TO_DATE(p.birth_day, '%Y%m%d'))) / 365 ) as age,
-            p.affilated_center as affilatedCenterIndex,
+            p.affilated_center as affilatedCenterIdx,
             s.store_name as affilatedCenterName,
             ptid.profile_photo as profilePhoto,
             ptid.profile_photo_file_pass as profilePhotoFilepass,
@@ -98,11 +99,11 @@
                 left join
             stores_info_basic as s
             on
-                p.affilated_center = s.store_index
+                p.affilated_center = s.store_idx
                 left join
             pt_trainer_info_details as ptid
             on
-                p.pt_trainer_idx = ptid.pt_trainer_index
+                p.pt_trainer_idx = ptid.pt_trainer_idx
         where
             p.pt_trainer_idx = #{idx}
     </select>
@@ -116,7 +117,7 @@
         from
             pt_trainer_work_experience as ptwe
         where
-            ptwe.pt_trainer_index = #{idx}
+            ptwe.pt_trainer_idx = #{idx}
     </select>
 
     <select id="getPTTrainerDetail_awardWinning" resultType="java.util.HashMap">
@@ -128,7 +129,7 @@
         from
             pt_trainer_award_winning as ptaw
         where
-            ptaw.pt_trainer_index = #{idx}
+            ptaw.pt_trainer_idx = #{idx}
     </select>
 
     <select id="getPTTrainerDetail_qualification" resultType="java.util.HashMap">
@@ -146,48 +147,199 @@
         select
             usb.product_category as category,
             usb.idx,
-            usb.user_index as userIndex,
+            usb.user_idx as userIdx,
             usb.quantity,
             usb.seleted_date as selectedDate,
-            usb.product_index as productIndex,
+            usb.product_idx as productIdx,
             p.name,
             p.price,
-            p.store_index as storeIndex,
+            p.store_idx as storeIdx,
             sib.store_name as storeName,
-            p.seller_index as sellerIndex,
+            p.seller_idx as sellerIdx,
             ptib.pt_trainer_name as sellerName
         from users_shopping_basket as usb
-        left join product as p on usb.product_index = p.idx
-        left join stores_info_basic as sib on p.store_index = sib.store_index
-        left join pt_trainer_info_basic as ptib on p.seller_index = ptib.pt_trainer_idx
-        where user_index = #{userIndex}
+        left join product as p on usb.product_idx = p.idx
+        left join stores_info_basic as sib on p.store_idx = sib.store_idx
+        left join pt_trainer_info_basic as ptib on p.seller_idx = ptib.pt_trainer_idx
+        where user_idx = #{userIdx}
     </select>
 
     <insert id="addShoppingItems">
-        insert into users_shopping_basket (user_index, product_index, product_category, quantity)
-        values (#{userIndex}, #{productIndex}, #{productCategory}, #{quantity})
+        insert into users_shopping_basket (user_idx, product_idx, product_category, quantity)
+        values (#{userIdx}, #{productIdx}, #{productCategory}, #{quantity})
     </insert>
 
     <delete id="deleteShoppingItems">
         delete from users_shopping_basket
-        where idx = #{usersShoppingBasketIndex}
+        where idx = #{usersShoppingBasketIdx}
     </delete>
 
-    <select id="getUserPick" resultType="java.util.HashMap">
-
+    <select id="getUserPick_Products" resultType="java.util.HashMap">
+        select
+            up.item_category as category, p.name, p.product_type as productType, p.price, p.discount,
+            p.store_idx as storeIdx, sib.store_name as storeName, p.seller_idx as sellerIdx, ptib.pt_trainer_name as sellerName
+        from
+            users_pick as up
+        left join
+            product as p
+        on
+            up.picked_item = p.idx
+        left join
+            stores_info_basic as sib
+        on
+            p.store_idx = sib.store_idx
+        left join
+            pt_trainer_info_basic as ptib
+        on
+            p.seller_idx = ptib.pt_trainer_idx
+        where
+            up.user_idx = #{userIdx} AND up.item_category = #{category}
     </select>
 
-    <select id="getUsersPickDetail" resultType="java.util.HashMap">
+    <select id="getUserPick_PTTrainers" resultType="java.util.HashMap">
+        select
+            up.item_category as category, ptib.pt_trainer_idx as idx,
+            ptib.pt_trainer_name as name, ptib.gender, ptib.affilated_center as affilatedCenterIdx,
+            sib.store_name as affilatedCenterName, ptid.profile_photo as profilePhoto,
+            ptid.profile_photo_file_pass as profilePhotoFilepass
+        from
+            users_pick as up
+        left join
+            pt_trainer_info_basic as ptib
+        on
+            ptib.pt_trainer_idx = up.picked_item
+        left join
+            stores_info_basic as sib
+        on
+            ptib.affilated_center = sib.store_idx
+        left join
+            pt_trainer_info_details as ptid
+        on
+            ptib.pt_trainer_idx = ptid.pt_trainer_idx
+        where
+            up.user_idx = #{userIdx} AND up.item_category = #{category}
+    </select>
 
+    <select id="getUserPick_Stores" resultType="java.util.HashMap">
+        select
+            sib.store_idx as idx, sib.store_name as name, sib.main_telephone as mainTelephone,
+            sib.address, fgsid.main_photo as mainPhoto
+        from
+            users_pick as up
+        left join
+            stores_info_basic as sib
+        on
+            up.picked_item = sib.store_idx
+        left join
+            fitness_gym_stores_info_details as fgsid
+        on
+            fgsid.store_idx = sib.store_idx
+        where
+            up.user_idx = #{userIdx} AND up.item_category = #{category}
+    </select>
+
+    <select id="getUsersPickDetail_Product" resultType="java.util.HashMap">
+        select
+            p.idx,
+            p.name,
+            p.product_type as productType,
+            p.price,
+            p.discount,
+            p.description,
+            p.store_idx as storeIdx,
+            s.store_name as storeName,
+            p.seller_idx as sellerIdx,
+            t.pt_trainer_name as sellerName,
+            p.registered_date as registeredDate,
+            pv.voucher_type as voucherType,
+            pv.use_termYN as useTermYN,
+            pv.use_term as useTerm
+        from
+            product as p
+        left join
+            pt_trainer_info_basic as t
+        on
+            p.seller_idx = t.pt_trainer_idx
+        left join
+            stores_info_basic as s
+        on
+            p.store_idx = s.store_idx
+        left join
+            product_pt_voucher_details as pv
+        on
+            p.idx = pv.idx
+        where
+            p.idx = #{idx}
+    </select>
+
+    <select id="getUsersPickDetail_PTTrainer" resultType="java.util.HashMap">
+        select
+            p.pt_trainer_idx as idx,
+            p.pt_trainer_name as name,
+            p.gender,
+            ROUND((TO_DAYS(NOW()) -  to_days(STR_TO_DATE(p.birth_day, '%Y%m%d'))) / 365 ) as age,
+            p.affilated_center as affilatedCenterIdx,
+            s.store_name as affilatedCenterName,
+            ptid.profile_photo as profilePhoto,
+            ptid.profile_photo_file_pass as profilePhotoFilepass,
+            ptid.introduction
+        from
+            pt_trainer_info_basic as p
+        left join
+            stores_info_basic as s
+        on
+            p.affilated_center = s.store_idx
+        left join
+            pt_trainer_info_details as ptid
+        on
+            p.pt_trainer_idx = ptid.pt_trainer_idx
+        where
+            p.pt_trainer_idx = #{idx}
+    </select>
+
+    <select id="getUsersPickDetail_Store" resultType="java.util.HashMap">
+        select
+            sib.store_idx as idx, sib.store_name as name, sib.main_telephone as mainTelephone,
+            sib.address, fgsid.main_photo as mainPhoto, fgsid.use_guide as useGuide, ifnull(fgsid.biz_hour, 0) as bizHour,
+            fgsid.introduction, ifnull(fgsid.programs, 0) as programs
+        from
+            stores_info_basic as sib
+        left join
+            fitness_gym_stores_info_details as fgsid
+        on
+            fgsid.store_idx = sib.store_idx
+        where
+            sib.store_idx = #{idx}
+    </select>
+
+    <select id="getStoreBizHours" resultType="java.util.HashMap">
+        select
+            fgsbh.iseq as idx, fgsbh.store_idx as storeIdx, fgsbh.title,
+            fgsbh.day_classification as dayClassification, fgsbh.open_time as openTime,
+            fgsbh.close_time as closeTime
+        from
+            fitness_gym_stores_biz_hour as fgsbh
+        where
+            fgsbh.store_idx = #{idx}
+    </select>
+
+    <select id="getStorePrograms" resultType="java.util.HashMap">
+        select
+            fgsp.iseq as idx, fgsp.store_idx as storeIdx, fgsp.program_name as programName,
+            fgsp.description, fgsp.charge
+        from
+            fitness_gym_stores_program as fgsp
+        where
+            fgsp.store_idx = #{idx}
     </select>
 
     <insert id="addUserPick">
-        insert into users_pick (user_index, item_category, picked_item)
-        values (#{userIndex}, #{category}, #{pickItemIndex})
+        insert into users_pick (user_idx, item_category, picked_item)
+        values (#{userIdx}, #{category}, #{pickItemIdx})
     </insert>
 
     <delete id="deleteUserPick">
         delete from users_pick
-        where idx = #{usersPicksIndex}
+        where idx = #{usersPicksIdx}
     </delete>
 </mapper>
