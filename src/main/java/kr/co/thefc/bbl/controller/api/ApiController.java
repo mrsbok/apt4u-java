@@ -408,13 +408,11 @@ public class ApiController {
                 } else {
                     infos.put("storeInfo", list);
 
-                    // FitnessGymStoresBizHour에 등록된 레코드가 존재한다.
                     if((Integer.parseInt(list.get(0).get("bizHour").toString())) > 0) {
                         List<HashMap> bizHour = dbConnService.select("getStoreBizHours", map);
                         infos.put("storeBizHours", bizHour);
                     }
 
-                    //FitnessGymStoresProgram에 등록된 레코드가 존재한다.
                     if((Integer.parseInt(list.get(0).get("programs").toString())) > 0) {
                         List<HashMap> program = dbConnService.select("getStoreBizHours", map);
                         infos.put("storePrograms", program);
