@@ -398,7 +398,7 @@ public class ApiController {
 //        }
 //        rtnVal.put("errorMsg", error);
 //
-//        return rtnVal;
+//        return rtnVal;organization
 //    }
 
     @RequestMapping(value="/addUserPick", method = RequestMethod.POST)
