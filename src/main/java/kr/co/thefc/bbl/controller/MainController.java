@@ -17,4 +17,10 @@ public class MainController {
         log.info("index");
         return "index";
     }
+
+    @GetMapping("/test_guide")
+    public String test_guide() {
+        log.info("test_guide");
+        return "test_guide";
+    }
 }

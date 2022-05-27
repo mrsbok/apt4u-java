@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>s3upload-test</title>
+</head>
+<body>
+<h1>파일 업로드</h1> <hr>
+
+<form id="id_file_upload_form" th:action="@{/api/s3upload}" method="post" enctype="multipart/form-data">
+    제목 : <input type="text" name="title"> <br>
+    파일 : <input type="file" name="file"> <br>
+    <button onclick="testAjax()">등록하기</button>
+</form>
+<img id="id_img_url" style="width:200px;" src="https://bbl-dev-one.s3.ap-northeast-2.amazonaws.com/2048px-No_image_available.png" />
+<img id="id_img_data" style="width:200px;" src="https://bbl-dev-one.s3.ap-northeast-2.amazonaws.com/2048px-No_image_available.png" />
+</body>
+</html>
+
+<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+<script>
+
+    function testAjax() {
+        event.preventDefault();
+
+        var form = $('#id_file_upload_form')[0];
+        // Create an FormData object
+        var data = new FormData(form);
+
+        $.ajax({
+            type: "POST",
+            url: "/api/s3upload",
+            enctype: 'multipart/form-data',
+            data: data,
+            processData: false,
+            contentType: false,
+            cache: false,
+            timeout: 600000,
+            beforeSend:function(rtnVal) {},// 서버 요청 전 호출 되는 함수 return false; 일 경우 요청 중단
+            success:function(rtnVal) {
+                console.log(rtnVal);
+                if (rtnVal.result == true) {
+                    // alert('API 호출 완료');
+                    var img_url = document.getElementById('id_img_url');
+                    var img_data = document.getElementById('id_img_data');
+
+                    img_url.src = rtnVal.infos.fileurl;
+                    img_data.src = rtnVal.infos.filedata;
+                }
+                else {
+                    alert(rtnVal.errorMsg);
+                }
+            },// 요청 완료 시
+            error:function(rtnVal) {
+                alert('API 호출에 실패했습니다.');
+            },// 요청 실패.
+            complete:function(jqXHR) {
+                // alert('complete');
+            }// 요청의 실패, 성공과 상관 없이 완료 될 경우 호출
+        });
+    }
+
+</script>

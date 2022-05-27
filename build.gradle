@@ -40,6 +40,13 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
     implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
+
+    // AWS S3
+    implementation group: 'org.springframework.cloud', name: 'spring-cloud-aws', version: '2.2.6.RELEASE', ext: 'pom'
+    implementation group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.12.42'
+
+    implementation group: 'org.imgscalr', name: 'imgscalr-lib', version: '4.2'
+
 }
 
 tasks.named('test') {
