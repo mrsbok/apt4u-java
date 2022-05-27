@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.onedatatech.bs_hdc.main_mapper">
+    <insert id="trainerSave" parameterType="hashmap" useGeneratedKeys="true" keyProperty="idx">
+        INSERT INTO pt_trainers(id,last_access) VALUES (#{id},now())
+   </insert>
+
+
+    <insert id="trainerAuthenticate" parameterType="hashmap">
+        INSERT INTO
+            pt_trainer_authentication(
+            idx,
+            cert_type,
+            password
+        )
+        VALUES
+            (
+                #{idx},
+                #{certType},
+                #{password}
+            )
+    </insert>
+
+
+    <insert id="trainerInfoSave" parameterType="hashmap">
+        INSERT INTO
+            pt_trainer_info_basic(
+                pt_trainer_idx,
+                pt_trainer_name,
+                affilated_center,
+                approval_status,
+                birth_day,
+                el_das,
+                gender,
+                nick_name,
+                phone_number,
+                registered_date,
+                approved_date
+        )
+        VALUES
+            (
+                #{idx},
+                #{ptTrainerName},
+                #{affilatedCenter},
+                #{approvalstatus},
+                #{brithDay},
+                #{elDas},
+                #{gender},
+                #{nickName},
+                #{phoneNumber},
+                 now(),
+                 now()
+
+            )
+    </insert>
+
+
+    <insert id="trainerInfoDetailSave" parameterType="hashmap">
+        INSERT INTO
+            pt_trainer_info_details(
+            pt_trainer_index,
+            award_winning,
+            introduction,
+            qualification,
+            work_experience
+        )
+        VALUES
+            (
+                1,
+                #{awardWinning},
+                #{introduction},
+                #{qualification},
+                #{workExperience}
+            )
+    </insert>
+
+
+    <insert id="trainerWorkExperienceSave" parameterType="java.util.List">
+        INSERT INTO
+        pt_trainer_work_experience(
+            pt_trainer_index,
+            start,
+            end,
+            role,
+            organization
+        )
+        VALUES
+            <foreach item="item" separator=" , " collection="list">
+                (
+                1,
+                #{item.startDate},
+                #{item.endDate},
+                #{item.role},
+                #{item.organization}
+                )
+            </foreach>
+    </insert>
+
+    <insert id="trainerAwardWinningSave" parameterType="java.util.List">
+        INSERT INTO
+        pt_trainer_award_winning(
+        pt_trainer_index,
+        competition,
+        participation,
+        year,
+        award_winning
+        )
+        VALUES
+        <foreach item="item" separator=" , " collection="list">
+            (
+            1,
+            #{item.competition},
+            #{item.participation},
+            #{item.year},
+            #{item.awardWinning}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="trainerQualitificationSave" parameterType="java.util.List">
+        INSERT INTO
+        pt_trainer_qualitification(
+        pt_trainer_index,
+        license_name,
+        organization,
+        issued_date
+        )
+        VALUES
+        <foreach item="item" separator=" , " collection="list">
+            (
+            1,
+            #{item.licenseName},
+            #{item.issuedOrganization},
+            DATE_FORMAT(#{item.issuedDate}, '%y%m%d')
+            )
+        </foreach>
+    </insert>
+
+    <insert id="centerApprovedSave" parameterType="HashMap">
+        INSERT INTO
+        pt_trainer_center_approved(
+        pt_trainer_idx,
+        affilated_center,
+        approval_status,
+        approval_date
+        )
+        VALUES
+        (
+            #{idx},
+            #{affiliateCenter},
+            #{approvalStatus},
+            now()
+        )
+    </insert>
+
+
+    <select id="selectInformation" resultType="java.util.HashMap">
+        select
+            pt.id,
+            pt.last_access,
+            auth.cert_type,
+            info.pt_trainer_name,
+            info.affilated_center,
+            info.nick_name,
+            info.phone_number,
+            sib.store_name
+        from pt_trainers pt
+                 left join pt_trainer_authentication auth on auth.idx = pt.idx
+                 left join pt_trainer_info_basic info on info.pt_trainer_idx = pt.idx
+                 left join stores st on st.idx = info.affilated_center
+                 left join stores_info_basic sib on st.idx = sib.store_idx
+        where
+            pt.idx  = #{idx};
+    </select>
+
+    <update id="updateInformation" parameterType="hashmap">
+        UPDATE pt_trainer_info_basic
+            left join pt_trainers pt on pt.idx = pt_trainer_info_basic.pt_trainer_idx
+            left join pt_trainer_authentication auth on auth.idx = pt.idx
+            left join pt_trainer_info_basic info on info.pt_trainer_idx = pt.idx
+            left join stores st on st.idx = info.affilated_center
+            left join stores_info_basic sib on st.idx = sib.store_idx
+            SET info.pt_trainer_name = #{ptTrainerName}
+        WHERE  pt.idx  = #{idx}
+    </update>
+
+    <update id="updatePassword" parameterType="hashmap">
+        UPDATE pt_trainer_authentication
+        SET password = #{password}
+        WHERE  idx  = #{idx}
+    </update>
+
+</mapper>

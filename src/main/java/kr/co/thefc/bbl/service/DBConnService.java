@@ -37,6 +37,10 @@ public class DBConnService {
         return sqlSession.insert(NAMESPACE + stat_id, list);
     }
 
+    public HashMap selectIdx(String stat_id, Integer idx) {
+        return sqlSession.selectOne(NAMESPACE + stat_id, idx);
+    }
+
     public int update(String stat_id, HashMap map) {
         return sqlSession.update (NAMESPACE + stat_id, map);
     }
