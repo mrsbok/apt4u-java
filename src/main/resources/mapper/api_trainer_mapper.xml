@@ -190,4 +190,110 @@
         WHERE  idx  = #{idx}
     </update>
 
+
+    <insert id="buyInformationSave" parameterType="java.util.List">
+        INSERT INTO
+        pt_trainer_buy_information(
+        pt_trainer_idx,
+        notice
+        )
+        VALUES
+        <foreach item="item" separator=" , " collection="list">
+            (
+            1,
+            #{item.notice}
+            )
+        </foreach>
+    </insert>
+
+
+    <insert id="feeInformationSave" useGeneratedKeys="true" keyProperty="idx"  parameterType="hashmap">
+        INSERT INTO
+            pt_fee_information(
+            pt_trainer_idx,
+            separate_paymentYN,
+            notice,
+            round_time
+        )
+        VALUES
+            (
+                1,
+                #{separatePaymentYN},
+                #{notice},
+                #{roundTime}
+            )
+    </insert>
+
+
+    <insert id="usePriceSave" useGeneratedKeys="true" keyProperty="idx"  parameterType="java.util.List">
+        INSERT INTO
+        pt_use_price(
+        pt_fee_information_idx,
+        title,
+        round
+        )
+        VALUES
+        <foreach item="item" separator=" , " collection="list">
+            (
+            ${item.idx},
+            #{item.title},
+            #{item.round}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="usePriceDetailSave" parameterType="java.util.List">
+        INSERT INTO
+        pt_use_price_detail(
+        use_price_idx,
+        amount,
+                            round
+        )
+        VALUES
+        <foreach item="item" separator=" , " collection="list">
+            (
+            ${item.idx},
+            #{item.amount},
+            #{item.round}
+            )
+        </foreach>
+    </insert>
+
+
+    <insert id="oneDayAmountSave" parameterType="hashmap">
+        INSERT INTO
+            product(
+            name,
+            product_type,
+            price,
+            discount,
+            registered_date,
+            discount_price,
+            ongoing_sales,
+            description,
+            seller_idx
+        )
+        VALUES
+            (
+                #{name},
+                #{productType},
+                #{price},
+                #{discountRate},
+                now(),
+                #{discountPrice},
+                1,
+                #{description},
+                1
+            )
+    </insert>
+
+
+    <select id="oneDayAmountSelect" resultType="java.util.HashMap">
+        select *
+        from pt_fee_information
+            left join pt_use_price pup on pt_fee_information.idx = pup.pt_fee_information_idx
+            left join pt_use_price_detail pupd on pup.idx = pupd.use_price_idx
+        where pt_trainer_idx = #{idx};
+    </select>
+
 </mapper>

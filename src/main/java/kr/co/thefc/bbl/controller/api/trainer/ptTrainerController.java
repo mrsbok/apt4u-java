@@ -5,15 +5,12 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.models.auth.In;
 import kr.co.thefc.bbl.model.trainerForm.*;
 import kr.co.thefc.bbl.service.PtTrainerService;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 
@@ -118,6 +115,34 @@ public class ptTrainerController {
 			@RequestParam Integer affilatedCenter,
 			@RequestParam String approvalStatus)  {
 		return ptTrainerService.centerApprovedSave(idx,affilatedCenter,approvalStatus);
+	}
+
+
+	@ApiOperation(
+			value = "구매 정보 등록"
+			, notes = "구매 정보 등록")
+	@PostMapping("trainer/buy-information")
+	public HashMap ptTrainerBuyInformation(
+			@RequestBody List<PtTrainerBuyInformationForm> ptTrainerBuyInformationForm)  {
+		return ptTrainerService.buyInformtaionSave(ptTrainerBuyInformationForm);
+	}
+
+	@ApiOperation(
+			value = "요금 정보 등록"
+			, notes = "요금 정보 등록")
+	@PostMapping("trainer/fee-information")
+	public HashMap ptFeeInformation(
+			@RequestBody PtFeeInformationDetailForm ptFeeInformationDetailForm)  {
+		return ptTrainerService.feeInformationSave(ptFeeInformationDetailForm);
+	}
+
+	@ApiOperation(
+			value = "요금 정보 조회"
+			, notes = "요금 정보 조회")
+	@PostMapping("trainer/fee-information-select")
+	public List<HashMap> ptFeeInformationSelect(
+			@RequestParam Integer ptTrainerIdx)  {
+		return ptTrainerService.feeInformationSelect(ptTrainerIdx);
 	}
 
 }

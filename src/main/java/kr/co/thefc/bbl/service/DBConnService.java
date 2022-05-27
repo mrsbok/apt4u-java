@@ -28,7 +28,14 @@ public class DBConnService {
         System.out.println(map.toString());
         return Integer.parseInt(map.get("insertedID").toString());
     }
-
+    public int insertWithReturnIntList(String stat_id, HashMap map) {
+        Integer rowcnt = sqlSession.insert(NAMESPACE + stat_id, map);
+        System.out.println(map.toString());
+        Double idx = (Double) map.get("idx");
+        Long test = Math.round(idx);
+        test.toString();
+        return Integer.parseInt(test.toString());
+    }
     public int insert(String stat_id, HashMap map) {
         return sqlSession.insert(NAMESPACE + stat_id, map);
     }
@@ -40,7 +47,9 @@ public class DBConnService {
     public HashMap selectIdx(String stat_id, Integer idx) {
         return sqlSession.selectOne(NAMESPACE + stat_id, idx);
     }
-
+    public List<HashMap> selectIdxList(String stat_id, Integer idx) {
+        return sqlSession.selectList(NAMESPACE + stat_id, idx);
+    }
     public int update(String stat_id, HashMap map) {
         return sqlSession.update (NAMESPACE + stat_id, map);
     }
