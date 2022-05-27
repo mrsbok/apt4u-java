@@ -342,4 +342,20 @@
         delete from users_pick
         where idx = #{usersPicksIdx}
     </delete>
+
+    <insert id="insertTransaction">
+        <selectKey resultType="int" keyProperty="transactionIdx" order="BEFORE">
+            SELECT MAX(idx)+1 from transactions
+        </selectKey>
+        insert into
+            transactions(consumer_idx, kind_of_items, total_amount, point_use, billing_amount, billing_method)
+        values
+        (#{userIdx}, #{kindOfItem}, #{totalAmount}, #{pointUse}, #{billingAmount}, #{billingMethod})
+    </insert>
+
+    <insert id="insertTransactionDetail">
+        insert into
+            transactions_details(transaction_idx, product_category, product_idx, price, quantity, amount, seller_idx, store_idx)
+        values (#{transactionIdx}, #{productCategory}, #{productIdx}, #{price}, #{quantity}, #{amount}, #{sellerIdx, jdbcType=INTEGER}, #{storeIdx, jdbcType=INTEGER})
+    </insert>
 </mapper>

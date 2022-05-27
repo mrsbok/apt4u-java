@@ -3,12 +3,14 @@ package kr.co.thefc.bbl.controller.api;
 import io.swagger.annotations.ApiOperation;
 import kr.co.thefc.bbl.service.DBConnService;
 import lombok.extern.slf4j.Slf4j;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -102,6 +104,42 @@ public class ApiController {
                     rtnVal.put("infos", infos);
                 }
             }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="/addNewPTLessionVoucher", method = RequestMethod.POST)
+    @ApiOperation(value = "PT 이용권 상품 등록", notes = "PT 이용권 등록")
+    public HashMap addNewPTLessionVoucher(@RequestBody String data) {
+        log.info("####addNewPTLessionVoucher##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("productType", "1");
+
+            System.out.println(map);
 
         } catch (ParseException e) {
             e.printStackTrace();
@@ -537,37 +575,92 @@ public class ApiController {
         return rtnVal;
     }
 
-//    @RequestMapping(value="/buyProduct", method = RequestMethod.POST)
-//    @ApiOperation(value = "상품 구매", notes = "상품 구매")
-//    public HashMap buyProduct(@RequestBody String data) {
-//        log.info("####buyProduct##### : " + data);
-//        HashMap rtnVal = new HashMap();
-//
-//        JSONParser parser = new JSONParser();
-//        String error = null;
-//
-//        try{
-//            JSONObject jsonData = (JSONObject) parser.parse(data);
-//
-//            HashMap map = new HashMap();
-//            Set set = jsonData.keySet();
-//            jsonData.forEach((key, value) -> map.put(key,value));
-//
-//        } catch (ParseException e) {
-//            e.printStackTrace();
-//            error = "정보를 파싱하지 못했습니다.";
-//        }
-//
-//        if (error!=null) {
-//            rtnVal.put("result", false);
-//        }
-//        else {
-//            rtnVal.put("result", true);
-//        }
-//        rtnVal.put("errorMsg", error);
-//
-//        return rtnVal;
-//    }
+    @RequestMapping(value="/buyProduct", method = RequestMethod.POST)
+    @ApiOperation(value = "상품 구매",
+            notes = "userIdx, productCategory, productIdx, voucherType, " +
+                    "price, quantity, sellerIdx or storeIdx, kindOfItems, pointUse, billingMethod")
+    public HashMap buyProduct(@RequestBody String data) {
+        log.info("####buyProduct##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            JSONArray arr = (JSONArray) map.get("products");
+
+            int kindOfItem = arr.size();
+            int totalAmount = 0;
+            int pointUse = Integer.parseInt(map.get("pointUse").toString());
+            int billingAmount;
+            int price, quantity, amount;
+
+            for(int i=0; i<arr.size(); i++) {
+                JSONObject obj = (JSONObject) arr.get(i);
+
+                price = Integer.parseInt(obj.get("price").toString());
+                quantity = Integer.parseInt(obj.get("quantity").toString());
+
+                totalAmount = totalAmount + (price * quantity);
+            }
+
+            billingAmount = totalAmount - pointUse;
+
+            map.put("kindOfItem", kindOfItem);
+            map.put("totalAmount", totalAmount);
+            map.put("billingAmount", billingAmount);
+
+            int result = dbConnService.insert("insertTransaction", map);
+
+            if(result > 0)  {
+                for(int i=0; i<arr.size(); i++) {
+                    JSONObject obj = (JSONObject) arr.get(i);
+                    obj.forEach((key, value) -> map.put(key, value));
+
+                    price = Integer.parseInt(obj.get("price").toString());
+                    quantity = Integer.parseInt(obj.get("quantity").toString());
+
+                    amount = price * quantity;
+
+                    map.put("amount", amount);
+
+                    result = dbConnService.insert("insertTransactionDetail", map);
+                }
+            } else {
+                error = "transaction insert failed";
+            }
+
+            int billingMethod = Integer.parseInt(map.get("billingMethod").toString());
+
+            if(billingMethod == 1) {
+                // 무통장 입금 안내 메세지
+            } else if (billingMethod == 2) {
+                // 카드 결제 시스템 호출
+                // 카드 결제 성공 시 결제 여부와 결제 일시(tbl_transactions : billingYN, billingDate UPDATE)
+                // 카드 결제 실패 시 재시도
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
 
     @RequestMapping(value="/getTransactions", method = RequestMethod.POST)
     @ApiOperation(value = "구매 목록 보기", notes = "구매 목록 보기")
