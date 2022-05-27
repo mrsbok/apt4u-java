@@ -13,4 +13,11 @@ public interface PtTrainerService {
 
     HashMap trainerInfoDetailSave(PtTrainerDetailForm ptTrainerDetailForm);
 
+    HashMap oneDayAmountSave(OneDayAmountForm oneDayAmountForm);
+
+    HashMap selectInformation(Integer idx);
+    HashMap updateInformation(PtTrainerForm ptTrainerForm);
+    HashMap updatePassword(Integer idx,String password);
+    HashMap centerApprovedSave(Integer idx,Integer AffiliateCenter,String ApprovalStatus);
+
 }
