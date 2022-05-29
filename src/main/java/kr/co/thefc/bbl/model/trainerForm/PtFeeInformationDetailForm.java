@@ -7,6 +7,4 @@ public class PtFeeInformationDetailForm {
 
 	public List<PtUsePriceForm> ptUsePriceFormList;
 
-	public List<PtUsePriceDetailForm> ptUsePriceDetailFormList;
-
 }

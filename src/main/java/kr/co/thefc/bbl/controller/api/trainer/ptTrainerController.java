@@ -139,6 +139,16 @@ public class ptTrainerController {
 	@ApiOperation(
 			value = "요금 정보 조회"
 			, notes = "요금 정보 조회")
+	@ApiImplicitParams(
+			{
+					@ApiImplicitParam(
+							name = "ptTrainerIdx"
+							, value = "요금정보 idx"
+							, required = true
+					)
+
+			}
+	)
 	@PostMapping("trainer/fee-information-select")
 	public List<HashMap> ptFeeInformationSelect(
 			@RequestParam Integer ptTrainerIdx)  {

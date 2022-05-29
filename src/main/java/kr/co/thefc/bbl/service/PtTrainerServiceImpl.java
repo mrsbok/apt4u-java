@@ -234,8 +234,7 @@ public class PtTrainerServiceImpl implements PtTrainerService {
       List listData = new ArrayList<>();
       List listData2 = new ArrayList<>();
       Integer idx  = dbConnService.insertWithReturnIntList("feeInformationSave", data);
-      System.out.println("1" +ptFeeInformationDetailForm.ptFeeInformtaionForms);
-      System.out.println("2" + ptFeeInformationDetailForm.ptFeeInformtaionForms);
+
       ptFeeInformationDetailForm.ptUsePriceFormList.forEach(
           ptUsePriceForm
               ->{
