@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Transactional
@@ -201,5 +203,96 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     rtnVal.put("errorMsg", error);
     return rtnVal;
   }
+
+  @Override
+  public HashMap buyInformtaionSave(List<PtTrainerBuyInformationForm> ptTrainerBuyInformationForm) {
+    String error = null;
+    try {
+      dbConnService.insertList("buyInformationSave", ptTrainerBuyInformationForm);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error!=null) {
+      rtnVal.put("result", false);
+    }
+    else {
+      rtnVal.put("result", true);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap feeInformationSave(PtFeeInformationDetailForm ptFeeInformationDetailForm) {
+    String error = null;
+    System.out.println("1" +ptFeeInformationDetailForm.ptFeeInformtaionForms);
+    try {
+      String convertJson = gson.toJson(ptFeeInformationDetailForm.ptFeeInformtaionForms);
+      HashMap data = gson.fromJson(convertJson,HashMap.class);
+      List listData = new ArrayList<>();
+      List listData2 = new ArrayList<>();
+      Integer idx  = dbConnService.insertWithReturnIntList("feeInformationSave", data);
+
+      ptFeeInformationDetailForm.ptUsePriceFormList.forEach(
+          ptUsePriceForm
+              ->{
+            ptUsePriceForm.setIdx(
+                  idx
+              );
+            listData2.add(ptUsePriceForm);
+          }
+      );
+      System.out.println("두번째" + listData2);
+      dbConnService.insertList("usePriceSave",listData2);
+      ptFeeInformationDetailForm.ptUsePriceFormList.forEach(
+          usePriceData
+              -> usePriceData.getPtUsePriceDetailForm().forEach(
+              ptUsePriceDetailForm
+                  ->{
+                  ptUsePriceDetailForm.setIdx(usePriceData.getIdx());
+                  listData.add(ptUsePriceDetailForm);
+              }
+
+          )
+      );
+
+      dbConnService.insertList("usePriceDetailSave", listData);
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error!=null) {
+      rtnVal.put("result", false);
+    }
+    else {
+      rtnVal.put("result", true);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public List<HashMap> feeInformationSelect(Integer ptTrainerIdx) {
+    String error = null;
+    List<HashMap> list = new ArrayList<>();
+    try {
+
+      list = dbConnService.selectIdxList("oneDayAmountSelect", ptTrainerIdx);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error!=null) {
+      rtnVal.put("result", false);
+    }
+    else {
+      rtnVal.put("result", true);
+    }
+    rtnVal.put("errorMsg", error);
+    return list;
+    }
 
 }

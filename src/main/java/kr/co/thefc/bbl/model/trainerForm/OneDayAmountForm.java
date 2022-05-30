@@ -13,6 +13,28 @@ public class OneDayAmountForm {
 
 
         @ApiModelProperty(
+            value = "상품명",
+            example = "1회 체험권",
+            required = true
+        )
+        String name;
+
+        @ApiModelProperty(
+            value = "상세 설명",
+            example = "PT",
+            required = true
+        )
+        String description;
+
+        @ApiModelProperty(
+            value = "상품유형(Byte)",
+            example = "1",
+            required = true,
+            dataType = "int"
+        )
+        Byte productType;
+
+        @ApiModelProperty(
             value = "할인율",
            example = "20",
             required = true
@@ -24,14 +46,14 @@ public class OneDayAmountForm {
             required = true,
             example = "100000"
         )
-        Integer amount;
+        Integer price;
 
         @ApiModelProperty(
             value = "1회 체험 가격",
             example = "8000",
             required = true
         )
-        Integer oneDayAmount;
+        Integer discountPrice;
 
 
 }

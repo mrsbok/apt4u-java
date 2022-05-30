@@ -20,4 +20,7 @@ public interface PtTrainerService {
     HashMap updatePassword(Integer idx,String password);
     HashMap centerApprovedSave(Integer idx,Integer AffiliateCenter,String ApprovalStatus);
 
+    HashMap buyInformtaionSave(List<PtTrainerBuyInformationForm> ptTrainerBuyInformationForm);
+    HashMap feeInformationSave(PtFeeInformationDetailForm ptFeeInformationDetailForm);
+    List<HashMap> feeInformationSelect(Integer ptTrainerIdx);
 }
