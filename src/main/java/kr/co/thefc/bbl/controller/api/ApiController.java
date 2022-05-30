@@ -662,67 +662,67 @@ public class ApiController {
         return rtnVal;
     }
 
-    @RequestMapping(value="/getTransactions", method = RequestMethod.POST)
-    @ApiOperation(value = "구매 목록 보기", notes = "구매 목록 보기")
-    public HashMap getTransactions(@RequestBody String data) {
-        log.info("####getTransactions##### : " + data);
-        HashMap rtnVal = new HashMap();
-
-        JSONParser parser = new JSONParser();
-        String error = null;
-
-        try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-
-            HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
-
-        } catch (ParseException e) {
-            e.printStackTrace();
-            error = "정보를 파싱하지 못했습니다.";
-        }
-
-        if (error!=null) {
-            rtnVal.put("result", false);
-        }
-        else {
-            rtnVal.put("result", true);
-        }
-        rtnVal.put("errorMsg", error);
-
-        return rtnVal;
-    }
-
-    @RequestMapping(value="/cancelTransaction", method = RequestMethod.POST)
-    @ApiOperation(value = "구매 취소", notes = "구매 취소")
-    public HashMap cancelTransaction(@RequestBody String data) {
-        log.info("####cancelTransaction##### : " + data);
-        HashMap rtnVal = new HashMap();
-
-        JSONParser parser = new JSONParser();
-        String error = null;
-
-        try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-
-            HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
-
-        } catch (ParseException e) {
-            e.printStackTrace();
-            error = "정보를 파싱하지 못했습니다.";
-        }
-
-        if (error!=null) {
-            rtnVal.put("result", false);
-        }
-        else {
-            rtnVal.put("result", true);
-        }
-        rtnVal.put("errorMsg", error);
-
-        return rtnVal;
-    }
+//    @RequestMapping(value="/getTransactions", method = RequestMethod.POST)
+//    @ApiOperation(value = "구매 목록 보기", notes = "구매 목록 보기")
+//    public HashMap getTransactions(@RequestBody String data) {
+//        log.info("####getTransactions##### : " + data);
+//        HashMap rtnVal = new HashMap();
+//
+//        JSONParser parser = new JSONParser();
+//        String error = null;
+//
+//        try{
+//            JSONObject jsonData = (JSONObject) parser.parse(data);
+//
+//            HashMap map = new HashMap();
+//            Set set = jsonData.keySet();
+//            jsonData.forEach((key, value) -> map.put(key,value));
+//
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//            error = "정보를 파싱하지 못했습니다.";
+//        }
+//
+//        if (error!=null) {
+//            rtnVal.put("result", false);
+//        }
+//        else {
+//            rtnVal.put("result", true);
+//        }
+//        rtnVal.put("errorMsg", error);
+//
+//        return rtnVal;
+//    }
+//
+//    @RequestMapping(value="/cancelTransaction", method = RequestMethod.POST)
+//    @ApiOperation(value = "구매 취소", notes = "구매 취소")
+//    public HashMap cancelTransaction(@RequestBody String data) {
+//        log.info("####cancelTransaction##### : " + data);
+//        HashMap rtnVal = new HashMap();
+//
+//        JSONParser parser = new JSONParser();
+//        String error = null;
+//
+//        try{
+//            JSONObject jsonData = (JSONObject) parser.parse(data);
+//
+//            HashMap map = new HashMap();
+//            Set set = jsonData.keySet();
+//            jsonData.forEach((key, value) -> map.put(key,value));
+//
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//            error = "정보를 파싱하지 못했습니다.";
+//        }
+//
+//        if (error!=null) {
+//            rtnVal.put("result", false);
+//        }
+//        else {
+//            rtnVal.put("result", true);
+//        }
+//        rtnVal.put("errorMsg", error);
+//
+//        return rtnVal;
+//    }
 }
