@@ -358,4 +358,32 @@
             transactions_details(transaction_idx, product_category, product_idx, price, quantity, amount, seller_idx, store_idx)
         values (#{transactionIdx}, #{productCategory}, #{productIdx}, #{price}, #{quantity}, #{amount}, #{sellerIdx, jdbcType=INTEGER}, #{storeIdx, jdbcType=INTEGER})
     </insert>
+
+    <select id="getTransactions" resultType="java.util.HashMap">
+        select
+            t.idx as transactionIdx,
+            p.idx as productIdx,
+            p.name as productName,
+            t.transaction_date as transactionDate,
+            p.product_type as productType,
+            p.seller_idx as sellerIdx,
+            p.store_idx as storeIdx,
+            t.billing_date as billingDate,
+            t.billing_method as billingMethod
+        from transactions as t
+        left join
+            transactions_details as td
+        on
+            t.idx = td.transaction_idx
+        left join
+            product as p
+        on
+            p.idx = td.product_idx
+        where
+            consumer_idx = #{userIdx}
+    </select>
+
+    <select id="getTransactionDetail">
+
+    </select>
 </mapper>

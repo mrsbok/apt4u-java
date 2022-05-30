@@ -34,7 +34,8 @@ public class ApiController {
     }
 
     @RequestMapping(value="/getPTLessionVouchars", method = RequestMethod.POST)
-    @ApiOperation(value = "PT 상품 목록 조회", notes = "PT 상품 목록")
+    @ApiOperation(value = "PT 상품 목록 조회",
+            notes = "{}")
     public HashMap getPTLessionVouchars(@RequestBody String data) {
         log.info("####getPTLessionVouchars##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -74,7 +75,8 @@ public class ApiController {
     }
 
     @RequestMapping(value="/getPTLessionVoucharDetail", method = RequestMethod.POST)
-    @ApiOperation(value = "PT 상품 상세 조회", notes = "PT 상품 상세 조회")
+    @ApiOperation(value = "PT 상품 상세 조회",
+            notes = "{\"idx\":\"1\"}")
     public HashMap getPTLessionVoucharDetail(@RequestBody String data) {
         log.info("####getPTLessionVoucharDetail##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -121,44 +123,9 @@ public class ApiController {
         return rtnVal;
     }
 
-    @RequestMapping(value="/addNewPTLessionVoucher", method = RequestMethod.POST)
-    @ApiOperation(value = "PT 이용권 상품 등록", notes = "PT 이용권 등록")
-    public HashMap addNewPTLessionVoucher(@RequestBody String data) {
-        log.info("####addNewPTLessionVoucher##### : " + data);
-        HashMap rtnVal = new HashMap();
-
-        JSONParser parser = new JSONParser();
-        String error = null;
-
-        try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-
-            HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
-
-            map.put("productType", "1");
-
-            System.out.println(map);
-
-        } catch (ParseException e) {
-            e.printStackTrace();
-            error = "정보를 파싱하지 못했습니다.";
-        }
-
-        if (error!=null) {
-            rtnVal.put("result", false);
-        }
-        else {
-            rtnVal.put("result", true);
-        }
-        rtnVal.put("errorMsg", error);
-
-        return rtnVal;
-    }
-
     @RequestMapping(value="/getPTTrainers", method = RequestMethod.POST)
-    @ApiOperation(value = "PT 트레이너 목록 조회", notes = "PT 트레이너 목록")
+    @ApiOperation(value = "PT 트레이너 목록 조회",
+            notes = "{}")
     public HashMap getPTTrainers(@RequestBody String data) {
         log.info("####getPTTrainers##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -196,7 +163,8 @@ public class ApiController {
     }
 
     @RequestMapping(value="/getPTTrainerDetail", method = RequestMethod.POST)
-    @ApiOperation(value = "PT 트레이너 상세 조회", notes = "PT 트레이너 상세 조회")
+    @ApiOperation(value = "PT 트레이너 상세 조회",
+            notes = "{\"idx\":\"1\"}")
     public HashMap getPTTrainerDetail(@RequestBody String data) {
         log.info("####getPTTrainerDetail##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -251,7 +219,8 @@ public class ApiController {
     }
 
     @RequestMapping(value="/getShoppingItems", method = RequestMethod.POST)
-    @ApiOperation(value = "장바구니 조회", notes = "장바구니 조회")
+    @ApiOperation(value = "장바구니 목록 조회",
+            notes = "{\"userIdx\":\"1\"}")
     public HashMap getShoppingItems(@RequestBody String data) {
         log.info("####getShoppingItems##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -290,7 +259,9 @@ public class ApiController {
     }
 
     @RequestMapping(value="/addShoppingItems", method = RequestMethod.POST)
-    @ApiOperation(value = "장바구니 상품 추가", notes = "장바구니 상품 추가")
+    @ApiOperation(value = "장바구니 상품 추가",
+            notes = "{\"userIdx\":\"1\", \"productIdx\":\"1\", \"productCategory\":\"1\", \"quantity\":\"1\"}" +
+                    "\n\nproductCategory(=CD_ProductClassification) 1: PTVoucher")
     public HashMap addShoppingItems(@RequestBody String data) {
         log.info("####addShoppingItems##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -332,7 +303,8 @@ public class ApiController {
     }
 
     @RequestMapping(value="/deleteShoppingItems", method = RequestMethod.POST)
-    @ApiOperation(value = "장바구니 상품 삭제", notes = "장바구니 상품 삭제")
+    @ApiOperation(value = "장바구니 상품 삭제",
+            notes = "{\"usersShoppingBasketIdx\":\"1\"}")
     public HashMap deleteShoppingItems(@RequestBody String data) {
         log.info("####deleteShoppingItems##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -370,7 +342,9 @@ public class ApiController {
 
     // 찜
     @RequestMapping(value="/getUserPick", method = RequestMethod.POST)
-    @ApiOperation(value = "사용자 찜 목록", notes = "사용자 찜 목록")
+    @ApiOperation(value = "사용자 찜 목록",
+            notes = "{\"userIdx\":\"1\", \"category\":\"1\"}" +
+                    "\n\ncategory 1:업체, 2:상품, 3:트레이너")
     public HashMap getUserPick(@RequestBody String data) {
         log.info("####getUserPick##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -420,7 +394,9 @@ public class ApiController {
     }
 
     @RequestMapping(value="/getUserPickDetail", method = RequestMethod.POST)
-    @ApiOperation(value = "사용자 찜 상품 상세 보기", notes = "사용자 찜 상품 상세 보기")
+    @ApiOperation(value = "사용자 찜 상품 상세 보기",
+            notes = "{\"idx\":\"1\", \"category\":\"1\"}" +
+                    "\n\ncategory 1:업체, 2:상품, 3:트레이너")
     public HashMap getUserPickDetail(@RequestBody String data) {
         log.info("####getUserPickDetail##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -501,7 +477,9 @@ public class ApiController {
     }
 
     @RequestMapping(value="/addUserPick", method = RequestMethod.POST)
-    @ApiOperation(value = "사용자 찜 상품 추가", notes = "사용자 찜 상품 추가")
+    @ApiOperation(value = "사용자 찜 상품 추가",
+            notes = "{\"userIdx\":\"1\", \"category\":\"2\", \"pickItemIdx\":\"1\"}" +
+                    "\n\ncategory 1:업체, 2:상품, 3:트레이너")
     public HashMap addUserPick(@RequestBody String data) {
         log.info("####addUserPick##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -539,7 +517,8 @@ public class ApiController {
     }
 
     @RequestMapping(value="/deleteUserPick", method = RequestMethod.POST)
-    @ApiOperation(value = "사용자 찜 상품 삭제", notes = "사용자 찜 상품 삭제")
+    @ApiOperation(value = "사용자 찜 상품 삭제",
+            notes = "{\"usersPicksIdx\":\"1\"}")
     public HashMap deleteUserPick(@RequestBody String data) {
         log.info("####deleteUserPick##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -577,8 +556,12 @@ public class ApiController {
 
     @RequestMapping(value="/buyProduct", method = RequestMethod.POST)
     @ApiOperation(value = "상품 구매",
-            notes = "userIdx, productCategory, productIdx, voucherType, " +
-                    "price, quantity, sellerIdx or storeIdx, kindOfItems, pointUse, billingMethod")
+            notes = "{\"userIdx\":\"1\", \"pointUse\":\"0\", \"billingMethod\":\"1\", " +
+                    "\n\n\"products\":[\n\n{\"productCategory\":\"1\", \"productIdx\":\"2\", \"price\":\"33000\", " +
+                    "\"quantity\":\"1\", \"sellerIdx\":\"1\"}\n\n]}" +
+                    "\n\nbillingMethod 1: 무통장입금, 2: 카드결제" +
+                    "\n\nproductCategory: 상품 분야 구분(뷰티, 성형, PT, ...) 열거형 데이터 정의 필요" +
+                    "\n\nproducts: 여러 개의 데이터가 될 수 있음")
     public HashMap buyProduct(@RequestBody String data) {
         log.info("####buyProduct##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -662,10 +645,49 @@ public class ApiController {
         return rtnVal;
     }
 
-//    @RequestMapping(value="/getTransactions", method = RequestMethod.POST)
-//    @ApiOperation(value = "구매 목록 보기", notes = "구매 목록 보기")
-//    public HashMap getTransactions(@RequestBody String data) {
-//        log.info("####getTransactions##### : " + data);
+    @RequestMapping(value="/getTransactions", method = RequestMethod.POST)
+    @ApiOperation(value = "구매 목록 보기",
+            notes = "{\"userIdx\":\"1\"}")
+    public HashMap getTransactions(@RequestBody String data) {
+        log.info("####getTransactions##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("getTransactions", map);
+
+            HashMap infos = new HashMap();
+            infos.put("Transactions", list);
+
+            rtnVal.put("infos", infos);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+//    @RequestMapping(value="/getTransactionDetail", method = RequestMethod.POST)
+//    @ApiOperation(value = "구매 목록 상세 보기", notes = "구매 목록 상세 보기")
+//    public HashMap getTransactionDetail(@RequestBody String data) {
+//        log.info("####getTransactionDetail##### : " + data);
 //        HashMap rtnVal = new HashMap();
 //
 //        JSONParser parser = new JSONParser();
@@ -678,6 +700,12 @@ public class ApiController {
 //            Set set = jsonData.keySet();
 //            jsonData.forEach((key, value) -> map.put(key,value));
 //
+//            List<HashMap> list = dbConnService.select("getTransactionDetail", map);
+//
+//            HashMap infos = new HashMap();
+//            infos.put("transactionsDetail", list);
+//
+//            rtnVal.put("infos", infos);
 //        } catch (ParseException e) {
 //            e.printStackTrace();
 //            error = "정보를 파싱하지 못했습니다.";
@@ -693,7 +721,7 @@ public class ApiController {
 //
 //        return rtnVal;
 //    }
-//
+
 //    @RequestMapping(value="/cancelTransaction", method = RequestMethod.POST)
 //    @ApiOperation(value = "구매 취소", notes = "구매 취소")
 //    public HashMap cancelTransaction(@RequestBody String data) {
