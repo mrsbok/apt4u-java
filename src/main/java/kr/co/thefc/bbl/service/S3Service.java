@@ -18,10 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.UUID;
 
 @Service
@@ -107,9 +104,9 @@ public class S3Service {
 
     public String uploadWithUUID(MultipartFile file, FileGroupType fileGroupType) throws IOException {
         String fileName = file.getOriginalFilename();
-        String ext = fileName.substring(fileName.lastIndexOf('.'));
+        String ext = fileName.substring(fileName.lastIndexOf('.') + 1);
         UUID uuid = UUID.randomUUID();
-        String newFileName = uuid + ext;
+        String newFileName = uuid + "." + ext;
 
         String path = "/";
         path = fileGroupType.getValue();
@@ -154,11 +151,13 @@ public class S3Service {
         if(nh > oh) { nw = (oh * dw) / dh; nh = oh; }
         // 계산된 크기로 원본이미지를 가운데에서 crop 합니다.
         BufferedImage cropImg = Scalr.crop(srcImg, (ow-nw)/2, (oh-nh)/2, nw, nh);
+
         // crop된 이미지로 썸네일을 생성합니다.
         BufferedImage destImg = Scalr.resize(cropImg, dw, dh);
+
         // 썸네일을 저장합니다. 이미지 이름 앞에 "THUMB_" 를 붙여 표시했습니다.
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(destImg, fileExt.toUpperCase(), baos);
+        ImageIO.write(destImg, fileExt, baos);
         baos.flush();
         return new ByteArrayInputStream(baos.toByteArray());
     }
