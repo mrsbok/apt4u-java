@@ -1,5 +1,6 @@
 package kr.co.thefc.bbl.controller.api;
 
+import com.google.gson.Gson;
 import io.swagger.annotations.ApiOperation;
 import kr.co.thefc.bbl.service.DBConnService;
 import lombok.extern.slf4j.Slf4j;
@@ -556,12 +557,14 @@ public class ApiController {
 
     @RequestMapping(value="/buyProduct", method = RequestMethod.POST)
     @ApiOperation(value = "상품 구매",
-            notes = "{\"userIdx\":\"1\", \"pointUse\":\"0\", \"billingMethod\":\"1\", " +
-                    "\n\n\"products\":[\n\n{\"productCategory\":\"1\", \"productIdx\":\"2\", \"price\":\"33000\", " +
-                    "\"quantity\":\"1\", \"sellerIdx\":\"1\"}\n\n]}" +
-                    "\n\nbillingMethod 1: 무통장입금, 2: 카드결제" +
-                    "\n\nproductCategory: 상품 분야 구분(뷰티, 성형, PT, ...) 열거형 데이터 정의 필요" +
-                    "\n\nproducts: 여러 개의 데이터가 될 수 있음")
+            notes = "{\"userIdx\":\"1\", \"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
+                    "\"totalAmount\":\"25000\", \"billingAmount\":\"15000\"," +
+                    "\n\n\"products\":[\n\n{\"productCategory\":\"1\", \"productIdx\":\"8\", \"price\":\"25000\", " +
+                    "\"quantity\":\"1\", \"amount\":\"25000\", \"sellerIdx\":\"16\"}\n\n]}" +
+                    "\n\nbillingMethod 1: 무통장입금, 2: 신용/체크카드, 3: 카카오페이, 4: 삼성페이, 5: 페이코, 6: 토스" +
+                    "\n\nproductCategory 1: PTVoucher, ... " +
+                    "\n\nproducts: 여러 개의 데이터가 될 수 있음" +
+                    "\n\nsellerIdx와 storeIdx 중 하나의 데이터가 필요")
     public HashMap buyProduct(@RequestBody String data) {
         log.info("####buyProduct##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -579,25 +582,8 @@ public class ApiController {
             JSONArray arr = (JSONArray) map.get("products");
 
             int kindOfItem = arr.size();
-            int totalAmount = 0;
-            int pointUse = Integer.parseInt(map.get("pointUse").toString());
-            int billingAmount;
-            int price, quantity, amount;
-
-            for(int i=0; i<arr.size(); i++) {
-                JSONObject obj = (JSONObject) arr.get(i);
-
-                price = Integer.parseInt(obj.get("price").toString());
-                quantity = Integer.parseInt(obj.get("quantity").toString());
-
-                totalAmount = totalAmount + (price * quantity);
-            }
-
-            billingAmount = totalAmount - pointUse;
 
             map.put("kindOfItem", kindOfItem);
-            map.put("totalAmount", totalAmount);
-            map.put("billingAmount", billingAmount);
 
             int result = dbConnService.insert("insertTransaction", map);
 
@@ -605,13 +591,6 @@ public class ApiController {
                 for(int i=0; i<arr.size(); i++) {
                     JSONObject obj = (JSONObject) arr.get(i);
                     obj.forEach((key, value) -> map.put(key, value));
-
-                    price = Integer.parseInt(obj.get("price").toString());
-                    quantity = Integer.parseInt(obj.get("quantity").toString());
-
-                    amount = price * quantity;
-
-                    map.put("amount", amount);
 
                     result = dbConnService.insert("insertTransactionDetail", map);
                 }
@@ -684,43 +663,48 @@ public class ApiController {
         return rtnVal;
     }
 
-//    @RequestMapping(value="/getTransactionDetail", method = RequestMethod.POST)
-//    @ApiOperation(value = "구매 목록 상세 보기", notes = "구매 목록 상세 보기")
-//    public HashMap getTransactionDetail(@RequestBody String data) {
-//        log.info("####getTransactionDetail##### : " + data);
-//        HashMap rtnVal = new HashMap();
-//
-//        JSONParser parser = new JSONParser();
-//        String error = null;
-//
-//        try{
-//            JSONObject jsonData = (JSONObject) parser.parse(data);
-//
-//            HashMap map = new HashMap();
-//            Set set = jsonData.keySet();
-//            jsonData.forEach((key, value) -> map.put(key,value));
-//
-//            List<HashMap> list = dbConnService.select("getTransactionDetail", map);
-//
-//            HashMap infos = new HashMap();
-//            infos.put("transactionsDetail", list);
-//
-//            rtnVal.put("infos", infos);
-//        } catch (ParseException e) {
-//            e.printStackTrace();
-//            error = "정보를 파싱하지 못했습니다.";
-//        }
-//
-//        if (error!=null) {
-//            rtnVal.put("result", false);
-//        }
-//        else {
-//            rtnVal.put("result", true);
-//        }
-//        rtnVal.put("errorMsg", error);
-//
-//        return rtnVal;
-//    }
+    @RequestMapping(value="/getTransactionDetail", method = RequestMethod.POST)
+    @ApiOperation(value = "구매 목록 상세 보기", notes = "{\"transactionIdx\":\"8\"}")
+    public HashMap getTransactionDetail(@RequestBody String data) {
+        log.info("####getTransactionDetail##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("getTransactionDetail", map);
+
+            if(list.isEmpty()) {
+                error = "Transaction index " +jsonData.values() + " not found";
+            } else {
+                HashMap infos = new HashMap();
+                infos.put("transactionsDetail", list);
+                rtnVal.put("infos", infos);
+                
+                // product 데이터 가져오기
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
 
 //    @RequestMapping(value="/cancelTransaction", method = RequestMethod.POST)
 //    @ApiOperation(value = "구매 취소", notes = "구매 취소")

@@ -15,7 +15,9 @@
             p.store_idx as storeIdx,
             s.store_name as storeName,
             p.seller_idx as sellerIdx,
-            t.pt_trainer_name as sellerName
+            t.pt_trainer_name as sellerName,
+            s.address,
+            (select avg(user_satisfaction) from users_notes as un where p.idx = un.note_target) as userSatisfaction
         from
             product as p
         left join
@@ -25,7 +27,7 @@
         left join
                 stores_info_basic as s
         on
-            p.store_idx = s.store_idx
+            p.store_idx = s.store_idx OR t.affilated_center = s.store_idx
     </select>
 
     <select id="getPTLessionVoucharsDetail" resultType="java.util.HashMap">
@@ -383,7 +385,16 @@
             consumer_idx = #{userIdx}
     </select>
 
-    <select id="getTransactionDetail">
-
+    <select id="getTransactionDetail" resultType="java.util.HashMap">
+        select
+            t.total_amount as totalAmount,
+            t.point_use as pointUse,
+            t.billing_amount as billingAmount,
+            t.billing_method as billingMethod,
+            t.kind_of_items as kindOfItems
+        from
+            transactions as t
+        where
+            t.idx = #{transactionIdx}
     </select>
 </mapper>
