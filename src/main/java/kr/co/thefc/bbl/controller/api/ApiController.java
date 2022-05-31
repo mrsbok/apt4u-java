@@ -1,6 +1,5 @@
 package kr.co.thefc.bbl.controller.api;
 
-import com.google.gson.Gson;
 import io.swagger.annotations.ApiOperation;
 import kr.co.thefc.bbl.service.DBConnService;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +10,6 @@ import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -689,6 +687,7 @@ public class ApiController {
                 rtnVal.put("infos", infos);
                 
                 // product 데이터 가져오기
+
             }
         } catch (ParseException e) {
             e.printStackTrace();

@@ -16,8 +16,9 @@
             s.store_name as storeName,
             p.seller_idx as sellerIdx,
             t.pt_trainer_name as sellerName,
-            s.address,
-            (select avg(user_satisfaction) from users_notes as un where p.idx = un.note_target) as userSatisfaction
+            t.nick_name as sellerNickName, /** 220531추가 **/
+            s.address, /** 220531추가 **/
+            (select avg(user_satisfaction) from users_notes as un where p.idx = un.note_target) as userSatisfaction /** 220531추가 **/
         from
             product as p
         left join
@@ -42,6 +43,7 @@
             s.store_name as storeName,
             p.seller_idx as sellerIdx,
             t.pt_trainer_name as sellerName,
+            t.nick_name as sellerNickName, /** 220531추가 **/
             p.registered_date as registeredDate,
             pv.voucher_type as voucherType,
             pv.use_termYN as useTermYN,
@@ -68,6 +70,7 @@
         select
             p.pt_trainer_idx as idx,
             p.pt_trainer_name as name,
+            p.nick_name as nickName, /** 220531추가 **/
             p.gender,
             p.affilated_center as affilatedCenterIdx,
             s.store_name as affilatedCenterName,
@@ -89,6 +92,7 @@
         select
             p.pt_trainer_idx as idx,
             p.pt_trainer_name as name,
+            p.nick_name as nickName, /** 220531추가 **/
             p.gender,
             ROUND((TO_DAYS(NOW()) -  to_days(STR_TO_DATE(p.birth_day, '%Y%m%d'))) / 365 ) as age,
             p.affilated_center as affilatedCenterIdx,
@@ -158,7 +162,8 @@
             p.store_idx as storeIdx,
             sib.store_name as storeName,
             p.seller_idx as sellerIdx,
-            ptib.pt_trainer_name as sellerName
+            ptib.pt_trainer_name as sellerName,
+            ptib.nick_name as sellerNickName /** 220531추가 **/
         from users_shopping_basket as usb
         left join product as p on usb.product_idx = p.idx
         left join stores_info_basic as sib on p.store_idx = sib.store_idx
@@ -178,8 +183,16 @@
 
     <select id="getUserPick_Products" resultType="java.util.HashMap">
         select
-            up.item_category as category, p.name, p.product_type as productType, p.price, p.discount,
-            p.store_idx as storeIdx, sib.store_name as storeName, p.seller_idx as sellerIdx, ptib.pt_trainer_name as sellerName
+            up.item_category as category,
+            p.name,
+            p.product_type as productType,
+            p.price,
+            p.discount,
+            p.store_idx as storeIdx,
+            sib.store_name as storeName,
+            p.seller_idx as sellerIdx,
+            ptib.pt_trainer_name as sellerName,
+            ptib.nick_name as sellerNickName /** 220531추가 **/
         from
             users_pick as up
         left join
@@ -200,9 +213,14 @@
 
     <select id="getUserPick_PTTrainers" resultType="java.util.HashMap">
         select
-            up.item_category as category, ptib.pt_trainer_idx as idx,
-            ptib.pt_trainer_name as name, ptib.gender, ptib.affilated_center as affilatedCenterIdx,
-            sib.store_name as affilatedCenterName, ptid.profile_photo as profilePhoto,
+            up.item_category as category,
+            ptib.pt_trainer_idx as idx,
+            ptib.pt_trainer_name as name,
+            ptib.nick_name as nickName, /** 220531추가 **/
+            ptib.gender,
+            ptib.affilated_center as affilatedCenterIdx,
+            sib.store_name as affilatedCenterName,
+            ptid.profile_photo as profilePhoto,
             ptid.profile_photo_file_pass as profilePhotoFilepass
         from
             users_pick as up
@@ -224,8 +242,11 @@
 
     <select id="getUserPick_Stores" resultType="java.util.HashMap">
         select
-            sib.store_idx as idx, sib.store_name as name, sib.main_telephone as mainTelephone,
-            sib.address, fgsid.main_photo as mainPhoto
+            sib.store_idx as idx,
+            sib.store_name as name,
+            sib.main_telephone as mainTelephone,
+            sib.address,
+            fgsid.main_photo as mainPhoto
         from
             users_pick as up
         left join
@@ -252,6 +273,7 @@
             s.store_name as storeName,
             p.seller_idx as sellerIdx,
             t.pt_trainer_name as sellerName,
+            t.nick_name as sellerNickName, /** 220531추가 **/
             p.registered_date as registeredDate,
             pv.voucher_type as voucherType,
             pv.use_termYN as useTermYN,
@@ -278,6 +300,7 @@
         select
             p.pt_trainer_idx as idx,
             p.pt_trainer_name as name,
+            p.nick_name as nickName, /** 220531추가 **/
             p.gender,
             ROUND((TO_DAYS(NOW()) -  to_days(STR_TO_DATE(p.birth_day, '%Y%m%d'))) / 365 ) as age,
             p.affilated_center as affilatedCenterIdx,
@@ -301,9 +324,15 @@
 
     <select id="getUsersPickDetail_Store" resultType="java.util.HashMap">
         select
-            sib.store_idx as idx, sib.store_name as name, sib.main_telephone as mainTelephone,
-            sib.address, fgsid.main_photo as mainPhoto, fgsid.use_guide as useGuide, ifnull(fgsid.biz_hour, 0) as bizHour,
-            fgsid.introduction, ifnull(fgsid.programs, 0) as programs
+            sib.store_idx as idx,
+            sib.store_name as name,
+            sib.main_telephone as mainTelephone,
+            sib.address,
+            fgsid.main_photo as mainPhoto,
+            fgsid.use_guide as useGuide,
+            ifnull(fgsid.biz_hour, 0) as bizHour,
+            fgsid.introduction,
+            ifnull(fgsid.programs, 0) as programs
         from
             stores_info_basic as sib
         left join
@@ -316,8 +345,11 @@
 
     <select id="getStoreBizHours" resultType="java.util.HashMap">
         select
-            fgsbh.iseq as idx, fgsbh.store_idx as storeIdx, fgsbh.title,
-            fgsbh.day_classification as dayClassification, fgsbh.open_time as openTime,
+            fgsbh.iseq as idx,
+            fgsbh.store_idx as storeIdx,
+            fgsbh.title,
+            fgsbh.day_classification as dayClassification,
+            fgsbh.open_time as openTime,
             fgsbh.close_time as closeTime
         from
             fitness_gym_stores_biz_hour as fgsbh
@@ -327,8 +359,11 @@
 
     <select id="getStorePrograms" resultType="java.util.HashMap">
         select
-            fgsp.iseq as idx, fgsp.store_idx as storeIdx, fgsp.program_name as programName,
-            fgsp.description, fgsp.charge
+            fgsp.iseq as idx,
+            fgsp.store_idx as storeIdx,
+            fgsp.program_name as programName,
+            fgsp.description,
+            fgsp.charge
         from
             fitness_gym_stores_program as fgsp
         where
@@ -372,7 +407,8 @@
             p.store_idx as storeIdx,
             t.billing_date as billingDate,
             t.billing_method as billingMethod
-        from transactions as t
+        from
+            transactions as t
         left join
             transactions_details as td
         on
