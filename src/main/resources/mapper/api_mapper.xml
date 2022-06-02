@@ -9,6 +9,8 @@
         select
             p.idx,
             p.name,
+            p.description as productDescription, /** 220602추가 **/
+            ptid.specialty, /** 220602추가 **/
             p.product_type as productType,
             p.price,
             p.discount,
@@ -18,7 +20,8 @@
             t.pt_trainer_name as sellerName,
             t.nick_name as sellerNickName, /** 220531추가 **/
             s.address, /** 220531추가 **/
-            (select avg(user_satisfaction) from users_notes as un where p.idx = un.note_target) as userSatisfaction /** 220531추가 **/
+            avg(un.user_satisfaction) as userSatisfaction /** 220531추가, 220602수정 **/
+            /** 사진 정보 추가 예정**/
         from
             product as p
         left join
@@ -26,9 +29,20 @@
         on
             p.seller_idx = t.pt_trainer_idx
         left join
-                stores_info_basic as s
+            pt_trainer_info_details as ptid
+        on
+            t.pt_trainer_idx = ptid.pt_trainer_idx
+        left join
+            stores_info_basic as s
         on
             p.store_idx = s.store_idx OR t.affilated_center = s.store_idx
+        left join
+            users_notes as un
+        on
+            p.idx = un.note_target AND un.note_category = #{noteCategory} /** 220602추가 **/
+        group by
+            p.idx, p.name, p.description, ptid.specialty, p.product_type, p.price, p.discount, p.store_idx, s.store_name, p.seller_idx, t.pt_trainer_name,
+            t.nick_name, s.address
     </select>
 
     <select id="getPTLessionVoucharsDetail" resultType="java.util.HashMap">
@@ -47,7 +61,9 @@
             p.registered_date as registeredDate,
             pv.voucher_type as voucherType,
             pv.use_termYN as useTermYN,
-            pv.use_term as useTerm
+            pv.use_term as useTerm,
+            avg(un.user_satisfaction) as userSatisfaction /** 220531추가, 220602수정 **/
+            /** 사진 정보 추가 예정**/
         from
             product as p
         left join
@@ -57,13 +73,19 @@
         left join
             stores_info_basic as s
         on
-            p.store_idx = s.store_idx
+            p.store_idx = s.store_idx OR t.affilated_center = s.store_idx
         left join
             product_pt_voucher_details as pv
         on
             p.idx = pv.idx
+        left join
+            users_notes as un
+        on
+            p.idx = un.note_target AND un.note_category = #{noteCategory}
         where
             p.idx = #{idx}
+        group by
+            p.idx, p.name, p.product_type, p.price, p.discount, p.description, p.store_idx, s.store_name, p.seller_idx, t.pt_trainer_name, t.nick_name, p.registered_date, pv.voucher_type, pv.use_termYN, pv.use_term
     </select>
 
     <select id="getPTTrainers" resultType="java.util.HashMap">
@@ -97,19 +119,26 @@
             ROUND((TO_DAYS(NOW()) -  to_days(STR_TO_DATE(p.birth_day, '%Y%m%d'))) / 365 ) as age,
             p.affilated_center as affilatedCenterIdx,
             s.store_name as affilatedCenterName,
-            ptid.profile_photo as profilePhoto,
-            ptid.profile_photo_file_pass as profilePhotoFilepass,
-            ptid.introduction
+            ptid.introduction,
+            ptid.specialty, /** 220602추가 **/
+            ptid.work_experience as workExperienceCount, /** 220602추가 **/
+            ptid.award_winning as awardWinningCount, /** 220602추가 **/
+            ptid.qualification as qualificationCount, /** 220602추가 **/
+            count(case when pti.pt_trainer_idx = p.pt_trainer_idx then 1 end) as photoCount /** 220602추가 **/
         from
             pt_trainer_info_basic as p
-                left join
+        left join
             stores_info_basic as s
-            on
-                p.affilated_center = s.store_idx
-                left join
+        on
+            p.affilated_center = s.store_idx
+        left join
             pt_trainer_info_details as ptid
-            on
-                p.pt_trainer_idx = ptid.pt_trainer_idx
+        on
+            p.pt_trainer_idx = ptid.pt_trainer_idx
+        left join /** 220602추가 **/
+            pt_trainer_images as pti
+        on
+            p.pt_trainer_idx = pti.pt_trainer_idx
         where
             p.pt_trainer_idx = #{idx}
     </select>
@@ -147,6 +176,19 @@
             pt_trainer_qualitification as ptq
         where
             ptq.idx = #{idx}
+    </select>
+
+    <select id="getPTTrainerDetail_photo" resultType="java.util.HashMap">
+        select
+            pti.iseq as idx,
+            pti.pt_trainer_idx as trainerIdx,
+            pti.image_path as imagePath,
+            pti.image_file_name as imageFileName,
+            pti.main_image_yn as mainImageYN
+        from
+            pt_trainer_images as pti
+        where
+            pti.pt_trainer_idx = #{idx} AND image_type = #{imageType}
     </select>
 
     <select id="getShoppingItems" resultType="java.util.HashMap">
@@ -406,7 +448,9 @@
             p.seller_idx as sellerIdx,
             p.store_idx as storeIdx,
             t.billing_date as billingDate,
-            t.billing_method as billingMethod
+            t.billing_method as billingMethod,
+            t.billingyn as billingYN, /** 결제 여부 220531 추가 **/
+            t.cancelyn as cancelYN /** 취소 여부 220531 추가 **/
         from
             transactions as t
         left join
@@ -427,10 +471,85 @@
             t.point_use as pointUse,
             t.billing_amount as billingAmount,
             t.billing_method as billingMethod,
-            t.kind_of_items as kindOfItems
+            t.kind_of_items as kindOfItems,
+            t.billingyn as billingYN,
+            t.cancelyn as cancelYN
         from
             transactions as t
         where
             t.idx = #{transactionIdx}
+    </select>
+
+    <select id="getTransactionDetail_product" resultType="java.util.HashMap">
+        select
+            p.idx as productIdx,
+            p.name as productName,
+            ptib.pt_trainer_name as sellerName,
+            ptib.nick_name as sellerNickName,
+            sib.store_name as storeName,
+            td.price,
+            td.quantity,
+            td.amount
+        from
+            transactions_details as td
+        left join
+            product as p
+        on
+            td.product_idx = p.idx
+        left join
+            pt_trainer_info_basic as ptib
+        on
+            ptib.pt_trainer_idx = p.seller_idx
+        left join
+            stores_info_basic as sib
+        on
+            sib.store_idx = p.store_idx OR ptib.affilated_center = sib.store_idx
+        where
+            td.transaction_idx = #{transactionIdx}
+    </select>
+
+    <select id="getCancelYN" resultType="String">
+        select
+            cancelyn
+        from
+            transactions
+        where
+            idx = #{transactionIdx}
+    </select>
+
+    <update id="updateCancel" parameterType="java.util.HashMap">
+        update transactions
+        set cancelyn = "1", cancel_date = now()
+        where idx = #{transactionIdx}
+    </update>
+
+    <select id="getBillingYN" resultType="String">
+        select
+            billingyn
+        from
+            transactions
+        where
+            idx = #{transactionIdx}
+    </select>
+
+    <update id="updateRefund" parameterType="java.util.HashMap">
+        update transactions
+        set refundyn = "1", refund_date = now()
+        where idx = #{transactionIdx}
+    </update>
+    
+    <select id="getTransactionIdx" resultType="java.util.HashMap">
+        select distinct transaction_idx as transactionIdx
+        from transactions_details
+        where seller_idx = #{trainerIdx}
+    </select>
+
+    <select id="getConsumerIdx" resultType="String">
+        select
+            consumer_idx as consumerIdx
+        from
+            transactions as t
+        where
+            t.idx = #{transactionIdx} AND billingyn = "1" AND cancelyn = "0"
     </select>
 </mapper>

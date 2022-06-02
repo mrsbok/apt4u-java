@@ -18,6 +18,9 @@ public class DBConnService {
         return sqlSession.selectOne(NAMESPACE + "selectNow");
     }
 
+    public String selectWithReturnString(String stat_id, HashMap map) {
+        return sqlSession.selectOne(NAMESPACE + stat_id, map);
+    }
 
     public List<HashMap> select(String stat_id, HashMap map) {
         return sqlSession.selectList(NAMESPACE + stat_id, map);

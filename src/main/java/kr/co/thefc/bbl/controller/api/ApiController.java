@@ -49,13 +49,19 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
+            // category 1:store, 2:product, 3:trainer
+            map.put("noteCategory", "2");
+
             List<HashMap> list = dbConnService.select("getPTLessionVouchars", map);
-            HashMap infos = new HashMap();
-            infos.put("products", list);
-            for (Object key:map.keySet()) {
-                infos.put(key,map.get(key));
+
+            if(list.isEmpty()) {
+                error = "Product index " +jsonData.values() + " not found";
+            } else {
+                HashMap infos = new HashMap();
+                infos.put("products", list);
+
+                rtnVal.put("infos", infos);
             }
-            rtnVal.put("infos", infos);
 
         } catch (ParseException e) {
             e.printStackTrace();
@@ -93,6 +99,9 @@ public class ApiController {
                 HashMap map = new HashMap();
                 Set set = jsonData.keySet();
                 jsonData.forEach((key, value) -> map.put(key,value));
+
+                // 1:store, 2:product, 3:trainer
+                map.put("noteCategory", "2");
 
                 List<HashMap> list = dbConnService.select("getPTLessionVoucharsDetail", map);
 
@@ -183,21 +192,38 @@ public class ApiController {
 
                 List<HashMap> list = dbConnService.select("getPTTrainerDetail", map);
 
-                if (list.isEmpty()) {
+                if (list.get(0).get("idx") == null) {
                     error = "Trainer index " +jsonData.values() + " not found";
                 } else {
                     HashMap infos = new HashMap();
                     infos.put("PTTrainerInfo", list);
 
-                    list = dbConnService.select("getPTTrainerDetail_workExperience", map);
-                    infos.put("workExperience", list);
+                    Integer workExperience = Integer.parseInt(String.valueOf(list.get(0).get("workExperienceCount")));
+                    Integer awardWinning= Integer.parseInt(String.valueOf(list.get(0).get("awardWinningCount")));
+                    Integer qualification= Integer.parseInt(String.valueOf(list.get(0).get("qualificationCount")));
+                    Integer photoCount= Integer.parseInt(String.valueOf(list.get(0).get("photoCount")));
 
-                    list = dbConnService.select("getPTTrainerDetail_awardWinning", map);
-                    infos.put("awardWinning", list);
+                    if(workExperience > 0) {
+                        list = dbConnService.select("getPTTrainerDetail_workExperience", map);
+                        infos.put("workExperience", list);
+                    }
 
-                    list = dbConnService.select("getPTTrainerDetail_qualification", map);
-                    infos.put("qualification", list);
+                    if(awardWinning > 0) {
+                        list = dbConnService.select("getPTTrainerDetail_awardWinning", map);
+                        infos.put("awardWinning", list);
+                    }
 
+                    if(qualification > 0) {
+                        list = dbConnService.select("getPTTrainerDetail_qualification", map);
+                        infos.put("qualification", list);
+                    }
+
+                    if(photoCount > 0) {
+                        // imageType 중 "프로필" 사진인 데이터만 가져옴
+                        map.put("imageType", "프로필");
+                        list = dbConnService.select("getPTTrainerDetail_photo", map);
+                        infos.put("trainerPhoto", list);
+                    }
                     rtnVal.put("infos", infos);
                 }
             }
@@ -274,11 +300,6 @@ public class ApiController {
             HashMap map = new HashMap();
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
-
-            // 에러 추가
-            // 1. productIdx가 없음
-            // 2. userIdx가 없음
-            // 3. quantity가 없음
             
             int result = dbConnService.insert("addShoppingItems", map);
 
@@ -414,6 +435,9 @@ public class ApiController {
             HashMap infos = new HashMap();
 
             if(map.get("category").equals("1")) {
+                // 1:store, 2:product, 3:trainer
+                map.put("noteCategory", "1");
+
                 list = dbConnService.select("getUsersPickDetail_Store", map);
 
                 if(list.isEmpty()) {
@@ -431,30 +455,60 @@ public class ApiController {
                         infos.put("storePrograms", program);
                     }
                 }
-            } else if (map.get("category").equals("2")) {
-                list = dbConnService.select("getUsersPickDetail_Product", map);
+            }
+            else if (map.get("category").equals("2")) {
+                // 1:store, 2:product, 3:trainer
+                map.put("noteCategory", "2");
 
+                list = dbConnService.select("getPTLessionVoucharsDetail", map);
+
+                // 검색해서 가져온 list에 값이 들어있는지 확인
                 if(list.isEmpty()) {
-                    error = "Product index number " + map.get("idx") + " is not found";
+                    error = "Product index " +jsonData.values() + " not found";
                 } else {
+                    infos = new HashMap();
                     infos.put("productInfo", list);
+                    rtnVal.put("infos", infos);
                 }
-            } else if (map.get("category").equals("3")) {
-                list = dbConnService.select("getUsersPickDetail_PTTrainer", map);
+            }
+            else if (map.get("category").equals("3")) {
+                // 1:store, 2:product, 3:trainer
+                map.put("noteCategory", "3");
 
-                if(list.isEmpty()) {
-                    error = "PTTrainer index number " + map.get("idx") + " is not found";
+                list = dbConnService.select("getPTTrainerDetail", map);
+
+                if (list.get(0).get("idx") == null) {
+                    error = "Trainer index " +jsonData.values() + " not found";
                 } else {
                     infos.put("PTTrainerInfo", list);
 
-                    list = dbConnService.select("getPTTrainerDetail_workExperience", map);
-                    infos.put("workExperience", list);
+                    Integer workExperience = Integer.parseInt(String.valueOf(list.get(0).get("workExperienceCount")));
+                    Integer awardWinning= Integer.parseInt(String.valueOf(list.get(0).get("awardWinningCount")));
+                    Integer qualification= Integer.parseInt(String.valueOf(list.get(0).get("qualificationCount")));
+                    Integer photoCount= Integer.parseInt(String.valueOf(list.get(0).get("photoCount")));
 
-                    list = dbConnService.select("getPTTrainerDetail_awardWinning", map);
-                    infos.put("awardWinning", list);
+                    if(workExperience > 0) {
+                        list = dbConnService.select("getPTTrainerDetail_workExperience", map);
+                        infos.put("workExperience", list);
+                    }
 
-                    list = dbConnService.select("getPTTrainerDetail_qualification", map);
-                    infos.put("qualification", list);
+                    if(awardWinning > 0) {
+                        list = dbConnService.select("getPTTrainerDetail_awardWinning", map);
+                        infos.put("awardWinning", list);
+                    }
+
+                    if(qualification > 0) {
+                        list = dbConnService.select("getPTTrainerDetail_qualification", map);
+                        infos.put("qualification", list);
+                    }
+
+                    if(photoCount > 0) {
+                        // imageType 중 "프로필" 사진인 데이터만 가져옴
+                        map.put("imageType", "프로필");
+                        list = dbConnService.select("getPTTrainerDetail_photo", map);
+                        infos.put("trainerPhoto", list);
+                    }
+                    rtnVal.put("infos", infos);
                 }
             }
 
@@ -684,10 +738,12 @@ public class ApiController {
             } else {
                 HashMap infos = new HashMap();
                 infos.put("transactionsDetail", list);
-                rtnVal.put("infos", infos);
-                
-                // product 데이터 가져오기
 
+                // product 데이터 가져오기
+                list = dbConnService.select("getTransactionDetail_product", map);
+                infos.put("productInfo", list);
+
+                rtnVal.put("infos", infos);
             }
         } catch (ParseException e) {
             e.printStackTrace();
@@ -705,35 +761,62 @@ public class ApiController {
         return rtnVal;
     }
 
-//    @RequestMapping(value="/cancelTransaction", method = RequestMethod.POST)
-//    @ApiOperation(value = "구매 취소", notes = "구매 취소")
-//    public HashMap cancelTransaction(@RequestBody String data) {
-//        log.info("####cancelTransaction##### : " + data);
-//        HashMap rtnVal = new HashMap();
-//
-//        JSONParser parser = new JSONParser();
-//        String error = null;
-//
-//        try{
-//            JSONObject jsonData = (JSONObject) parser.parse(data);
-//
-//            HashMap map = new HashMap();
-//            Set set = jsonData.keySet();
-//            jsonData.forEach((key, value) -> map.put(key,value));
-//
-//        } catch (ParseException e) {
-//            e.printStackTrace();
-//            error = "정보를 파싱하지 못했습니다.";
-//        }
-//
-//        if (error!=null) {
-//            rtnVal.put("result", false);
-//        }
-//        else {
-//            rtnVal.put("result", true);
-//        }
-//        rtnVal.put("errorMsg", error);
-//
-//        return rtnVal;
-//    }
+    @RequestMapping(value="/cancelTransaction", method = RequestMethod.POST)
+    @ApiOperation(value = "구매 취소", notes = "{\"transactionIdx\":\"10\"}")
+    public HashMap cancelTransaction(@RequestBody String data) {
+        log.info("####cancelTransaction##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String selectResult = dbConnService.selectWithReturnString("getCancelYN", map);
+            int cancelYN = Integer.parseInt(selectResult);
+
+            if(cancelYN == 0) {
+                int updateResult = dbConnService.update("updateCancel", map);
+                
+                if(updateResult > 0) {
+                    selectResult = dbConnService.selectWithReturnString("getBillingYN", map);
+                    int billingYN = Integer.parseInt(selectResult);
+
+                    // 결제가 완료된 상태라면 환불 진행
+                    if(billingYN == 1) {
+                        // 환불 진행(:포인트 사용여부도 확인) 후 refundYN, refundDate update
+                        System.out.println("환불 처리 ,,,");
+                        updateResult = dbConnService.update("updateRefund", map);
+                        
+                        if(updateResult > 0) {
+                            System.out.println("환불 완료");
+                        }
+                    }
+                }
+                
+            } else {
+                error = "이미 취소된 구매 목록입니다.";
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
 }
