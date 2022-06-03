@@ -58,82 +58,76 @@
     <insert id="trainerInfoDetailSave" parameterType="hashmap">
         INSERT INTO
             pt_trainer_info_details(
-            pt_trainer_index,
+            pt_trainer_idx,
             award_winning,
             introduction,
             qualification,
-            work_experience
+            work_experience,
+            specialty
         )
         VALUES
             (
-                1,
+                #{tarinerIdx},
                 #{awardWinning},
                 #{introduction},
                 #{qualification},
-                #{workExperience}
+                #{workExperience},
+                #{specialty}
             )
     </insert>
 
 
-    <insert id="trainerWorkExperienceSave" parameterType="java.util.List">
+    <insert id="trainerWorkExperienceSave"  useGeneratedKeys="true" keyProperty="idx"  parameterType="hashmap">
         INSERT INTO
         pt_trainer_work_experience(
-            pt_trainer_index,
+            pt_trainer_idx,
             start,
             end,
             role,
             organization
         )
         VALUES
-            <foreach item="item" separator=" , " collection="list">
-                (
-                1,
-                #{item.startDate},
-                #{item.endDate},
-                #{item.role},
-                #{item.organization}
+            (
+                #{tarinerIdx},
+                #{startDate},
+                #{endDate},
+                #{role},
+                #{organization}
                 )
-            </foreach>
     </insert>
 
-    <insert id="trainerAwardWinningSave" parameterType="java.util.List">
+    <insert id="trainerAwardWinningSave" useGeneratedKeys="true" keyProperty="idx" parameterType="hashmap">
         INSERT INTO
         pt_trainer_award_winning(
-        pt_trainer_index,
+        pt_trainer_idx,
         competition,
         participation,
         year,
         award_winning
         )
-        VALUES
-        <foreach item="item" separator=" , " collection="list">
-            (
-            1,
-            #{item.competition},
-            #{item.participation},
-            #{item.year},
-            #{item.awardWinning}
-            )
-        </foreach>
+        VALUES(
+            #{tarinerIdx},
+            #{competition},
+            #{participation},
+            #{year},
+            #{awardWinning})
     </insert>
 
-    <insert id="trainerQualitificationSave" parameterType="java.util.List">
+    <insert id="trainerQualitificationSave" useGeneratedKeys="true" keyProperty="idx" parameterType="hashmap">
         INSERT INTO
         pt_trainer_qualitification(
-        pt_trainer_index,
+        pt_trainer_idx,
         license_name,
         organization,
         issued_date
         )
         VALUES
-        <foreach item="item" separator=" , " collection="list">
             (
-            1,
-            #{item.licenseName},
-            #{item.issuedOrganization},
-            DATE_FORMAT(#{item.issuedDate}, '%y%m%d')
+            #{tarinerIdx},
+            #{licenseName},
+            #{issuedOrganization},
+            DATE_FORMAT(#{issuedDate}, '%y%m%d')
             )
-        </foreach>
     </insert>
 
     <insert id="centerApprovedSave" parameterType="HashMap">
@@ -171,6 +165,15 @@
                  left join stores_info_basic sib on st.idx = sib.store_idx
         where
             pt.idx  = #{idx};
+    </select>
+
+
+    <select id="selectDetailInformation" resultType="java.util.HashMap">
+        select
+           *
+        from pt_trainer_info_details
+        where
+            pt_trainer_idx  = #{idx};
     </select>
 
     <update id="updateInformation" parameterType="hashmap">
@@ -296,4 +299,52 @@
         where pt_trainer_idx = #{idx};
     </select>
 
+
+    <insert id="trainerProfileSave" parameterType="java.util.List">
+        INSERT INTO
+        pt_trainer_images(
+        pt_trainer_idx,
+        image_file_name,
+        image_path,
+        image_type,
+        award_winning_iseq,
+        work_exprience_iseq,
+        qualitification_iseq
+        )
+        VALUES
+        <foreach item="item" separator=" , " collection="list">
+            (
+            1,
+            #{item.filename},
+            #{item.fileurl},
+            #{item.imagetype},
+            #{item.awardWinningIseq},
+            #{item.workExprienceIseq},
+            #{item.qualitificationIseq}
+            )
+        </foreach>
+    </insert>
+
+
+    <select id="selectTrainerImages" resultType="java.util.HashMap">
+        select
+            *
+        from pt_trainer_images
+        where
+            pt_trainer_idx  = #{idx};
+    </select>
+
+
+    <delete id="deleteImage">
+        delete from pt_trainer_images where iseq = #{iseq}
+    </delete>
+    <delete id="deleteWork">
+        delete from pt_trainer_work_experience where idx = #{workExprienceIseq}
+    </delete>
+    <delete id="deleteAward">
+        delete from pt_trainer_award_winning where idx = #{awardWinningIseq}
+    </delete>
+    <delete id="deleteQuailtification">
+        delete from pt_trainer_qualitification where idx = #{qualitificationIseq}
+    </delete>
 </mapper>

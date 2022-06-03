@@ -11,6 +11,13 @@ public class PtTrainerProfileForm {
 
         Integer idx = null;
 
+        @ApiModelProperty(
+            value = "트레이너 idx",
+            example = "1",
+            required = true
+        )
+        Integer tarinerIdx;
+
         // 소개
         @ApiModelProperty(
             value = "트레이너 소개 글",
@@ -43,5 +50,13 @@ public class PtTrainerProfileForm {
             dataType = "int"
         )
         Byte qualification;
+
+        @ApiModelProperty(
+            value = "전문 분야",
+            example = "#바른체형,#허리운동",
+            required = true
+        )
+        String specialty;
+
 
 }
