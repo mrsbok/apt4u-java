@@ -7,8 +7,8 @@
 
     <select id="getPTLessionVouchars" resultType="java.util.HashMap">
         select
-            p.idx,
-            p.name,
+            p.idx as productIdx,
+            p.name as productName,
             p.description as productDescription, /** 220602추가 **/
             ptid.specialty, /** 220602추가 **/
             p.product_type as productType,
@@ -20,8 +20,9 @@
             t.pt_trainer_name as sellerName,
             t.nick_name as sellerNickName, /** 220531추가 **/
             s.address, /** 220531추가 **/
-            avg(un.user_satisfaction) as userSatisfaction /** 220531추가, 220602수정 **/
-            /** 사진 정보 추가 예정**/
+            avg(un.user_satisfaction) as userSatisfaction, /** 220531추가, 220602수정 **/
+			pti.image_path as imagePath, /** 220603 추가 **/
+            pti.image_file_name as imageFileName /** 220603 추가 **/
         from
             product as p
         left join
@@ -40,15 +41,18 @@
             users_notes as un
         on
             p.idx = un.note_target AND un.note_category = #{noteCategory} /** 220602추가 **/
+        left join
+			pt_trainer_images as pti
+		on
+			pti.pt_trainer_idx = ptid.pt_trainer_idx AND pti.main_image_yn = "1" AND pti.image_type = #{imageType} /** 220603 추가 **/
         group by
-            p.idx, p.name, p.description, ptid.specialty, p.product_type, p.price, p.discount, p.store_idx, s.store_name, p.seller_idx, t.pt_trainer_name,
-            t.nick_name, s.address
+            p.idx, p.name, p.description, ptid.specialty, p.product_type, p.price, p.discount, p.store_idx, s.store_name, p.seller_idx, t.pt_trainer_name, t.nick_name, s.address, pti.image_path, pti.image_file_name
     </select>
 
     <select id="getPTLessionVoucharsDetail" resultType="java.util.HashMap">
         select
-            p.idx,
-            p.name,
+            p.idx as productIdx,
+            p.name as productName,
             p.product_type as productType,
             p.price,
             p.discount,
@@ -83,21 +87,21 @@
         on
             p.idx = un.note_target AND un.note_category = #{noteCategory}
         where
-            p.idx = #{idx}
+            p.idx = #{productIdx}
         group by
             p.idx, p.name, p.product_type, p.price, p.discount, p.description, p.store_idx, s.store_name, p.seller_idx, t.pt_trainer_name, t.nick_name, p.registered_date, pv.voucher_type, pv.use_termYN, pv.use_term
     </select>
 
     <select id="getPTTrainers" resultType="java.util.HashMap">
         select
-            p.pt_trainer_idx as idx,
-            p.pt_trainer_name as name,
+            p.pt_trainer_idx as PTTrainerIdx,
+            p.pt_trainer_name as PTTrainerName,
             p.nick_name as nickName, /** 220531추가 **/
             p.gender,
             p.affilated_center as affilatedCenterIdx,
             s.store_name as affilatedCenterName,
-            ptid.profile_photo as profilePhoto,
-            ptid.profile_photo_file_pass as profilePhotoFilepass
+            pti.image_path as imagePath, /** 220603 추가 **/
+            pti.image_file_name as imageFileName /** 220603 추가 **/
         from
             pt_trainer_info_basic as p
         left join
@@ -108,12 +112,16 @@
             pt_trainer_info_details as ptid
         on
             p.pt_trainer_idx = ptid.pt_trainer_idx
+        left join
+			pt_trainer_images as pti
+		on
+			p.pt_trainer_idx = pti.pt_trainer_idx AND pti.main_image_yn = "1" AND pti.image_type = #{imageType} /** 220603 추가 **/
     </select>
 
     <select id="getPTTrainerDetail" resultType="java.util.HashMap">
         select
-            p.pt_trainer_idx as idx,
-            p.pt_trainer_name as name,
+            p.pt_trainer_idx as PTTrainerIdx,
+            p.pt_trainer_name as PTTrainerName,
             p.nick_name as nickName, /** 220531추가 **/
             p.gender,
             ROUND((TO_DAYS(NOW()) -  to_days(STR_TO_DATE(p.birth_day, '%Y%m%d'))) / 365 ) as age,
@@ -121,9 +129,9 @@
             s.store_name as affilatedCenterName,
             ptid.introduction,
             ptid.specialty, /** 220602추가 **/
-            ptid.work_experience as workExperienceCount, /** 220602추가 **/
-            ptid.award_winning as awardWinningCount, /** 220602추가 **/
-            ptid.qualification as qualificationCount, /** 220602추가 **/
+            ifnull(ptid.work_experience, 0) as workExperienceCount, /** 220602추가 **/
+            ifnull(ptid.award_winning, 0) as awardWinningCount, /** 220602추가 **/
+            ifnull(ptid.qualification, 0) as qualificationCount, /** 220602추가 **/
             count(case when pti.pt_trainer_idx = p.pt_trainer_idx then 1 end) as photoCount /** 220602추가 **/
         from
             pt_trainer_info_basic as p
@@ -140,7 +148,7 @@
         on
             p.pt_trainer_idx = pti.pt_trainer_idx
         where
-            p.pt_trainer_idx = #{idx}
+            p.pt_trainer_idx = #{PTTrainerIdx}
     </select>
 
     <select id="getPTTrainerDetail_workExperience" resultType="java.util.HashMap">
@@ -152,7 +160,7 @@
         from
             pt_trainer_work_experience as ptwe
         where
-            ptwe.pt_trainer_idx = #{idx}
+            ptwe.pt_trainer_idx = #{PTTrainerIdx}
     </select>
 
     <select id="getPTTrainerDetail_awardWinning" resultType="java.util.HashMap">
@@ -164,7 +172,7 @@
         from
             pt_trainer_award_winning as ptaw
         where
-            ptaw.pt_trainer_idx = #{idx}
+            ptaw.pt_trainer_idx = #{PTTrainerIdx}
     </select>
 
     <select id="getPTTrainerDetail_qualification" resultType="java.util.HashMap">
@@ -175,20 +183,20 @@
         from
             pt_trainer_qualitification as ptq
         where
-            ptq.idx = #{idx}
+            ptq.pt_trainer_idx = #{PTTrainerIdx}
     </select>
 
     <select id="getPTTrainerDetail_photo" resultType="java.util.HashMap">
         select
-            pti.iseq as idx,
-            pti.pt_trainer_idx as trainerIdx,
+            pti.iseq as iseq,
+            pti.pt_trainer_idx as PTTrainerIdx,
             pti.image_path as imagePath,
             pti.image_file_name as imageFileName,
             pti.main_image_yn as mainImageYN
         from
             pt_trainer_images as pti
         where
-            pti.pt_trainer_idx = #{idx} AND image_type = #{imageType}
+            pti.pt_trainer_idx = #{PTTrainerIdx} AND image_type = #{imageType}
     </select>
 
     <select id="getShoppingItems" resultType="java.util.HashMap">
@@ -226,7 +234,8 @@
     <select id="getUserPick_Products" resultType="java.util.HashMap">
         select
             up.item_category as category,
-            p.name,
+            p.idx as productIdx,
+            p.name as productName,
             p.product_type as productType,
             p.price,
             p.discount,
@@ -256,8 +265,8 @@
     <select id="getUserPick_PTTrainers" resultType="java.util.HashMap">
         select
             up.item_category as category,
-            ptib.pt_trainer_idx as idx,
-            ptib.pt_trainer_name as name,
+            ptib.pt_trainer_idx as PTTrainerIdx,
+            ptib.pt_trainer_name as PTTrainerName,
             ptib.nick_name as nickName, /** 220531추가 **/
             ptib.gender,
             ptib.affilated_center as affilatedCenterIdx,
@@ -284,8 +293,8 @@
 
     <select id="getUserPick_Stores" resultType="java.util.HashMap">
         select
-            sib.store_idx as idx,
-            sib.store_name as name,
+            sib.store_idx as storeIdx,
+            sib.store_name as storeName,
             sib.main_telephone as mainTelephone,
             sib.address,
             fgsid.main_photo as mainPhoto
@@ -305,8 +314,8 @@
 
     <select id="getUsersPickDetail_Product" resultType="java.util.HashMap">
         select
-            p.idx,
-            p.name,
+            p.idx as productIdx,
+            p.name as productName,
             p.product_type as productType,
             p.price,
             p.discount,
@@ -319,7 +328,9 @@
             p.registered_date as registeredDate,
             pv.voucher_type as voucherType,
             pv.use_termYN as useTermYN,
-            pv.use_term as useTerm
+            pv.use_term as useTerm,
+            avg(un.user_satisfaction) as userSatisfaction /** 220531추가, 220602수정 **/
+            /** 사진 정보 추가 예정**/
         from
             product as p
         left join
@@ -329,27 +340,36 @@
         left join
             stores_info_basic as s
         on
-            p.store_idx = s.store_idx
+            p.store_idx = s.store_idx OR t.affilated_center = s.store_idx
         left join
             product_pt_voucher_details as pv
         on
             p.idx = pv.idx
+        left join
+            users_notes as un
+        on
+            p.idx = un.note_target AND un.note_category = #{noteCategory}
         where
-            p.idx = #{idx}
+            p.idx = #{pickedItemIdx}
+        group by
+            p.idx, p.name, p.product_type, p.price, p.discount, p.description, p.store_idx, s.store_name, p.seller_idx, t.pt_trainer_name, t.nick_name, p.registered_date, pv.voucher_type, pv.use_termYN, pv.use_term
     </select>
 
     <select id="getUsersPickDetail_PTTrainer" resultType="java.util.HashMap">
         select
-            p.pt_trainer_idx as idx,
-            p.pt_trainer_name as name,
+            p.pt_trainer_idx as PTTrainerIdx,
+            p.pt_trainer_name as PTTrainerName,
             p.nick_name as nickName, /** 220531추가 **/
             p.gender,
             ROUND((TO_DAYS(NOW()) -  to_days(STR_TO_DATE(p.birth_day, '%Y%m%d'))) / 365 ) as age,
             p.affilated_center as affilatedCenterIdx,
             s.store_name as affilatedCenterName,
-            ptid.profile_photo as profilePhoto,
-            ptid.profile_photo_file_pass as profilePhotoFilepass,
-            ptid.introduction
+            ptid.introduction,
+            ptid.specialty, /** 220602추가 **/
+            ifnull(ptid.work_experience, 0) as workExperienceCount, /** 220602추가 **/
+            ifnull(ptid.award_winning, 0) as awardWinningCount, /** 220602추가 **/
+            ifnull(ptid.qualification, 0) as qualificationCount, /** 220602추가 **/
+            count(case when pti.pt_trainer_idx = p.pt_trainer_idx then 1 end) as photoCount /** 220602추가 **/
         from
             pt_trainer_info_basic as p
         left join
@@ -360,14 +380,18 @@
             pt_trainer_info_details as ptid
         on
             p.pt_trainer_idx = ptid.pt_trainer_idx
+        left join /** 220602추가 **/
+            pt_trainer_images as pti
+        on
+            p.pt_trainer_idx = pti.pt_trainer_idx
         where
-            p.pt_trainer_idx = #{idx}
+            p.pt_trainer_idx = #{pickedItemIdx}
     </select>
 
     <select id="getUsersPickDetail_Store" resultType="java.util.HashMap">
         select
-            sib.store_idx as idx,
-            sib.store_name as name,
+            sib.store_idx as storeIdx,
+            sib.store_name as storeName,
             sib.main_telephone as mainTelephone,
             sib.address,
             fgsid.main_photo as mainPhoto,
@@ -382,12 +406,12 @@
         on
             fgsid.store_idx = sib.store_idx
         where
-            sib.store_idx = #{idx}
+            sib.store_idx = #{pickedItemIdx}
     </select>
 
     <select id="getStoreBizHours" resultType="java.util.HashMap">
         select
-            fgsbh.iseq as idx,
+            fgsbh.iseq as iseq,
             fgsbh.store_idx as storeIdx,
             fgsbh.title,
             fgsbh.day_classification as dayClassification,
@@ -396,12 +420,12 @@
         from
             fitness_gym_stores_biz_hour as fgsbh
         where
-            fgsbh.store_idx = #{idx}
+            fgsbh.store_idx = #{pickedItemIdx}
     </select>
 
     <select id="getStorePrograms" resultType="java.util.HashMap">
         select
-            fgsp.iseq as idx,
+            fgsp.iseq as iseq,
             fgsp.store_idx as storeIdx,
             fgsp.program_name as programName,
             fgsp.description,
@@ -409,12 +433,12 @@
         from
             fitness_gym_stores_program as fgsp
         where
-            fgsp.store_idx = #{idx}
+            fgsp.store_idx = #{pickedItemIdx}
     </select>
 
     <insert id="addUserPick">
         insert into users_pick (user_idx, item_category, picked_item)
-        values (#{userIdx}, #{category}, #{pickItemIdx})
+        values (#{userIdx}, #{category}, #{pickedItemIdx})
     </insert>
 
     <delete id="deleteUserPick">
