@@ -207,7 +207,7 @@
             usb.quantity,
             usb.seleted_date as selectedDate,
             usb.product_idx as productIdx,
-            p.name,
+            p.name as productName,
             p.price,
             p.store_idx as storeIdx,
             sib.store_name as storeName,
@@ -243,7 +243,8 @@
             sib.store_name as storeName,
             p.seller_idx as sellerIdx,
             ptib.pt_trainer_name as sellerName,
-            ptib.nick_name as sellerNickName /** 220531추가 **/
+            ptib.nick_name as sellerNickName, /** 220531추가 **/
+            sib.address /** 220603추가 **/
         from
             users_pick as up
         left join
@@ -251,13 +252,13 @@
         on
             up.picked_item = p.idx
         left join
-            stores_info_basic as sib
-        on
-            p.store_idx = sib.store_idx
-        left join
             pt_trainer_info_basic as ptib
         on
             p.seller_idx = ptib.pt_trainer_idx
+        left join
+            stores_info_basic as sib
+        on
+            p.store_idx = sib.store_idx OR ptib.affilated_center = sib.store_idx
         where
             up.user_idx = #{userIdx} AND up.item_category = #{category}
     </select>
@@ -271,8 +272,8 @@
             ptib.gender,
             ptib.affilated_center as affilatedCenterIdx,
             sib.store_name as affilatedCenterName,
-            ptid.profile_photo as profilePhoto,
-            ptid.profile_photo_file_pass as profilePhotoFilepass
+            pti.image_path as imagePath,
+            pti.image_file_name as imageFileName
         from
             users_pick as up
         left join
@@ -287,6 +288,10 @@
             pt_trainer_info_details as ptid
         on
             ptib.pt_trainer_idx = ptid.pt_trainer_idx
+        left join
+			pt_trainer_images as pti
+		on
+			ptib.pt_trainer_idx = pti.pt_trainer_idx AND pti.main_image_yn = "1" AND pti.image_type = #{imageType} /** 220603 추가 **/
         where
             up.user_idx = #{userIdx} AND up.item_category = #{category}
     </select>

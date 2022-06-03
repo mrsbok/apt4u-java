@@ -406,6 +406,7 @@ public class ApiController {
             } else if (map.get("category").equals("2")) {
                 list = dbConnService.select("getUserPick_Products", map);
             } else if (map.get("category").equals("3")) {
+                map.put("imageType", "프로필");
                 list = dbConnService.select("getUserPick_PTTrainers", map);
             }
 
@@ -418,10 +419,10 @@ public class ApiController {
                     infos.put("stores", list);
                 }
                 else if (map.get("category").equals("2")) {
-                    infos.put("productInfo", list);
+                    infos.put("products", list);
                 }
                 else if (map.get("category").equals("3")) {
-                    infos.put("productInfo", list);
+                    infos.put("PTTrainers", list);
                 }
                 rtnVal.put("infos", infos);
             }
