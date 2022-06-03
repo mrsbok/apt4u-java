@@ -33,10 +33,9 @@ public class DBConnService {
     }
     public int insertWithReturnIntList(String stat_id, HashMap map) {
         Integer rowcnt = sqlSession.insert(NAMESPACE + stat_id, map);
-        System.out.println(map.toString());
+//        System.out.println(map.toString());
         Double idx = (Double) map.get("idx");
         Long test = Math.round(idx);
-        test.toString();
         return Integer.parseInt(test.toString());
     }
     public int insert(String stat_id, HashMap map) {
@@ -60,4 +59,6 @@ public class DBConnService {
     public int delete(String stat_id, HashMap map) {
         return sqlSession.delete(NAMESPACE + stat_id, map);
     }
+
+
 }

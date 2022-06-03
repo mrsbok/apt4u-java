@@ -11,6 +11,13 @@ public class PTtrainersAwardWinningForm {
 
         Integer idx = null;
 
+        @ApiModelProperty(
+            value = "트레이너 idx",
+            example = "1",
+            required = true
+        )
+        Integer tarinerIdx;
+
         // 소개
         @ApiModelProperty(
             value = "년도 (대회년도)",

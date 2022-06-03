@@ -11,6 +11,13 @@ public class PtTrainerWorkExperienceForm {
 
         Integer idx = null;
 
+        @ApiModelProperty(
+            value = "트레이너 idx",
+            example = "1",
+            required = true
+        )
+        Integer tarinerIdx;
+
         // 소개
         @ApiModelProperty(
             value = "근무 시작일 (0000년 00월)",

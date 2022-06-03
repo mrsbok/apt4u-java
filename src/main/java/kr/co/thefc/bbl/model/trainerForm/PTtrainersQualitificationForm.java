@@ -11,6 +11,14 @@ public class PTtrainersQualitificationForm {
 
         Integer idx = null;
 
+
+        @ApiModelProperty(
+            value = "트레이너 idx",
+            example = "1",
+            required = true
+        )
+        Integer tarinerIdx;
+
         // 소개
         @ApiModelProperty(
             value = "자격증 이름",
