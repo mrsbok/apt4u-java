@@ -583,6 +583,8 @@ public class ApiController {
 
             if(result == 0) {
                 error = "Failed to add to user pick list";
+            } else {
+                rtnVal.put("result1", false);
             }
 
         } catch (ParseException e) {
@@ -622,6 +624,8 @@ public class ApiController {
 
             if(result == 0) {
                 error = "Failed to delete from user pick list";
+            } else {
+                rtnVal.put("result1", true);
             }
         } catch (ParseException e) {
             e.printStackTrace();
