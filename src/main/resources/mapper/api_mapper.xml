@@ -581,4 +581,142 @@
         where
             t.idx = #{transactionIdx} AND billingyn = "1" AND cancelyn = "0"
     </select>
+
+    <insert id="addUserPTRecords">
+        <selectKey resultType="int" keyProperty="recordIdx" order="AFTER">
+            SELECT MAX(idx) from users_pt_records
+        </selectKey>
+        insert into users_pt_records(user_idx, date, exercise_count, recorded_by)
+        values (#{userIdx}, #{date}, #{exerciseCount}, "0")
+    </insert>
+    
+    <insert id="addUserPTContents">
+        insert into user_pt_contents(record_idx, exercise_type, exercise_name, exercise_details)
+        values (#{recordIdx}, #{exerciseType}, #{exerciseName}, #{exerciseDetails})
+    </insert>
+
+    <select id="getUserPTRecords" resultType="java.util.HashMap">
+    select
+        upr.idx,
+        upr.date,
+        upr.exercise_count as exerciseCount,
+        upc.exercise_type as exerciseType,
+        upc.exercise_name as exerciseName,
+        upc.exercise_details as exerciseDetails
+    from
+        users_pt_records as upr
+    left join
+        user_pt_contents as upc
+    on
+        upr.idx = upc.record_idx
+    where
+        upr.user_idx = #{userIdx} and upr.recorded_by = "0"
+    </select>
+
+    <select id="getUserPTRecordsWithTrainer" resultType="java.util.HashMap">
+        select
+            upr.idx,
+            upr.pt_trainer_idx as PTTrainerIdx,
+            ptib.pt_trainer_name as PTTrainerName,
+            ptib.nick_name as nickName,
+            upr.date,
+            upr.start_time as startTime,
+            upr.end_time as endTime,
+            upr.exercise_count as exerciseCount,
+            upc.exercise_type as exerciseType,
+            upc.exercise_name as exerciseName,
+            upc.exercise_details as exerciseDetails
+        from
+            users_pt_records as upr
+        left join
+            user_pt_contents as upc
+        on
+            upr.idx = upc.record_idx
+        left join
+            pt_trainer_info_basic as ptib
+        on
+            upr.pt_trainer_idx = ptib.pt_trainer_idx
+        where
+            upr.user_idx = #{userIdx} and upr.recorded_by = "1"
+    </select>
+
+    <select id="checkId" resultType="java.util.HashMap">
+        select id
+        from users
+        where id = #{email}
+    </select>
+
+    <insert id="registerUser">
+        <selectKey resultType="int" keyProperty="userIdx" order="AFTER">
+            SELECT MAX(idx) from users
+        </selectKey>
+        insert into users(id)
+        values (#{email})
+    </insert>
+
+    <insert id="registerUser_authentication">
+        insert into users_authentication(user_idx, cert_type, password)
+        values (#{userIdx}, #{certType}, #{password})
+    </insert>
+
+    <insert id="registerUser_info">
+        insert into
+            users_info(
+                user_idx,
+                user_name,
+                nick_name,
+                birth_day,
+                gender,
+                eldas,
+                registered_date,
+                region,
+                local_area,
+                telephone,
+                marketingyn,
+                numof_interest)
+        values (
+                #{userIdx},
+                #{name},
+                #{nickName},
+                #{birthYYYYMMDD},
+                #{gender},
+                #{elDas},
+                now(),
+                #{region},
+                #{localArea},
+                #{telephone},
+                #{marketingYN},
+                "0")
+    </insert>
+
+    <update id="setNumOfInterest" parameterType="java.util.HashMap">
+        update users_info
+        set numof_interest = #{numOfInterest}
+        where user_idx = #{userIdx}
+    </update>
+
+    <insert id="setInterests">
+        insert into users_interests(user_idx, interest_code)
+        values (#{userIdx}, #{interestCode})
+    </insert>
+
+    <select id="getInterestsCount" resultType="INTEGER">
+        select count(interest_code)
+        from users_interests
+        where user_idx = #{userIdx}
+    </select>
+
+    <select id="getInterestCode" resultType="java.util.HashMap">
+        select interest_code
+        from users_interests
+        where user_idx = #{userIdx} AND interest_code = #{interestCode}
+    </select>
+
+    <delete id="delInterestCode">
+        delete from users_interests
+        where user_idx = #{userIdx} AND NOT interest_code IN
+        <foreach collection="interests" item="item" open="(" close=")" separator=",">
+            #{item.interestCode}
+        </foreach>
+    </delete>
 </mapper>

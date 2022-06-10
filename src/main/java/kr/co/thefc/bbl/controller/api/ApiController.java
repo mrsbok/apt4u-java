@@ -1,6 +1,7 @@
 package kr.co.thefc.bbl.controller.api;
 
 import io.swagger.annotations.ApiOperation;
+import kr.co.thefc.bbl.converter.PasswordCryptConverter;
 import kr.co.thefc.bbl.service.DBConnService;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -860,4 +861,241 @@ public class ApiController {
         return rtnVal;
     }
 
+    @RequestMapping(value="/addUserPTRecords", method = RequestMethod.POST)
+    @ApiOperation(value = "개인 운동 일정 등록",
+            notes = "{\"userIdx\":\"1\", \"date\":\"2022-03-24\", \"exerciseCount\":\"1\", \"exerciseType\":\"2\", " +
+                    "\"exerciseName\":\"푸쉬업\", \"exerciseDetails\":\"70,0,10,5\"}" +
+                    "\n\nexerciseCount : PT 운동 종류(열거형 데이터 정의 필요)" +
+                    "\n\nexerciseType : PT 운동 구분(열거형 데이터 정의 필요)" +
+                    "\n\nexerciseName : 운동 명칭" +
+                    "\n\nexerciseDetails : 중량,지속시간,운동횟수,세트수 순서대로 기입 만약 데이터가 없으면 0이 들어가게")
+    public HashMap addUserPTRecords(@RequestBody String data) {
+        log.info("####addUserPTRecords##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            int result = dbConnService.insert("addUserPTRecords", map);
+
+            if (result == 0) {
+                error = "users_pt_records 데이터 등록 실패";
+            } else {
+                result = dbConnService.insert("addUserPTContents", map);
+                if (result == 0) {
+                    error = "users_pt_contents 데이터 등록 실패";
+                }
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="/getUserPTRecords", method = RequestMethod.POST)
+    @ApiOperation(value = "개인 운동 일정 보기", notes = "{\"userIdx\":\"1\"}")
+    public HashMap getUserPTRecords(@RequestBody String data) {
+        log.info("####getUserPTRecords##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("getUserPTRecords", map);
+
+            if(list.isEmpty()) {
+                error = "User index " +jsonData.values() + " not found";
+            } else {
+                HashMap infos = new HashMap();
+                infos.put("PTRecords", list);
+
+                rtnVal.put("infos", infos);
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="/getUserPTRecordsWithTrainer", method = RequestMethod.POST)
+    @ApiOperation(value = "트레이너가 등록한 운동 일정 보기", notes = "{\"userIdx\":\"1\"}")
+    public HashMap getUserPTRecordsWithTrainer(@RequestBody String data) {
+        log.info("####getUserPTRecordsWithTrainer##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("getUserPTRecordsWithTrainer", map);
+
+            if(list.isEmpty()) {
+                error = "User index " +jsonData.values() + " not found";
+            } else {
+                HashMap infos = new HashMap();
+                infos.put("PTRecordsWithTrainer", list);
+
+                rtnVal.put("infos", infos);
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="user/register", method = RequestMethod.POST)
+    @ApiOperation(value = "유저 - 이메일로 시작하기",
+            notes = "{\"email\":\"gildong@naver.com\", \"password\":\"12345\", \"name\":\"홍길동\", " +
+                    "\"nickName\":\"길동이\", \"birthYYYYMMDD\":\"19900101\", \"gender\":\"1\", " +
+                    "\"elDas\":\"1\", \"region\":\"1\", \"localArea\":\"1\", " +
+                    "\"telephone\":\"01012345678\", \"marketingYN\":\"1\"}")
+    public HashMap registerUser(@RequestBody String data) {
+        log.info("####registerUser##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("checkId", map);
+
+            if(list.isEmpty()) {
+                map.put("certType", "1");
+                map.put("password", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("password")));
+
+                dbConnService.insert("registerUser", map);
+                dbConnService.insert("registerUser_authentication", map);
+                dbConnService.insert("registerUser_info", map);
+            } else {
+                error = "이미 존재하는 이메일입니다.";
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="user/setInterests", method = RequestMethod.POST)
+    @ApiOperation(value = "유저 - 관심분야 설정",
+            notes = "{\"userIdx\":\"15\", " +
+                    "\"interests\":[{\"interestCode\":\"1\"}, {\"interestCode\":\"2\"}]}")
+    public HashMap setUsersInterests(@RequestBody String data) {
+        log.info("####setUsersInterests##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            JSONArray arr = (JSONArray) map.get("interests");
+
+            for(int i=0; i<arr.size(); i++) {
+                JSONObject obj = (JSONObject) arr.get(i);
+                obj.forEach((key, value) -> map.put(key, value));
+
+                List<HashMap> list = dbConnService.select("getInterestCode", map);
+
+                if(list.isEmpty()) {
+                    int result = result = dbConnService.insert("setInterests", map);
+
+                    if(result == 0) {
+                        error = "users interests insert failed";
+                    }
+                }
+            }
+            dbConnService.delete("delInterestCode", map);
+
+            Integer numOfInterest = dbConnService.selectWithReturnInt("getInterestsCount", map);
+
+            map.put("numOfInterest", numOfInterest);
+
+            dbConnService.update("setNumOfInterest", map);
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
 }
