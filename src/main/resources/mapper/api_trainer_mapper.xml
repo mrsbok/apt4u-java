@@ -347,4 +347,117 @@
     <delete id="deleteQuailtification">
         delete from pt_trainer_qualitification where idx = #{qualitificationIseq}
     </delete>
+
+
+    <insert id="trainerScheduleSave" useGeneratedKeys="true" keyProperty="idx"   parameterType="java.util.HashMap">
+        INSERT INTO
+        pt_trainers_pt_schedule(
+                                  start_ampm
+                                  ,end_ampm
+                                , confirmed
+                                , confirmed_date
+                                , lesson_date
+                                , lesson_start_time
+                                , lesson_end_time
+                                , pttrainer_idx
+                                , user_idx
+                                )
+        VALUES
+            (
+            #{startAmPm},
+            #{endAmPm},
+            #{confirmed},
+            #{confirmedDate},
+            #{lessionDate},
+            #{lessonStartTime},
+            #{lessonEndTime},
+            #{tarinerIdx},
+            #{userIdx}
+            )
+    </insert>
+
+
+    <insert id="trainerLessionSave" parameterType="java.util.HashMap">
+        insert into pt_trainer_pt_users
+            (
+                approved_date
+            , date_end
+            , date_start
+            , pt_trainer_idx
+            , user_approved
+            , user_idx
+            , voucher
+            ) values (
+                     #{approvedDate},
+                     #{dateEnd},
+                     #{dateStart},
+                     #{tarinerIdx},
+                     #{userApproved},
+                     #{userIdx},
+                     #{voucher}
+                 )
+    </insert>
+
+    <insert id="trainerMessageSave" parameterType="java.util.HashMap">
+        insert into messages(
+            content,
+            received_date_time,
+            receiver_idx,
+            receiver_type,
+            send_date_time,
+            sender_idx,
+            sender_type,
+            title,
+            typeIdx,
+            message_type
+            )
+        values (
+                #{content},
+                null,
+                #{receiverIdx},
+                #{receiverType},
+                now(),
+                #{senderIdx},
+                #{senderType},
+                #{title},
+                #{typeIdx},
+                #{messageType}
+               )
+    </insert>
+
+
+    <insert id="userPtRecordSave" useGeneratedKeys="true" keyProperty="idx"  parameterType="java.util.HashMap">
+        insert into users_pt_records(
+                                     date,
+                                     end_time,
+                                     exercise_count,
+                                     pt_trainer_idx,
+                                     recorded_by,
+                                     start_time,
+                                     user_idx
+                                     )
+        values (
+                #{date},
+                #{endTime},
+                #{exerciseCount},
+                #{tarinerIdx},
+                #{recordedBy},
+                #{startTime},
+                #{userIdx}
+               )
+    </insert>
+
+    <insert id="userPtContentSave" useGeneratedKeys="true" keyProperty="idx"  parameterType="java.util.HashMap">
+        insert into user_pt_contents(
+                                     record_idx,
+                                     exercise_type,
+                                     exercise_details,
+                                     exercise_name)
+        values (
+                   #{recordIdx},
+                   #{exerciseType},
+                   #{exerciseDetails},
+                   #{exerciseName}
+               )
+    </insert>
 </mapper>

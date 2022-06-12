@@ -38,4 +38,8 @@ public interface PtTrainerService {
         ,MultipartHttpServletRequest request);
 
     HashMap qualitificationDelete(DeleteQualitificationForm deleteQualitificationForm);
+
+    HashMap ptTrainersScheduleSave(PTScheduleForm ptScheduleForm);
+    HashMap lessionSave(PTLessionForm ptLessionForm);
+    HashMap userPtRecordSave(UserPtRecordForm UserPtRecordForm);
 }

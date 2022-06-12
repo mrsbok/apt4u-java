@@ -554,4 +554,88 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     return rtnVal;
   }
 
+  @Override
+  public HashMap ptTrainersScheduleSave(PTScheduleForm ptScheduleForm) {
+    String error = null;
+
+
+    try {
+      HashMap messagesData = new HashMap<>();
+      String convertJson = gson.toJson(ptScheduleForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      Integer idx = dbConnService.insertWithReturnIntList("trainerScheduleSave",data) ;
+      System.out.println(idx);
+      System.out.println(ptScheduleForm);
+      messagesData.put("typeIdx", idx);
+      messagesData.put("messageType", 3);
+      messagesData.put("content", "내용 어쩌고 저쩌고");
+      messagesData.put("title", "<신규>운동 일정 등록");
+      messagesData.put("receiverType", 1);
+      messagesData.put("receiverIdx", ptScheduleForm.getUserIdx());
+      messagesData.put("senderType", 3);
+      messagesData.put("senderIdx", ptScheduleForm.getTarinerIdx());
+      dbConnService.insert("trainerMessageSave",messagesData) ;
+
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap lessionSave(PTLessionForm ptLessionForm) {
+    String error = null;
+
+    try {
+      String convertJson = gson.toJson(ptLessionForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      dbConnService.insert("trainerLessionSave",data) ;
+
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+
+  @Override
+  public HashMap userPtRecordSave(UserPtRecordForm UserPtRecordForm) {
+    String error = null;
+
+    try {
+      String convertJson = gson.toJson(UserPtRecordForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      Integer idx = dbConnService.insertWithReturnIntList("userPtRecordSave",data) ;
+      System.out.println(UserPtRecordForm);
+      data.put("recordIdx",idx);
+      dbConnService.insert("userPtContentSave",data) ;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
 }

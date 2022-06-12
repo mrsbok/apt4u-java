@@ -222,4 +222,34 @@ public class ptTrainerController {
 			@RequestBody DeleteQualitificationForm deleteQualitificationForm)  {
 		return ptTrainerService.qualitificationDelete(deleteQualitificationForm);
 	}
+
+	@ApiOperation(
+			value = "스케쥴링"
+			, notes = "스케쥴링")
+	@PostMapping("trainer/pt-schedule")
+	public HashMap ptTrainersSchedule(
+			@RequestBody PTScheduleForm ptScheduleForm)  {
+		return ptTrainerService.ptTrainersScheduleSave(ptScheduleForm);
+	}
+
+		@ApiOperation(
+			value = "피티 레슨 저장"
+			, notes = "피티 레슨 저장")
+	@PostMapping("trainer/reason-save")
+	public HashMap ptTrainersPTUsers(
+			@RequestBody PTLessionForm ptLessionForm)  {
+		return ptTrainerService.lessionSave(ptLessionForm);
+	}
+
+
+	@ApiOperation(
+			value = "피티 레슨 기록 저장"
+			, notes = "피티 레슨 기록 저장")
+	@PostMapping("trainer/record-save")
+	public HashMap PTUsersRecords(
+			@RequestBody UserPtRecordForm UserPtRecordForm)  {
+		return ptTrainerService.userPtRecordSave(UserPtRecordForm);
+	}
+
+
 }
