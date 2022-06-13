@@ -994,6 +994,48 @@ public class ApiController {
         return rtnVal;
     }
 
+    @RequestMapping(value="user/checkId", method = RequestMethod.POST)
+    @ApiOperation(value = "유저 - 이메일 중복 확인", notes = "{\"email\":\"gildong@naver.com\"}")
+    public HashMap checkId(@RequestBody String data) {
+        log.info("####checkId##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("checkId", map);
+
+            HashMap infos = new HashMap();
+
+            if(list.isEmpty()) {
+                infos.put("checkedId", false);
+            } else {
+                infos.put("checkedId", true);
+            }
+
+            rtnVal.put("infos", infos);
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
     @RequestMapping(value="user/register", method = RequestMethod.POST)
     @ApiOperation(value = "유저 - 이메일로 시작하기",
             notes = "{\"email\":\"gildong@naver.com\", \"password\":\"12345\", \"name\":\"홍길동\", " +
@@ -1016,12 +1058,13 @@ public class ApiController {
             List<HashMap> list = dbConnService.select("checkId", map);
 
             if(list.isEmpty()) {
-                map.put("certType", "1");
-                map.put("password", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("password")));
+               map.put("certType", "1");
+               map.put("password", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("password")));
 
                 dbConnService.insert("registerUser", map);
                 dbConnService.insert("registerUser_authentication", map);
                 dbConnService.insert("registerUser_info", map);
+
             } else {
                 error = "이미 존재하는 이메일입니다.";
             }
