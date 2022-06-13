@@ -586,14 +586,26 @@
         <selectKey resultType="int" keyProperty="recordIdx" order="AFTER">
             SELECT MAX(idx) from users_pt_records
         </selectKey>
-        insert into users_pt_records(user_idx, date, exercise_count, recorded_by)
-        values (#{userIdx}, #{date}, #{exerciseCount}, "0")
+        insert into users_pt_records(user_idx, date, exercise_category, recorded_by)
+        values (#{userIdx}, #{date}, #{exerciseCategory}, "0")
     </insert>
     
     <insert id="addUserPTContents">
         insert into user_pt_contents(record_idx, exercise_type, exercise_name, exercise_details)
         values (#{recordIdx}, #{exerciseType}, #{exerciseName}, #{exerciseDetails})
     </insert>
+
+    <select id="getExerciseCount" resultType="INTEGER">
+        select count(record_idx)
+        from user_pt_contents
+        where record_idx = #{recordIdx}
+    </select>
+
+    <update id="setUserPTRecordsExerciseCount" parameterType="java.util.HashMap">
+        update users_pt_records
+        set exercise_count = #{exerciseCount}
+        where idx = #{recordIdx}
+    </update>
 
     <select id="getUserPTRecords" resultType="java.util.HashMap">
     select
@@ -645,7 +657,7 @@
         	msg.idx as messageIdx,
             msg.related_message as relatedMessage,
             msg.title as messageTitle,
-            msg.content as messagecontent,
+            msg.content as messageContent,
             msg.sender_type as senderType,
             msg.sender_idx as senderIdx,
             msg.send_date_time as sendDateTime,
@@ -658,6 +670,38 @@
         	receiver_type = #{receiverType} AND receiver_idx = #{userIdx} AND message_type = #{messageType}
             AND NOT (del_by_sender = "1" OR del_by_receiver = "1")
     </select>
+
+    <select id="getMessagesDetail" resultType="java.util.HashMap">
+        select
+            ptps.idx as PTScheduleIdx,
+        	msg.idx as messageIdx,
+            msg.sender_idx as senderIdx,
+            ptib.pt_trainer_name as senderName,
+            ptib.nick_name as senderNickName,
+            ptps.lesson_date as lessonDate,
+            ptps.start_ampm as startAmPm,
+            ptps.lesson_start_time as lessonStartTime,
+            ptps.end_ampm as endAmPm,
+            ptps.lesson_end_time as lessonEndTime
+        from
+        	messages as msg
+        left join
+        	pt_trainers_pt_schedule as ptps
+        on
+        	msg.typeIdx = ptps.idx
+        left join
+        	pt_trainer_info_basic as ptib
+        on
+        	msg.sender_idx = ptib.pt_trainer_idx
+        where
+        	msg.idx = #{messageIdx};
+    </select>
+
+    <update id="setScheduleConfirmed" parameterType="java.util.HashMap">
+        update pt_trainers_pt_schedule
+        set confirmed = #{confirmed}
+        where idx = #{PTScheduleIdx}
+    </update>
 
     <select id="checkId" resultType="java.util.HashMap">
         select id

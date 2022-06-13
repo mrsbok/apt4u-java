@@ -863,9 +863,9 @@ public class ApiController {
 
     @RequestMapping(value="/addUserPTRecords", method = RequestMethod.POST)
     @ApiOperation(value = "개인 운동 일정 등록",
-            notes = "{\"userIdx\":\"1\", \"date\":\"2022-03-24\", \"exerciseCount\":\"1\", \"exerciseType\":\"2\", " +
+            notes = "{\"userIdx\":\"1\", \"date\":\"2022-03-24\", \"exerciseCategory\":\"1\", \"exerciseType\":\"2\", " +
                     "\"exerciseName\":\"푸쉬업\", \"exerciseDetails\":\"70,0,10,5\"}" +
-                    "\n\nexerciseCount : PT 운동 종류(열거형 데이터 정의 필요)" +
+                    "\n\nexerciseCategory : 운동 종목(1: PT&헬스, 2: 필라테스&요가)" +
                     "\n\nexerciseType : PT 운동 구분(열거형 데이터 정의 필요)" +
                     "\n\nexerciseName : 운동 명칭" +
                     "\n\nexerciseDetails : 중량,지속시간,운동횟수,세트수 순서대로 기입 만약 데이터가 없으면 0이 들어가게")
@@ -889,6 +889,13 @@ public class ApiController {
                 error = "users_pt_records 데이터 등록 실패";
             } else {
                 result = dbConnService.insert("addUserPTContents", map);
+
+                int exerciseCount = dbConnService.selectWithReturnInt("getExerciseCount", map);
+
+                if(exerciseCount > 0) {
+                    map.put("exerciseCount", exerciseCount);
+                    dbConnService.update("setUserPTRecordsExerciseCount", map);
+                }
                 if (result == 0) {
                     error = "users_pt_contents 데이터 등록 실패";
                 }
@@ -931,6 +938,21 @@ public class ApiController {
                 error = "User index " +jsonData.values() + " not found";
             } else {
                 HashMap infos = new HashMap();
+
+                for(int i = 0; i < list.size(); i++) {
+                    String exerciseDetails = String.valueOf(list.get(i).get("exerciseDetails"));
+
+                    String[] array = exerciseDetails.split(",");
+
+                    HashMap exerciseDetailsMap = new HashMap();
+                    exerciseDetailsMap.put("weight", array[0]);
+                    exerciseDetailsMap.put("time", array[1]);
+                    exerciseDetailsMap.put("numberOfExercise", array[2]);
+                    exerciseDetailsMap.put("numberOfSet", array[3]);
+
+                    list.get(i).put("exerciseDetails", exerciseDetailsMap);
+                }
+
                 infos.put("PTRecords", list);
 
                 rtnVal.put("infos", infos);
@@ -973,6 +995,25 @@ public class ApiController {
                 error = "User index " +jsonData.values() + " not found";
             } else {
                 HashMap infos = new HashMap();
+
+                for(int i = 0; i < list.size(); i++) {
+                    String exerciseDetails = String.valueOf(list.get(i).get("exerciseDetails"));
+
+                    String[] array = exerciseDetails.split(",");
+
+                    if(array.length > 1) {
+                        HashMap exerciseDetailsMap = new HashMap();
+
+                        exerciseDetailsMap.put("weight", array[0]);
+                        exerciseDetailsMap.put("time", array[1]);
+                        exerciseDetailsMap.put("numberOfExercise", array[2]);
+                        exerciseDetailsMap.put("numberOfSet", array[3]);
+
+                        list.get(i).put("exerciseDetails", exerciseDetailsMap);
+                    }
+
+                }
+
                 infos.put("PTRecordsWithTrainer", list);
 
                 rtnVal.put("infos", infos);
