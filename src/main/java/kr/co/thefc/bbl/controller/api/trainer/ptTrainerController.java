@@ -251,5 +251,12 @@ public class ptTrainerController {
 		return ptTrainerService.userPtRecordSave(UserPtRecordForm);
 	}
 
-
+	@ApiOperation(
+			value = "피티 레슨 기록 조회"
+			, notes = "피티 레슨 기록 조회")
+	@PostMapping("trainer/select-records")
+	public HashMap PTUsersRecordsSelect(
+			@RequestBody UserPtRecordForm UserPtRecordForm)  {
+		return ptTrainerService.userPtRecordSelect(UserPtRecordForm);
+	}
 }

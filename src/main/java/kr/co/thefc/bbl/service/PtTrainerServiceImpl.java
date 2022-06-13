@@ -638,4 +638,26 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     rtnVal.put("errorMsg", error);
     return rtnVal;
   }
+
+  @Override
+  public HashMap userPtRecordSelect(UserPtRecordForm UserPtRecordForm) {
+    String error = null;
+
+    try {
+      String convertJson = gson.toJson(UserPtRecordForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      dbConnService.select("userPtRecordSelect",data) ;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
 }

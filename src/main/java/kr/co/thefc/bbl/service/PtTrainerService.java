@@ -42,4 +42,5 @@ public interface PtTrainerService {
     HashMap ptTrainersScheduleSave(PTScheduleForm ptScheduleForm);
     HashMap lessionSave(PTLessionForm ptLessionForm);
     HashMap userPtRecordSave(UserPtRecordForm UserPtRecordForm);
+    HashMap userPtRecordSelect(UserPtRecordForm UserPtRecordForm);
 }
