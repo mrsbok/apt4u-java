@@ -944,13 +944,12 @@ public class ApiController {
 
                     String[] array = exerciseDetails.split(",");
 
-                    HashMap exerciseDetailsMap = new HashMap();
-                    exerciseDetailsMap.put("weight", array[0]);
-                    exerciseDetailsMap.put("time", array[1]);
-                    exerciseDetailsMap.put("numberOfExercise", array[2]);
-                    exerciseDetailsMap.put("numberOfSet", array[3]);
-
-                    list.get(i).put("exerciseDetails", exerciseDetailsMap);
+                    if(array.length > 1) {
+                        list.get(i).put("weight", array[0]);
+                        list.get(i).put("time", array[1]);
+                        list.get(i).put("numberOfExercise", array[2]);
+                        list.get(i).put("numberOfSet", array[3]);
+                    }
                 }
 
                 infos.put("PTRecords", list);
@@ -1002,14 +1001,10 @@ public class ApiController {
                     String[] array = exerciseDetails.split(",");
 
                     if(array.length > 1) {
-                        HashMap exerciseDetailsMap = new HashMap();
-
-                        exerciseDetailsMap.put("weight", array[0]);
-                        exerciseDetailsMap.put("time", array[1]);
-                        exerciseDetailsMap.put("numberOfExercise", array[2]);
-                        exerciseDetailsMap.put("numberOfSet", array[3]);
-
-                        list.get(i).put("exerciseDetails", exerciseDetailsMap);
+                        list.get(i).put("weight", array[0]);
+                        list.get(i).put("time", array[1]);
+                        list.get(i).put("numberOfExercise", array[2]);
+                        list.get(i).put("numberOfSet", array[3]);
                     }
 
                 }
@@ -1032,6 +1027,212 @@ public class ApiController {
         }
         rtnVal.put("errorMsg", error);
 
+        return rtnVal;
+    }
+
+    @RequestMapping(value="/checkedUnreadMessage", method = RequestMethod.POST)
+    @ApiOperation(value = "읽지 않은 메세지 확인", notes = "{\"userIdx\":\"1\"}")
+    public HashMap checkedUnreadMessage(@RequestBody String data) {
+        log.info("####checkedUnreadMessage##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            // IDType 1:User, 2:Store, 3:PTTrainer, 4:BBL Manager
+            map.put("IDType", "1");
+            // messageType 1:PT 일정 관리
+            map.put("messageType", "1");
+
+            Integer result = dbConnService.selectWithReturnInt("checkedUnreadMessage", map);
+
+            HashMap infos = new HashMap();
+
+            if(result > 0) {
+                infos.put("unreadMessages", true);
+            } else {
+                infos.put("unreadMessages", false);
+            }
+
+            rtnVal.put("infos", infos);
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+        }
+
+    @RequestMapping(value="/getScheduleMessages", method = RequestMethod.POST)
+    @ApiOperation(value = "일정 알림 메세지 보기", notes = "{\"userIdx\":\"1\"}")
+    public HashMap getScheduleMessages(@RequestBody String data) {
+        log.info("####getScheduleMessages##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            // IDType 1:User, 2:Store, 3:PTTrainer, 4:BBL Manager
+            map.put("IDType", "1");
+            // messageType 1:PT 일정 관리
+            map.put("messageType", "1");
+
+            List<HashMap> list = dbConnService.select("getMessages", map);
+
+            if(list.isEmpty()) {
+                error = "User index " +jsonData.values() + " messages not found";
+            } else {
+                HashMap infos = new HashMap();
+                infos.put("messages", list);
+
+                rtnVal.put("infos", infos);
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="/getScheduleMessagesDetail", method = RequestMethod.POST)
+    @ApiOperation(value = "일정 알림 메세지 상세 보기", notes = "{\"messageIdx\":\"3\"}")
+    public HashMap getScheduleMessagesDetail(@RequestBody String data) {
+        log.info("####getScheduleMessagesDetail##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("getMessagesDetail", map);
+
+            if(list.isEmpty()) {
+                error = "Message index " +jsonData.values() + " messages not found";
+            } else {
+                HashMap infos = new HashMap();
+                dbConnService.update("setReceivedDate", map);
+
+                infos.put("messages", list);
+
+                rtnVal.put("infos", infos);
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="/setScheduleConfirmed", method = RequestMethod.POST)
+    @ApiOperation(value = "운동일정 승인 요청",
+            notes = "{\"PTScheduleIdx\":\"15\", \"confirmed\":\"1\", \"messageIdx\":\"3\", " +
+                    "\"userIdx\":\"1\", \"receiverIdx\":\"1\"}" +
+                    "\n\n여기서 receiverIdx는 getScheduleMessagesDetail의 senderIdx" +
+            "\n\nconfirmed 1:동의 2:비동의")
+    public HashMap setScheduleConfirmed(@RequestBody String data) {
+        log.info("####setScheduleConfirmed##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            int result = dbConnService.update("setScheduleConfirmed", map);
+
+            if(result == 0) {
+                error = "Message index " +jsonData.values() + " messages not found";
+            } else {
+                Object confirmed = map.get("confirmed");
+
+                // senderType&receiverType 1:User, 2:Store, 3:PTTrainer, 4:BBL Manager
+                map.put("senderType", "1");
+                map.put("receiverType", "3");
+                map.put("messageType", "1");
+
+                if(confirmed.equals("1")) {
+                    // 승인 메세지 전송
+                    map.put("title", "일정 승인 완료");
+                    map.put("content", "일정 승인이 완료되었습니다.");
+
+                    result = dbConnService.insert("sendScheduleConfirmed", map);
+
+                    if(result == 0) {
+                        error = "Message send failed";
+                    }
+                } else if(confirmed.equals("2")) {
+                    // 거절 메세지 전송
+                    map.put("title", "일정 승인 거절");
+                    map.put("content", "일정 승인이 거절되었습니다.");
+
+                    result = dbConnService.insert("sendScheduleConfirmed", map);
+
+                    if(result == 0) {
+                        error = "Message send failed";
+                    }
+                }
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 

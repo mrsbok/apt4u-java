@@ -652,6 +652,14 @@
             upr.user_idx = #{userIdx} and upr.recorded_by = "1"
     </select>
 
+    <select id="checkedUnreadMessage" resultType="INTEGER">
+        select count(case when received_date_time is null then 'null' else received_date_time end) as nullCount
+        from messages
+        where
+            receiver_type = #{IDType} AND receiver_idx = #{userIdx} AND message_type = #{messageType}
+            AND NOT (del_by_sender = "1" OR del_by_receiver = "1") AND received_date_time is null
+    </select>
+
     <select id="getMessages" resultType="java.util.HashMap">
         select
         	msg.idx as messageIdx,
@@ -667,7 +675,8 @@
         from
         	messages as msg
         where
-        	receiver_type = #{receiverType} AND receiver_idx = #{userIdx} AND message_type = #{messageType}
+            (receiver_type = #{IDType} AND receiver_idx = #{userIdx})
+            OR (sender_type = #{IDType} ANd sender_idx = #{userIdx}) AND message_type = #{messageType}
             AND NOT (del_by_sender = "1" OR del_by_receiver = "1")
     </select>
 
@@ -697,11 +706,41 @@
         	msg.idx = #{messageIdx};
     </select>
 
+    <update id="setReceivedDate" parameterType="java.util.HashMap">
+        update messages
+        set received_date_time = now()
+        where idx = #{messageIdx}
+    </update>
+
     <update id="setScheduleConfirmed" parameterType="java.util.HashMap">
         update pt_trainers_pt_schedule
         set confirmed = #{confirmed}
         where idx = #{PTScheduleIdx}
     </update>
+    
+    <insert id="sendScheduleConfirmed">
+        insert into messages(
+            related_message,
+            sender_idx,
+            sender_type,
+            receiver_idx,
+            receiver_type,
+            title, content,
+            send_date_time,
+            message_type,
+            typeIdx)
+        values (
+            #{messageIdx},
+            #{userIdx},
+            #{senderType},
+            #{receiverIdx},
+            #{receiverType},
+            #{title},
+            #{content},
+            now(),
+            #{messageType},
+            #{PTScheduleIdx})
+    </insert>
 
     <select id="checkId" resultType="java.util.HashMap">
         select id
