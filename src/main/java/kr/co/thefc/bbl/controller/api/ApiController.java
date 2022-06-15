@@ -1474,6 +1474,67 @@ public class ApiController {
                     infos.put("checkedPw", false);
                 } else {
                     infos.put("checkedPw", true);
+
+                    list = dbConnService.select("getUserIdx", map);
+                    map.put("userIdx", list.get(0).get("userIdx"));
+
+                    int result = dbConnService.update("updateLastAccess", map);
+
+                    if(result == 0) {
+                        error = "LastAccess update failed";
+                    }
+                }
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="user/getUserInfo", method = RequestMethod.POST)
+    @ApiOperation(value = "유저 - 유저 정보 가져오기 ",
+            notes = "{\"email\":\"gildong@daum.net\", \"password\":\"12345\"}")
+    public HashMap getUserInfo(@RequestBody String data) {
+        log.info("####getUserInfo##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("password", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("password")));
+
+            List<HashMap> list = dbConnService.select("getUserIdx", map);
+            HashMap infos = new HashMap();
+
+            if(list.isEmpty()) {
+                error = "email : " + map.get("email") + ", password : " + map.get("password") + " Not Found";
+            } else {
+                map.put("userIdx", list.get(0).get("userIdx"));
+
+                list = dbConnService.select("getUsersInfo", map);
+                infos.put("userInfo", list);
+
+                Integer numOfInterest = (Integer) list.get(0).get("numOfInterest");
+                if(numOfInterest > 0) {
+                    list = dbConnService.select("getInterests", map);
+                    infos.put("userInterests", list);
                 }
             }
 
@@ -1588,5 +1649,45 @@ public class ApiController {
         rtnVal.put("errorMsg", error);
         return rtnVal;
     }
+    @RequestMapping(value="writeGeneralReview", method = RequestMethod.POST)
+    @ApiOperation(value = "PT톡 작성 - 일반 이용 후기",
+            notes = "{\"PTTrainerIdx\":\"1\", \"userSatisfaction\":\"5\", \"useStartDate\":\"2022-06-15\", " +
+                    "\"useEndDate\":\"2022-06-22\", \"content\":\"일반 이용 후기 작성 테스트\", " +
+                    "\"hashtag\":\"#일반이용,#해시태그,#테스트\", \"userIdx\":\"1\"}")
+    public HashMap writeGeneralReview(@RequestBody String data) {
+        log.info("####writeGeneralReview##### : " + data);
+        HashMap rtnVal = new HashMap();
 
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("noteCategory", "3");
+
+            int result = dbConnService.insert("writeReview", map);
+
+            if(result == 0) {
+                error = "후기 작성 실패";
+            } else {
+                //사진 등록 + photoCout 진행
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
 }

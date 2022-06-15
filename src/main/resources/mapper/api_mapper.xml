@@ -817,6 +817,17 @@
         where user_idx = #{userIdx} AND interest_code = #{interestCode}
     </select>
 
+    <select id="getInterests" resultType="java.util.HashMap">
+        SELECT
+        	iseq,
+            user_idx as userIdx,
+            interest_code as interestCode
+        FROM
+        	users_interests
+        WHERE
+        	user_idx = #{userIdx}
+    </select>
+
     <delete id="delInterestCode">
         delete from users_interests
         where user_idx = #{userIdx} AND NOT interest_code IN
@@ -829,6 +840,57 @@
         select *
         from users_authentication
         where user_idx = #{userIdx} AND password = #{password}
+    </select>
+    
+    <update id="updateLastAccess" parameterType="java.util.HashMap">
+        update users
+        set last_access = now()
+        where idx = #{userIdx}
+    </update>
+
+    <select id="getUserIdx" resultType="java.util.HashMap">
+        SELECT
+        	u.idx as userIdx
+        FROM
+        	users as u
+        LEFT jOIN
+        	users_authentication as ua
+        ON
+        	u.idx = ua.user_idx
+        WHERE
+        	u.id = #{email} AND ua.password = #{password}
+    </select>
+
+    <select id="getUsersInfo" resultType="java.util.HashMap">
+        SELECT
+        	u.idx as userIdx,
+            u.id as userId,
+            u.last_access as lastAccess,
+            ua.cert_type as certType,
+            ua.password as userPw,
+            ui.user_name as userName,
+            ui.nick_name as userNickName,
+            ui.birth_day as birthDay,
+            ui.gender,
+            ui.eldas,
+            ui.registered_date as registerdDate,
+            ui.region,
+            ui.local_area as localArea,
+            ui.telephone,
+            ui.marketingyn as marketingYN,
+            ui.numof_interest as numOfInterest
+        FROM
+        	users as u
+        LEFT JOIN
+        	users_authentication as ua
+        ON
+        	u.idx = ua.user_idx
+        LEFT JOIN
+        	users_info as ui
+        ON
+        	u.idx = ui.user_idx
+        WHERE
+        	u.idx = #{userIdx}
     </select>
 
     <select id="getUsersNotes" resultType="java.util.HashMap">
@@ -899,4 +961,29 @@
         	category = #{replyCategory} AND target_idx = #{noteIdx} AND del_yn = '0'
     </select>
 
+    <insert id="writeReview">
+    INSERT INTO
+	users_notes (
+		note_category,
+        note_target,
+        user_satisfaction,
+        use_start_date,
+        use_end_date,
+        content,
+        hashtag,
+        writer,
+        reg_date
+	)
+    VALUES (
+	        #{noteCategory},
+            #{PTTrainerIdx},
+            #{userSatisfaction},
+            #{useStartDate},
+            #{useEndDate},
+            #{content},
+            #{hashtag},
+            #{userIdx},
+            now()
+            )
+    </insert>
 </mapper>
