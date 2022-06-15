@@ -1,8 +1,10 @@
 package kr.co.thefc.bbl.controller.api;
 
+import com.amazonaws.services.s3.model.S3Object;
 import io.swagger.annotations.ApiOperation;
 import kr.co.thefc.bbl.converter.PasswordCryptConverter;
 import kr.co.thefc.bbl.service.DBConnService;
+import kr.co.thefc.bbl.service.S3Service;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -10,10 +12,13 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -21,6 +26,9 @@ import java.util.Set;
 public class ApiController {
     @Autowired
     private DBConnService dbConnService;
+
+    @Autowired
+    private S3Service s3Service;
 
     @RequestMapping(value="/now", method = RequestMethod.POST)
     public HashMap now() {
@@ -113,6 +121,48 @@ public class ApiController {
                 } else {
                     HashMap infos = new HashMap();
                     infos.put("productInfo", list);
+
+                    if(list.get(0).get("sellerIdx") == null) {
+                        error = "Seller index is null";
+                    } else {
+                        map.put("PTTrainerIdx", list.get(0).get("sellerIdx"));
+
+                        list = dbConnService.select("getPTTrainerDetail", map);
+
+                        if (list.isEmpty()) {
+                            error = "PTTrainer index not found";
+                        } else {
+                            infos.put("PTTrainerInfo", list);
+
+                            Integer workExperience = Integer.parseInt(String.valueOf(list.get(0).get("workExperienceCount")));
+                            Integer awardWinning = Integer.parseInt(String.valueOf(list.get(0).get("awardWinningCount")));
+                            Integer qualification = Integer.parseInt(String.valueOf(list.get(0).get("qualificationCount")));
+                            Integer photoCount = Integer.parseInt(String.valueOf(list.get(0).get("photoCount")));
+
+                            if (workExperience > 0) {
+                                list = dbConnService.select("getPTTrainerDetail_workExperience", map);
+                                infos.put("workExperience", list);
+                            }
+
+                            if (awardWinning > 0) {
+                                list = dbConnService.select("getPTTrainerDetail_awardWinning", map);
+                                infos.put("awardWinning", list);
+                            }
+
+                            if (qualification > 0) {
+                                list = dbConnService.select("getPTTrainerDetail_qualification", map);
+                                infos.put("qualification", list);
+                            }
+
+                            if (photoCount > 0) {
+                                // imageType : 프로필, 근무경력, 수상경력, 자격증 등등
+                                map.put("imageType", "프로필");
+
+                                list = dbConnService.select("getPTTrainerDetail_photo", map);
+                                infos.put("trainerPhoto", list);
+                            }
+                        }
+                    }
 
                     rtnVal.put("infos", infos);
                 }
@@ -1031,7 +1081,7 @@ public class ApiController {
     }
 
     @RequestMapping(value="/checkedUnreadMessage", method = RequestMethod.POST)
-    @ApiOperation(value = "읽지 않은 메세지 확인", notes = "{\"userIdx\":\"1\"}")
+    @ApiOperation(value = "읽지 않은 알림 확인", notes = "{\"userIdx\":\"1\"}")
     public HashMap checkedUnreadMessage(@RequestBody String data) {
         log.info("####checkedUnreadMessage##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -1047,8 +1097,6 @@ public class ApiController {
 
             // IDType 1:User, 2:Store, 3:PTTrainer, 4:BBL Manager
             map.put("IDType", "1");
-            // messageType 1:PT 일정 관리
-            map.put("messageType", "1");
 
             Integer result = dbConnService.selectWithReturnInt("checkedUnreadMessage", map);
 
@@ -1146,6 +1194,13 @@ public class ApiController {
             } else {
                 HashMap infos = new HashMap();
                 dbConnService.update("setReceivedDate", map);
+
+                // relatedMessage가 null이 아니라면, 연관된 메세지의 인덱스를 가져와서 연관 메세지 상세 보기를 출력한다.
+                if(list.get(0).get("relatedMessage") != null) {
+                    map.put("messageIdx", list.get(0).get("relatedMessage"));
+
+                    list = dbConnService.select("getMessagesDetail", map);
+                }
 
                 infos.put("messages", list);
 
@@ -1383,4 +1438,155 @@ public class ApiController {
 
         return rtnVal;
     }
+
+    @RequestMapping(value="user/login", method = RequestMethod.POST)
+    @ApiOperation(value = "유저 - 이메일로 로그인 ",
+            notes = "{\"email\":\"gildong@daum.net\", \"password\":\"12345\"}")
+    public HashMap loginUser(@RequestBody String data) {
+        log.info("####loginUser##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("checkId", map);
+            HashMap infos = new HashMap();
+
+            if(list.isEmpty()) {
+                infos.put("checkedId", false);
+                infos.put("checkedPw", false);
+            } else {
+                infos.put("checkedId", true);
+                Object userIdx =  list.get(0).get("idx");
+
+                map.put("userIdx", userIdx);
+                map.put("password", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("password")));
+
+                list = dbConnService.select("checkPw", map);
+
+                if(list.isEmpty()) {
+                    infos.put("checkedPw", false);
+                } else {
+                    infos.put("checkedPw", true);
+                }
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="getUsersNotes", method = RequestMethod.POST)
+    @ApiOperation(value = "PT톡 목록 보기",
+            notes = "{}")
+    public HashMap getUsersNotes(@RequestBody String data) {
+        log.info("####getUsersNotes##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("noteCategory", "2");
+
+            List<HashMap> list = dbConnService.select("getUsersNotes", map);
+            HashMap infos = new HashMap();
+
+            if(list.isEmpty()) {
+                error = "PT톡 목록을 불러올 수 없습니다.";
+            } else {
+                infos.put("usersNotes", list);
+            }
+
+            rtnVal.put("infos", infos);
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="getUsersNotesDetail", method = RequestMethod.POST)
+    @ApiOperation(value = "PT톡 상세 보기",
+            notes = "{\"noteIdx\":\"1\"}")
+    public HashMap getUsersNotesDetail(@RequestBody String data) {
+        log.info("####getUsersNotesDetail##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("noteCategory", "2");
+            map.put("replyCategory", "1");
+
+            List<HashMap> list = dbConnService.select("getUsersNotesDetail", map);
+            HashMap infos = new HashMap();
+
+            if(list.isEmpty()) {
+                error = "PT톡 상세보기를 불러올 수 없습니다.";
+            } else {
+                infos.put("usersNotesDetail", list);
+
+                list = dbConnService.select("getNotesReplies", map);
+
+                if(list.isEmpty()) {
+                    infos.put("replies", "등록된 댓글이 없습니다.");
+                } else {
+                    infos.put("replies", list);
+                }
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
 }

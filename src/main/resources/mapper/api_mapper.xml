@@ -611,6 +611,7 @@
     select
         upr.idx,
         upr.date,
+        upr.exercise_category as exerciseCategory,
         upr.exercise_count as exerciseCount,
         upc.exercise_type as exerciseType,
         upc.exercise_name as exerciseName,
@@ -634,6 +635,7 @@
             upr.date,
             upr.start_time as startTime,
             upr.end_time as endTime,
+            upr.exercise_category as exerciseCategory,
             upr.exercise_count as exerciseCount,
             upc.exercise_type as exerciseType,
             upc.exercise_name as exerciseName,
@@ -656,7 +658,7 @@
         select count(case when received_date_time is null then 'null' else received_date_time end) as nullCount
         from messages
         where
-            receiver_type = #{IDType} AND receiver_idx = #{userIdx} AND message_type = #{messageType}
+            receiver_type = #{IDType} AND receiver_idx = #{userIdx}
             AND NOT (del_by_sender = "1" OR del_by_receiver = "1") AND received_date_time is null
     </select>
 
@@ -684,6 +686,7 @@
         select
             ptps.idx as PTScheduleIdx,
         	msg.idx as messageIdx,
+            msg.related_message as relatedMessage,
             msg.sender_idx as senderIdx,
             ptib.pt_trainer_name as senderName,
             ptib.nick_name as senderNickName,
@@ -743,7 +746,7 @@
     </insert>
 
     <select id="checkId" resultType="java.util.HashMap">
-        select id
+        select id, idx
         from users
         where id = #{email}
     </select>
@@ -821,4 +824,79 @@
             #{item.interestCode}
         </foreach>
     </delete>
+
+    <select id="checkPw" resultType="java.util.HashMap">
+        select *
+        from users_authentication
+        where user_idx = #{userIdx} AND password = #{password}
+    </select>
+
+    <select id="getUsersNotes" resultType="java.util.HashMap">
+        SELECT
+        	un.idx,
+            un.writer as writerIdx,
+            ui.user_name as writerName,
+            ui.nick_name as writerNickName,
+            un.reg_date as regDate,
+            un.update_date as updateDate,
+            un.user_satisfaction as userSatisfaction,
+            un.hashtag,
+            un.content,
+            un.like_count as likeCount,
+            un.reply_count as replyCount,
+            un.photo_count as photoCount
+        FROM
+        	users_notes as un
+        LEFT JOIN
+        	users_info as ui
+        ON
+        	un.writer = ui.user_idx
+        WHERE
+        	note_category = #{noteCategory}
+    </select>
+
+    <select id="getUsersNotesDetail" resultType="java.util.HashMap">
+        SELECT
+            un.idx,
+            un.writer as writerIdx,
+            ui.user_name as writerName,
+            ui.nick_name as writerNickName,
+            un.reg_date as regDate,
+            un.update_date as updateDate,
+            un.user_satisfaction as userSatisfaction,
+            un.hashtag,
+            un.content,
+            un.like_count as likeCount,
+            un.reply_count as replyCount,
+            un.photo_count as photoCount
+        FROM
+            users_notes as un
+        LEFT JOIN
+            users_info as ui
+        ON
+            un.writer = ui.user_idx
+        WHERE
+            un.idx = #{noteIdx}
+    </select>
+    
+    <select id="getNotesReplies" resultType="java.util.HashMap">
+        select
+        	re.iseq as replyIdx,
+            re.user_idx as writerIdx,
+            ui.user_name as writerName,
+            ui.nick_name as writerNickName,
+            re.reg_date as regDate,
+            re.update_date as updateDate,
+            re.content,
+            re.hidden_yn as hiddenYN
+        from
+        	reply as re
+        left join
+        	users_info as ui
+        on
+        	ui.user_idx = re.user_idx
+        where
+        	category = #{replyCategory} AND target_idx = #{noteIdx} AND del_yn = '0'
+    </select>
+
 </mapper>
