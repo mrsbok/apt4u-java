@@ -854,7 +854,7 @@ public class ApiController {
     }
 
     @RequestMapping(value="/cancelTransaction", method = RequestMethod.POST)
-    @ApiOperation(value = "구매 취소", notes = "{\"transactionIdx\":\"10\"}")
+    @ApiOperation(value = "구매 취소 신청", notes = "{\"transactionIdx\":\"10\", \"cancelReason\":\"3\", \"reasonDetail\":\"지역이 멀어요.\"}")
     public HashMap cancelTransaction(@RequestBody String data) {
         log.info("####cancelTransaction##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -869,15 +869,17 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
-            String selectResult = dbConnService.selectWithReturnString("getCancelYN", map);
-            int cancelYN = Integer.parseInt(selectResult);
+            int selectResult = dbConnService.selectWithReturnInt("getCancelYN", map);
+            int cancelYN = selectResult;
 
             if(cancelYN == 0) {
                 int updateResult = dbConnService.update("updateCancel", map);
-                
+
+                dbConnService.insert("setCancelReason", map);
+
                 if(updateResult > 0) {
-                    selectResult = dbConnService.selectWithReturnString("getBillingYN", map);
-                    int billingYN = Integer.parseInt(selectResult);
+                    selectResult = dbConnService.selectWithReturnInt("getBillingYN", map);
+                    int billingYN = selectResult;
 
                     // 결제가 완료된 상태라면 환불 진행
                     if(billingYN == 1) {

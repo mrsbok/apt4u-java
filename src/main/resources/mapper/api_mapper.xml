@@ -512,6 +512,7 @@
 
     <select id="getTransactionDetail" resultType="java.util.HashMap">
         select
+            t.idx as transactionIdx,
             t.total_amount as totalAmount,
             t.point_use as pointUse,
             t.billing_amount as billingAmount,
@@ -555,7 +556,7 @@
             td.transaction_idx = #{transactionIdx}
     </select>
 
-    <select id="getCancelYN" resultType="String">
+    <select id="getCancelYN" resultType="INTEGER">
         select
             cancelyn
         from
@@ -570,7 +571,21 @@
         where idx = #{transactionIdx}
     </update>
 
-    <select id="getBillingYN" resultType="String">
+    <insert id="setCancelReason">
+        insert into
+        transactions_cancel_reason(
+        transaction_idx,
+        reason_category,
+        reason_detail
+        )
+        values(
+        #{transactionIdx},
+        #{cancelReason},
+        #{reasonDetail}
+        )
+    </insert>
+
+    <select id="getBillingYN" resultType="INTEGER">
         select
             billingyn
         from
@@ -591,7 +606,7 @@
         where seller_idx = #{trainerIdx}
     </select>
 
-    <select id="getConsumerIdx" resultType="String">
+    <select id="getConsumerIdx" resultType="INTEGER">
         select
             consumer_idx as consumerIdx
         from
