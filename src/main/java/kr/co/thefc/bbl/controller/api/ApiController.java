@@ -928,7 +928,7 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
-            List<HashMap> list = dbConnService.select("getTransactions", map);
+            List<HashMap> list = dbConnService.select("getCancelTransactions", map);
 
             if(list.isEmpty()) {
                 error = "User index number " + map.get("userIdx") + " and category number " + map.get("category") +  " is not found";
