@@ -472,6 +472,13 @@
             t.idx as transactionIdx,
             p.idx as productIdx,
             p.name as productName,
+            ptib.pt_trainer_name as PTTrainerName, /** 220616 추가 **/
+            ptib.nick_name as nickName, /** 220616 추가 **/
+            sib.store_name as storeName, /** 220616 추가 **/
+            sib.address as storeAddress, /** 220616 추가 **/
+            td.quantity, /** 220616 추가 **/
+            td.price, /** 220616 추가 **/
+            td.amount, /** 220616 추가 **/
             t.transaction_date as transactionDate,
             p.product_type as productType,
             p.seller_idx as sellerIdx,
@@ -490,6 +497,14 @@
             product as p
         on
             p.idx = td.product_idx
+		left join
+			pt_trainer_info_basic as ptib
+		on
+			ptib.pt_trainer_idx = td.seller_idx
+		left join
+			stores_info_basic as sib
+		on
+			ptib.affilated_center = sib.store_idx
         where
             consumer_idx = #{userIdx}
     </select>
@@ -962,6 +977,9 @@
     </select>
 
     <insert id="writeReview">
+        <selectKey resultType="int" keyProperty="noteIdx" order="AFTER">
+        SELECT MAX(idx) from users_notes
+        </selectKey>
     INSERT INTO
 	users_notes (
 		note_category,
@@ -986,4 +1004,16 @@
             now()
             )
     </insert>
+
+    <select id="getPTTrainersPTUsers" resultType="java.util.HashMap">
+        SELECT
+        	pt_trainer_idx as PTTrainerIdx,
+            user_idx as userIdx,
+            date_start as dateStart,
+            date_end as dateEnd
+        FROM
+        	pt_trainer_pt_users
+        WHERE
+        	user_idx = #{userIdx}
+    </select>
 </mapper>

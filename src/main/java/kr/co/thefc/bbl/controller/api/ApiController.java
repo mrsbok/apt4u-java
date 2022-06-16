@@ -1690,4 +1690,95 @@ public class ApiController {
            rtnVal.put("errorMsg", error);
         return rtnVal;
     }
+
+    @RequestMapping(value="getPTTrainersPTUsers", method = RequestMethod.POST)
+        @ApiOperation(value = "체험권 구매내역 조회",
+                notes = "{\"userIdx\":\"15\"}")
+        public HashMap getPTTrainersPTUsers(@RequestBody String data) {
+            log.info("####getPTTrainersPTUsers##### : " + data);
+            HashMap rtnVal = new HashMap();
+
+            JSONParser parser = new JSONParser();
+            String error = null;
+
+            try{
+                JSONObject jsonData = (JSONObject) parser.parse(data);
+                HashMap map = new HashMap();
+                Set set = jsonData.keySet();
+                jsonData.forEach((key, value) -> map.put(key,value));
+
+                List<HashMap> list = dbConnService.select("getPTTrainersPTUsers", map);
+                HashMap infos = new HashMap();
+
+                if(list.isEmpty()) {
+                    infos.put("vouchersPurchaseHistory", false);
+                } else {
+                    infos.put("vouchersPurchaseHistory", list);
+                }
+
+                rtnVal.put("infos", infos);
+
+            } catch (ParseException e) {
+                e.printStackTrace();
+                error = "정보를 파싱하지 못했습니다.";
+            }
+
+            if (error!=null) {
+                rtnVal.put("result", false);
+            }
+            else {
+                rtnVal.put("result", true);
+            }
+               rtnVal.put("errorMsg", error);
+            return rtnVal;
+        }
+
+    @RequestMapping(value="writeExperienceReview", method = RequestMethod.POST)
+    @ApiOperation(value = "PT톡 작성 - 1회 체험 후기",
+            notes = "{ \"PTTrainerIdx\":\"1\"," +
+                    " \"userSatisfaction\":\"5\"," +
+                    " \"dateStart\":\"2022-02-03\"," +
+                    " \"dateEnd\":\"2022-02-04\"," +
+                    " \"content\":\"1회 체험 후기 작성 테스트\"," +
+                    " \"hashtag\":\"#1회체험후기작성\"," +
+                    " \"userIdx\":\"15\"}" +
+                    "\n\nPTTrainerIdx, dateStart, dateEnd는 getPTTrainersPTUsers에서 반환된 값")
+    public HashMap writeExperienceReview(@RequestBody String data) {
+        log.info("####writeExperienceReview##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("noteCategory", "2");
+            map.put("useStartDate", map.get("dateStart"));
+            map.put("useEndDate", map.get("dateEnd"));
+
+            int result = dbConnService.insert("writeReview", map);
+
+            if(result == 0) {
+                error = "후기 작성 실패";
+            } else {
+                //사진 등록 + photoCount 진행
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
 }
