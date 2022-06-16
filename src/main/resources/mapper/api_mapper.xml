@@ -479,6 +479,7 @@
             td.quantity, /** 220616 추가 **/
             td.price, /** 220616 추가 **/
             td.amount, /** 220616 추가 **/
+            t.point_use as pointUse, /** 220616 추가 **/
             t.transaction_date as transactionDate,
             p.product_type as productType,
             p.seller_idx as sellerIdx,
@@ -517,7 +518,9 @@
             t.billing_method as billingMethod,
             t.kind_of_items as kindOfItems,
             t.billingyn as billingYN,
-            t.cancelyn as cancelYN
+            t.cancelyn as cancelYN,
+            t.refundyn as refundYN, /** 220616 추가 **/
+            t.refund_date as refundDate /** 220616 추가 **/
         from
             transactions as t
         where
@@ -595,6 +598,51 @@
             transactions as t
         where
             t.idx = #{transactionIdx} AND billingyn = "1" AND cancelyn = "0"
+    </select>
+
+    <select id="getCancelTransactions" resultType="java.util.HashMap">
+        select
+            t.idx as transactionIdx,
+            p.idx as productIdx,
+            p.name as productName,
+            ptib.pt_trainer_name as PTTrainerName, /** 220616 추가 **/
+            ptib.nick_name as nickName, /** 220616 추가 **/
+            sib.store_name as storeName, /** 220616 추가 **/
+            sib.address as storeAddress, /** 220616 추가 **/
+            td.quantity, /** 220616 추가 **/
+            td.price, /** 220616 추가 **/
+            td.amount, /** 220616 추가 **/
+            t.point_use as pointUse, /** 220616 추가 **/
+            t.transaction_date as transactionDate,
+            p.product_type as productType,
+            p.seller_idx as sellerIdx,
+            p.store_idx as storeIdx,
+            t.billing_date as billingDate,
+            t.billing_method as billingMethod,
+            t.billingyn as billingYN, /** 결제 여부 220531 추가 **/
+            t.cancelyn as cancelYN, /** 취소 여부 220531 추가 **/
+            t.refundyn as refundYN, /** 220616 추가 **/
+            t.refund_date as refundDate /** 220616 추가 **/
+        from
+            transactions as t
+        left join
+            transactions_details as td
+        on
+            t.idx = td.transaction_idx
+        left join
+            product as p
+        on
+            p.idx = td.product_idx
+		left join
+			pt_trainer_info_basic as ptib
+		on
+			ptib.pt_trainer_idx = td.seller_idx
+		left join
+			stores_info_basic as sib
+		on
+			ptib.affilated_center = sib.store_idx
+        where
+            consumer_idx = #{userIdx} AND cancelyn = "1"
     </select>
 
     <insert id="addUserPTRecords">
@@ -929,7 +977,7 @@
         ON
         	un.writer = ui.user_idx
         WHERE
-        	note_category = #{noteCategory}
+        	note_category = #{noteCategory} AND un.exposeyn = "1"
     </select>
 
     <select id="getUsersNotesDetail" resultType="java.util.HashMap">
@@ -1005,6 +1053,39 @@
             )
     </insert>
 
+    <insert id="boardUpload" parameterType="java.util.List">
+        INSERT INTO
+            attached_file_management(
+                image_file_name,
+                image_path,
+                category,
+                target_idx,
+                main_image_yn
+            )
+        VALUES
+        <foreach item="item" separator=" , " collection="list">
+            (
+                #{item.filename},
+                #{item.fileurl},
+                #{item.category},
+                #{noteIdx},
+                '0'
+            )
+        </foreach>
+    </insert>
+
+    <select id="getPhotoCount" parameterType="INTEGER">
+        SELECT count(*)
+        FROM attached_file_management
+        WHERE target_idx = "1"
+    </select>
+
+    <update id="updatePhotoCount" parameterType="java.util.HashMap">
+        update users_notes
+        set photo_count = #{photoCount}
+        where idx = #{noteIdx}
+    </update>
+
     <select id="getPTTrainersPTUsers" resultType="java.util.HashMap">
         SELECT
         	pt_trainer_idx as PTTrainerIdx,
@@ -1015,5 +1096,50 @@
         	pt_trainer_pt_users
         WHERE
         	user_idx = #{userIdx}
+    </select>
+
+    <update id="deleteNote">
+        update users_notes
+        set exposeyn = "0"
+        where idx = #{noteIdx}
+    </update>
+
+    <insert id="writeReply">
+        <selectKey resultType="int" keyProperty="replyCount" order="AFTER">
+                SELECT count(*) from reply where target_idx = #{targetIdx}
+        </selectKey>
+        INSERT INTO reply (category, target_idx, user_idx, content, reg_date, hidden_yn)
+        VALUE (#{category}, #{targetIdx}, #{userIdx}, #{content}, now(), #{hiddenYN});
+    </insert>
+
+    <delete id="deleteReply">
+        delete from reply
+        where iseq = #{replyIdx}
+    </delete>
+
+    <update id="updateReplyCount" parameterType="java.util.HashMap">
+        update users_notes
+        set reply_count = #{replyCount}
+        where idx = #{targetIdx}
+    </update>
+
+    <insert id="likeNotes">
+            <selectKey resultType="int" keyProperty="likeCount" order="AFTER">
+                    SELECT count(*) from bbldb.like where target_idx = #{targetIdx}
+            </selectKey>
+            INSERT INTO bbldb.like (category, target_idx, user_idx)
+            VALUE (#{category}, #{targetIdx}, #{userIdx});
+    </insert>
+
+    <update id="updateLikeCount" parameterType="java.util.HashMap">
+        update users_notes
+        set like_count = #{likeCount}
+        where idx = #{targetIdx}
+    </update>
+    
+    <select id="getUsersLikes" resultType="java.util.HashMap">
+        SELECT *
+        FROM bbldb.like
+        WHERE user_idx = #{userIdx} AND target_idx = #{targetIdx} AND category = #{category}
     </select>
 </mapper>

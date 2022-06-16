@@ -911,6 +911,50 @@ public class ApiController {
         return rtnVal;
     }
 
+    @RequestMapping(value="/getCancelTransactions", method = RequestMethod.POST)
+    @ApiOperation(value = "취소/환불 목록 보기",
+            notes = "{\"userIdx\":\"1\"}")
+    public HashMap getCancelTransactions(@RequestBody String data) {
+        log.info("####getCancelTransactions##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("getTransactions", map);
+
+            if(list.isEmpty()) {
+                error = "User index number " + map.get("userIdx") + " and category number " + map.get("category") +  " is not found";
+            } else {
+                HashMap infos = new HashMap();
+                infos.put("CancelTransactions", list);
+
+                rtnVal.put("infos", infos);
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
     @RequestMapping(value="/addUserPTRecords", method = RequestMethod.POST)
     @ApiOperation(value = "개인 운동 일정 등록",
             notes = "{\"userIdx\":\"1\", \"date\":\"2022-03-24\", \"exerciseCategory\":\"1\", \"exerciseType\":\"2\", " +
@@ -1649,6 +1693,7 @@ public class ApiController {
         rtnVal.put("errorMsg", error);
         return rtnVal;
     }
+
     @RequestMapping(value="writeGeneralReview", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 작성 - 일반 이용 후기",
             notes = "{\"PTTrainerIdx\":\"1\", \"userSatisfaction\":\"5\", \"useStartDate\":\"2022-06-15\", " +
@@ -1675,6 +1720,7 @@ public class ApiController {
                 error = "후기 작성 실패";
             } else {
                 //사진 등록 + photoCout 진행
+
             }
         } catch (ParseException e) {
             e.printStackTrace();
@@ -1692,46 +1738,46 @@ public class ApiController {
     }
 
     @RequestMapping(value="getPTTrainersPTUsers", method = RequestMethod.POST)
-        @ApiOperation(value = "체험권 구매내역 조회",
-                notes = "{\"userIdx\":\"15\"}")
-        public HashMap getPTTrainersPTUsers(@RequestBody String data) {
-            log.info("####getPTTrainersPTUsers##### : " + data);
-            HashMap rtnVal = new HashMap();
+    @ApiOperation(value = "체험권 구매내역 조회",
+            notes = "{\"userIdx\":\"15\"}")
+    public HashMap getPTTrainersPTUsers(@RequestBody String data) {
+        log.info("####getPTTrainersPTUsers##### : " + data);
+        HashMap rtnVal = new HashMap();
 
-            JSONParser parser = new JSONParser();
-            String error = null;
+        JSONParser parser = new JSONParser();
+        String error = null;
 
-            try{
-                JSONObject jsonData = (JSONObject) parser.parse(data);
-                HashMap map = new HashMap();
-                Set set = jsonData.keySet();
-                jsonData.forEach((key, value) -> map.put(key,value));
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
 
-                List<HashMap> list = dbConnService.select("getPTTrainersPTUsers", map);
-                HashMap infos = new HashMap();
+            List<HashMap> list = dbConnService.select("getPTTrainersPTUsers", map);
+            HashMap infos = new HashMap();
 
-                if(list.isEmpty()) {
-                    infos.put("vouchersPurchaseHistory", false);
-                } else {
-                    infos.put("vouchersPurchaseHistory", list);
-                }
-
-                rtnVal.put("infos", infos);
-
-            } catch (ParseException e) {
-                e.printStackTrace();
-                error = "정보를 파싱하지 못했습니다.";
+            if(list.isEmpty()) {
+                infos.put("vouchersPurchaseHistory", false);
+            } else {
+                infos.put("vouchersPurchaseHistory", list);
             }
 
-            if (error!=null) {
-                rtnVal.put("result", false);
-            }
-            else {
-                rtnVal.put("result", true);
-            }
-               rtnVal.put("errorMsg", error);
-            return rtnVal;
+            rtnVal.put("infos", infos);
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
         }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
 
     @RequestMapping(value="writeExperienceReview", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 작성 - 1회 체험 후기",
@@ -1767,6 +1813,207 @@ public class ApiController {
             } else {
                 //사진 등록 + photoCount 진행
             }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="deleteNote", method = RequestMethod.POST)
+    @ApiOperation(value = "후기 삭제",
+            notes = "{\"noteIdx\":\"1\"}")
+    public HashMap deleteNote(@RequestBody String data) {
+        log.info("####deleteNote##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            int result = dbConnService.update("deleteNote", map);
+
+            if(result == 0) {
+                error = "후기 삭제 실패";
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="writeReplyToNote", method = RequestMethod.POST)
+    @ApiOperation(value = "후기 댓글 작성",
+            notes = "{\"noteIdx\":\"2\", \"userIdx\":\"13\", \"content\":\"후기 댓글 작성\"," +
+                    " \"hiddenYN\":\"0\"\n}")
+    public HashMap writeReplyToNote(@RequestBody String data) {
+        log.info("####writeReplyToNote##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("category", "1");
+            map.put("targetIdx", map.get("noteIdx"));
+
+            int result = dbConnService.insert("writeReply", map);
+
+            if(result == 0) {
+                error = "후기 댓글 작성 실패";
+            } else {
+                dbConnService.update("updateReplyCount", map);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="deleteReply", method = RequestMethod.POST)
+    @ApiOperation(value = "댓글 삭제",
+            notes = "{\"replyIdx\":\"1\"}")
+    public HashMap deleteReply(@RequestBody String data) {
+        log.info("####deleteReply##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            int result = dbConnService.delete("deleteReply", map);
+
+            if(result == 0) {
+                error = "댓글 삭제 실패";
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="likeNotes", method = RequestMethod.POST)
+    @ApiOperation(value = "후기 좋아요",
+            notes = "{\"noteIdx\":\"2\", \"userIdx\":\"13\"}")
+    public HashMap likeNotes(@RequestBody String data) {
+        log.info("####likeNotes##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("category", "1");
+            map.put("targetIdx", map.get("noteIdx"));
+
+            int result = dbConnService.insert("likeNotes", map);
+
+            if(result == 0) {
+                error = "후기 게시글 좋아요 실패";
+            } else {
+                dbConnService.update("updateLikeCount", map);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="usersLikesIt", method = RequestMethod.POST)
+    @ApiOperation(value = "사용자의 후기 게시글 좋아요 여부",
+            notes = "{\"userIdx\":\"13\", \"idx\":\"1\"}")
+    public HashMap usersLikesIt(@RequestBody String data) {
+        log.info("####usersLikesIt##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("category", "1");
+            map.put("targetIdx", map.get("idx"));
+
+            List<HashMap> list = dbConnService.select("getUsersLikes", map);
+            HashMap infos = new HashMap();
+
+            if(list.isEmpty()) {
+                infos.put("usersLikesYN", false);
+            } else {
+                infos.put("usersLikesYN", true);
+            }
+
+            rtnVal.put("infos", infos);
         } catch (ParseException e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
