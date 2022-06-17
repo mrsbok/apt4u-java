@@ -40,11 +40,13 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
     implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
-
+    implementation group: 'io.springfox', name: 'springfox-swagger-ui', version: '3.0.0'
     //정윤철 2022-05-18추가
     implementation("com.squareup.retrofit2:converter-gson:2.7.1")
     implementation 'commons-io:commons-io:2.6'
-
+    implementation("io.jsonwebtoken:jjwt:0.9.1")
+// https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api
+    implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.4.0-b180830.0359'
 
     // AWS S3
     implementation group: 'org.springframework.cloud', name: 'spring-cloud-aws', version: '2.2.6.RELEASE', ext: 'pom'
