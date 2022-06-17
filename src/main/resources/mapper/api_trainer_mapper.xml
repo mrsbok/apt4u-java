@@ -183,9 +183,13 @@
             left join pt_trainer_info_basic info on info.pt_trainer_idx = pt.idx
             left join stores st on st.idx = info.affilated_center
             left join stores_info_basic sib on st.idx = sib.store_idx
-            SET info.pt_trainer_name = #{ptTrainerName}
+            SET info.pt_trainer_name = #{ptTrainerName},
+            info.nick_name = #{nickName}
         WHERE  pt.idx  = #{idx}
     </update>
+
+
+
 
     <update id="updatePassword" parameterType="hashmap">
         UPDATE pt_trainer_authentication
@@ -359,6 +363,8 @@
                                 , lesson_date
                                 , lesson_start_time
                                 , lesson_end_time
+                                , lesson_start_minute
+                                , lesson_end_minute
                                 , pttrainer_idx
                                 , user_idx
                                 )
@@ -371,12 +377,24 @@
             #{lessionDate},
             #{lessonStartTime},
             #{lessonEndTime},
+            #{lessonStartMinute},
+            #{lessonEndMinute},
             #{tarinerIdx},
             #{userIdx}
             )
     </insert>
 
+    <update id="updateSchedule" parameterType="hashmap">
+        UPDATE pt_trainers_pt_schedule
+            SET start_ampm = #{startAmPm} , end_ampm = #{endAmPm} , lesson_start_time = #{lessonStartTime} ,
+                lesson_end_time = #{lessonEndTime} ,
+                lesson_start_minute = #{lessonStartMinute} ,
+                lesson_end_minute = #{lessonEndMinute}
 
+        WHERE pttrainer_idx  = #{tarinerIdx} and
+            user_idx  = #{userIdx} and
+            lesson_date  = #{lessionDate}
+    </update>
     <insert id="trainerLessionSave" parameterType="java.util.HashMap">
         insert into pt_trainer_pt_users
             (
@@ -434,7 +452,8 @@
                                      pt_trainer_idx,
                                      recorded_by,
                                      start_time,
-                                     user_idx
+                                     user_idx,
+                                     exercise_category
                                      )
         values (
                 #{date},
@@ -443,7 +462,8 @@
                 #{tarinerIdx},
                 #{recordedBy},
                 #{startTime},
-                #{userIdx}
+                #{userIdx},
+                1
                )
     </insert>
 
@@ -460,4 +480,37 @@
                    #{exerciseName}
                )
     </insert>
+
+    <update id="updateRecords" parameterType="hashmap">
+        UPDATE users_pt_records ptr
+            left join user_pt_contents ptc on ptc.record_idx = ptr.idx
+        SET ptc.exercise_name = #{exerciseName} ,
+            ptc.exercise_details = #{exerciseDetails} ,
+            ptc.exercise_type = #{exerciseType}
+        WHERE ptr.pt_trainer_idx  = #{tarinerIdx} and
+            ptr.user_idx  = #{userIdx} and
+            ptr.date  = #{date}
+    </update>
+
+    <select id="selectTime" resultType="java.util.HashMap">
+        select
+            *
+        from pt_trainers_pt_schedule
+        where
+            pttrainer_idx  = #{tarinerIdx} and
+            user_idx  = #{userIdx} and
+            lesson_date  = #{date}
+    </select>
+
+
+    <select id="findUser" resultType="java.util.HashMap">
+        select
+            pt.id,
+            pt.idx,
+            auth.password
+        from pt_trainers pt
+                 left join pt_trainer_authentication auth on auth.idx = pt.idx
+        where
+            pt.id  = #{userName};
+    </select>
 </mapper>

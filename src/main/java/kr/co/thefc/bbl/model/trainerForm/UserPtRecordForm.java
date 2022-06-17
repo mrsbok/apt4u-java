@@ -28,7 +28,7 @@ public class UserPtRecordForm extends UserPtContentsForm {
 
         @ApiModelProperty(
             value = "PT 일자",
-           example = "2022-01-05",
+           example = "2022-08-15",
             required = true
         )
         String date;
