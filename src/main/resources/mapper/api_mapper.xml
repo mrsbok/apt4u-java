@@ -14,6 +14,7 @@
             p.product_type as productType,
             p.price,
             p.discount,
+            p.discount_price as discountPrice,
             p.store_idx as storeIdx,
             s.store_name as storeName,
             p.seller_idx as sellerIdx,
@@ -56,6 +57,7 @@
             p.product_type as productType,
             p.price,
             p.discount,
+            p.discount_price as discountPrice,
             p.description,
             p.store_idx as storeIdx,
             s.store_name as storeName,
@@ -209,6 +211,8 @@
             usb.product_idx as productIdx,
             p.name as productName,
             p.price,
+            p.discount,
+            p.discount_price as discountPrice,
             p.store_idx as storeIdx,
             sib.store_name as storeName,
             p.seller_idx as sellerIdx,
@@ -239,6 +243,7 @@
             p.product_type as productType,
             p.price,
             p.discount,
+            p.discount_price as discountPrice,
             p.store_idx as storeIdx,
             sib.store_name as storeName,
             p.seller_idx as sellerIdx,
@@ -324,6 +329,7 @@
             p.product_type as productType,
             p.price,
             p.discount,
+            p.discount_price as discountPrice,
             p.description,
             p.store_idx as storeIdx,
             s.store_name as storeName,
@@ -441,6 +447,15 @@
             fgsp.store_idx = #{pickedItemIdx}
     </select>
 
+    <select id="getUsersPicks" resultType="java.util.HashMap">
+        select
+            *
+        from
+            users_pick
+        where
+            item_category = #{category} and picked_item = #{pickedItemIdx} and user_idx = #{userIdx}
+    </select>
+
     <insert id="addUserPick">
         insert into users_pick (user_idx, item_category, picked_item)
         values (#{userIdx}, #{category}, #{pickedItemIdx})
@@ -448,7 +463,7 @@
 
     <delete id="deleteUserPick">
         delete from users_pick
-        where idx = #{usersPicksIdx}
+        where item_category = #{category} and picked_item = #{pickedItemIdx} and user_idx = #{userIdx}
     </delete>
 
     <insert id="insertTransaction">

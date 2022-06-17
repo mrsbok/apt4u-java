@@ -612,6 +612,51 @@ public class ApiController {
         return rtnVal;
     }
 
+    @RequestMapping(value="/getUsersPicks", method = RequestMethod.POST)
+    @ApiOperation(value = "사용자의 상품 찜 여부",
+            notes = "{\"userIdx\":\"1\", \"category\":\"2\", \"pickedItemIdx\":\"1\"}" +
+                    "\n\ncategory 1:업체, 2:상품, 3:트레이너")
+    public HashMap getUsersPicks(@RequestBody String data) {
+        log.info("####getUsersPicks##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("getUsersPicks", map);
+            HashMap infos = new HashMap();
+
+            if(list.isEmpty()) {
+                infos.put("usersPicksYN", false);
+            } else {
+                infos.put("usersPicksYN", true);
+            }
+
+            rtnVal.put("infos", infos);
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
     @RequestMapping(value="/addUserPick", method = RequestMethod.POST)
     @ApiOperation(value = "사용자 찜 상품 추가",
             notes = "{\"userIdx\":\"1\", \"category\":\"2\", \"pickedItemIdx\":\"1\"}" +
@@ -630,14 +675,20 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
-            int result = dbConnService.insert("addUserPick", map);
+            List<HashMap> list = dbConnService.select("getUsersPicks", map);
+            HashMap infos = new HashMap();
 
-            if(result == 0) {
-                error = "Failed to add to user pick list";
+            if(list.isEmpty()) {
+                int result = dbConnService.insert("addUserPick", map);
+
+                if(result == 0) {
+                    error = "Failed to add to user pick list";
+                } else {
+                    rtnVal.put("result1", false);
+                }
             } else {
-                rtnVal.put("result1", false);
+                error = "Product is already picked by the user.";
             }
-
         } catch (ParseException e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
@@ -656,7 +707,7 @@ public class ApiController {
 
     @RequestMapping(value="/deleteUserPick", method = RequestMethod.POST)
     @ApiOperation(value = "사용자 찜 상품 삭제",
-            notes = "{\"usersPicksIdx\":\"1\"}")
+            notes = "{\"userIdx\":\"1\", \"category\":\"2\", \"pickedItemIdx\":\"1\"}")
     public HashMap deleteUserPick(@RequestBody String data) {
         log.info("####deleteUserPick##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -671,13 +722,21 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
-            int result = dbConnService.delete("deleteUserPick", map);
+            List<HashMap> list = dbConnService.select("getUsersPicks", map);
+            HashMap infos = new HashMap();
 
-            if(result == 0) {
-                error = "Failed to delete from user pick list";
+            if(!list.isEmpty()) {
+                int result = dbConnService.insert("deleteUserPick", map);
+
+                if(result == 0) {
+                    error = "Failed to delete from user pick list";
+                } else {
+                    rtnVal.put("result1", true);
+                }
             } else {
-                rtnVal.put("result1", true);
+                error = "Product is not picked by the user.";
             }
+
         } catch (ParseException e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
