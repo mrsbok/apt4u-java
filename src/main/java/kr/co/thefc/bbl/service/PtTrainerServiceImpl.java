@@ -4,6 +4,7 @@ package kr.co.thefc.bbl.service;
 import com.amazonaws.services.s3.model.S3Object;
 import com.google.gson.Gson;
 import kr.co.thefc.bbl.converter.PasswordCryptConverter;
+import kr.co.thefc.bbl.converter.JwtProvider;
 import kr.co.thefc.bbl.model.trainerForm.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +17,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -591,6 +589,30 @@ public class PtTrainerServiceImpl implements PtTrainerService {
   }
 
   @Override
+  public HashMap ptTrainersScheduleSelect(PTScheduleForm ptScheduleForm) {
+    String error = null;
+
+
+    try {
+      String convertJson = gson.toJson(ptScheduleForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      Integer idx = dbConnService.insertWithReturnIntList("trainerScheduleSelect",data) ;
+
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
   public HashMap lessionSave(PTLessionForm ptLessionForm) {
     String error = null;
 
@@ -619,10 +641,17 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     String error = null;
 
     try {
+
       String convertJson = gson.toJson(UserPtRecordForm);
       HashMap data = gson.fromJson(convertJson, HashMap.class);
+      HashMap timeData  = dbConnService.selectOne("selectTime",data) ;
+      String startTime = timeData.get("lesson_start_time").toString() + ":" + timeData.get("lesson_start_minute").toString();
+      String endTime = timeData.get("lesson_end_time").toString() + ":" + timeData.get("lesson_end_minute").toString();
+
+      data.put("startTime", startTime);
+      data.put("endTime", endTime);
       Integer idx = dbConnService.insertWithReturnIntList("userPtRecordSave",data) ;
-      System.out.println(UserPtRecordForm);
+
       data.put("recordIdx",idx);
       dbConnService.insert("userPtContentSave",data) ;
 
@@ -639,14 +668,17 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     return rtnVal;
   }
 
+
+
   @Override
-  public HashMap userPtRecordSelect(UserPtRecordForm UserPtRecordForm) {
+  public HashMap getSchedule(UserPtRecordForm UserPtRecordForm) {
     String error = null;
+    HashMap scheduleData = new HashMap<>();
 
     try {
       String convertJson = gson.toJson(UserPtRecordForm);
       HashMap data = gson.fromJson(convertJson, HashMap.class);
-      dbConnService.select("userPtRecordSelect",data) ;
+      scheduleData  = dbConnService.selectOne("selectTime",data) ;
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -654,6 +686,113 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     }
     if (error != null) {
       rtnVal.put("result", false);
+
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("data", scheduleData);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+
+  @Override
+  public HashMap updateSchedule(PTScheduleForm ptScheduleForm) {
+    String error = null;
+
+
+    try {
+      String convertJson = gson.toJson(ptScheduleForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      dbConnService.update("updateSchedule",data) ;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+
+    } else {
+      rtnVal.put("result", true);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap login(String userName, String password) {
+    String error = null;
+    HashMap loginData = new HashMap<>();
+    try {
+      loginData.put("userName",userName);
+      loginData.put("password",password);
+      String convertJson = gson.toJson(loginData);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      loginData = dbConnService.selectOne("findUser",data) ;
+      if(Objects.equals(loginData.get("password").toString(), new PasswordCryptConverter().convertToDatabaseColumn(password))){
+        String token = new JwtProvider().jwtCreater(
+            Integer.parseInt(loginData.get("idx").toString())
+        );
+        rtnVal.put("token", token);
+      }else{
+        error = "로그인 실패 패스워드 또는 ID를 확인하여 주십시오";
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+        error = "로그인 실패 패스워드 또는 ID를 확인하여 주십시오.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+      rtnVal.put("token", null);
+    } else {
+      rtnVal.put("result", true);
+//      rtnVal.put("data", data2);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap userPtRecordSelect(UserPtRecordForm UserPtRecordForm) {
+    String error = null;
+    HashMap data2 = new HashMap<>();
+    try {
+      String convertJson = gson.toJson(UserPtRecordForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+       data2 = dbConnService.selectOne("userPtRecordSelect",data) ;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("data", data2);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap updateRecords(UserPtRecordForm UserPtRecordForm) {
+    String error = null;
+
+
+    try {
+      String convertJson = gson.toJson(UserPtRecordForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      dbConnService.update("updateRecords",data) ;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+
     } else {
       rtnVal.put("result", true);
     }

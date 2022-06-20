@@ -29,7 +29,9 @@ public class DBConnService {
     public List<HashMap> select(String stat_id, HashMap map) {
         return sqlSession.selectList(NAMESPACE + stat_id, map);
     }
-
+    public HashMap selectOne(String stat_id, HashMap map) {
+        return sqlSession.selectOne(NAMESPACE + stat_id, map);
+    }
     public int insertWithReturnInt(String stat_id, HashMap map) {
         int rowcnt = sqlSession.insert(NAMESPACE + stat_id, map);
         System.out.println(map.toString());

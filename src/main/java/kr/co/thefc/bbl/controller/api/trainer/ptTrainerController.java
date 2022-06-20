@@ -2,34 +2,28 @@ package kr.co.thefc.bbl.controller.api.trainer;
 
 
 import com.amazonaws.services.s3.model.S3Object;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import kr.co.thefc.bbl.converter.JwtProvider;
 import kr.co.thefc.bbl.model.trainerForm.*;
 import kr.co.thefc.bbl.service.PtTrainerService;
-import kr.co.thefc.bbl.service.S3Service;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
+
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 @RestController
 @RequestMapping("api")
 @Api(description = "트레이너 정보 관리")
 public class ptTrainerController {
-	Logger log;
-
-	@Autowired
-	private S3Service s3Service;
 
 	@Autowired
 	public PtTrainerService ptTrainerService;
@@ -45,27 +39,37 @@ public class ptTrainerController {
 	@ApiOperation(value = "트레이너 상세정보 등록",notes = "트레이너 상세정보 등록")
 	@PostMapping("trainer/proflie-register")
 	public HashMap ptTrainerProfileRegister(
-			@RequestBody PtTrainerProfileForm ptTrainerProfileForm)   {
+			@RequestBody PtTrainerProfileForm ptTrainerProfileForm,HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("idx")));
+		ptTrainerProfileForm.setTarinerIdx(result);
 		return ptTrainerService.trainerInfoDetailSave(ptTrainerProfileForm);
 	}
 
 	@ApiOperation(value = "트레이너 정보 조회",notes = "트레이너 정보 조회")
 	@PostMapping("trainer/select-information")
-	public HashMap selectInformation(
-			@RequestParam(value = "idx") Integer idx)   {
+	public HashMap selectInformation(HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("idx")));
 		return ptTrainerService.selectInformation(idx);
 	}
-	@ApiOperation(value = "트레이너 상세 정보 조회",notes = "트레이너 정보 조회")
+	@ApiOperation(value = "트레이너 상세 정보 조회",notes = "트레이너 상세 정보 조회")
 	@PostMapping("trainer/select-detail-information")
 	public HashMap selectDetailInformation(
-			@RequestParam(value = "idx") Integer idx)   {
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("idx")));
 		return ptTrainerService.selectDetailInformation(idx);
 	}
 
 	@ApiOperation(value = "트레이너 기본정보 수정",notes = "트레이너 기본정보 수정")
 	@PostMapping("trainer/update-information")
 	public HashMap updateInformation(
-			@RequestBody PtTrainerForm ptTrainerForm)   {
+			@RequestBody PtTrainerForm ptTrainerForm,	HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("idx")));
+		ptTrainerForm.setIdx(idx);
+		System.out.println();
 		return ptTrainerService.updateInformation(ptTrainerForm);
 	}
 
@@ -258,5 +262,53 @@ public class ptTrainerController {
 	public HashMap PTUsersRecordsSelect(
 			@RequestBody UserPtRecordForm UserPtRecordForm)  {
 		return ptTrainerService.userPtRecordSelect(UserPtRecordForm);
+	}
+
+	@ApiOperation(
+			value = "스케쥴 조회"
+			, notes = "스케쥴 조회")
+	@PostMapping("trainer/select-Schedule")
+	public HashMap SelectSchedule(
+			@RequestBody UserPtRecordForm UserPtRecordForm)  {
+		return ptTrainerService.getSchedule(UserPtRecordForm);
+	}
+	@ApiOperation(
+			value = "일정 수정"
+			, notes = "일정 수정")
+	@PostMapping("trainer/update-Schedule")
+	public HashMap PTUsersUpdateSchedule(
+			@RequestBody PTScheduleForm ptScheduleForm)  {
+		return ptTrainerService.updateSchedule(ptScheduleForm);
+	}
+
+	@ApiOperation(
+			value = "운동 수정"
+			, notes = "운동 수정")
+	@PostMapping("trainer/update-records")
+	public HashMap PTUsersUpdateRecords(
+			@RequestBody UserPtRecordForm UserPtRecordForm)  {
+		return ptTrainerService.updateRecords(UserPtRecordForm);
+	}
+
+
+	@ApiOperation(
+			value = "트레이너 로그인"
+			, notes = "트레이너 로그인")
+	@PostMapping("trainer/login")
+	public HashMap PTtrainerLogin(
+			@RequestParam String userName,
+			@RequestParam String password
+			)  {
+		return ptTrainerService.login(userName,password);
+	}
+
+	@ApiOperation(
+			value = "트레이너 로그인"
+			, notes = "트레이너 로그인")
+	@PostMapping("trainer/login1")
+	public void PTtrainerLogin1(HttpServletRequest request)  {
+		String token = request.getHeader("token");
+		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("idx")));
+
 	}
 }

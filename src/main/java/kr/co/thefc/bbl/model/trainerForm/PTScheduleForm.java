@@ -52,12 +52,28 @@ public class PTScheduleForm {
         Byte lessonStartTime;
 
         @ApiModelProperty(
+            value = "PT 분 ",
+            example = "11",
+            required = true,
+            dataType = "int"
+        )
+        Byte lessonStartMinute;
+
+        @ApiModelProperty(
             value = "PT 시간 (예, 10, 8)",
             example = "1",
             required = true,
             dataType = "int"
         )
         Byte lessonEndTime;
+
+        @ApiModelProperty(
+            value = "PT 분 ",
+            example = "25",
+            required = true,
+            dataType = "int"
+        )
+        Byte lessonEndMinute;
 
 
         @ApiModelProperty(
