@@ -1072,7 +1072,7 @@
 	)
     VALUES (
 	        #{noteCategory},
-            #{PTTrainerIdx},
+            #{targetIdx},
             #{userSatisfaction},
             #{useStartDate},
             #{useEndDate},
@@ -1093,15 +1093,13 @@
                 main_image_yn
             )
         VALUES
-        <foreach item="item" separator=" , " collection="list">
             (
-                #{item.filename},
-                #{item.fileurl},
-                #{item.category},
+                #{filename},
+                #{fileurl},
+                #{category},
                 #{noteIdx},
                 '0'
             )
-        </foreach>
     </insert>
 
     <select id="getPhotoCount" parameterType="INTEGER">

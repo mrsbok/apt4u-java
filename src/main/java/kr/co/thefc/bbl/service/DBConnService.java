@@ -26,7 +26,6 @@ public class DBConnService {
         return sqlSession.selectOne(NAMESPACE + stat_id, map);
     }
 
-
     public List<HashMap> select(String stat_id, HashMap map) {
         return sqlSession.selectList(NAMESPACE + stat_id, map);
     }
@@ -50,7 +49,6 @@ public class DBConnService {
     public int insertList(String stat_id, List list) {
         return sqlSession.insert(NAMESPACE + stat_id, list);
     }
-
     public HashMap selectIdx(String stat_id, Integer idx) {
         return sqlSession.selectOne(NAMESPACE + stat_id, idx);
     }

@@ -1,7 +1,9 @@
 package kr.co.thefc.bbl.controller.api;
 
 import com.amazonaws.services.s3.model.S3Object;
+import com.google.gson.Gson;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import kr.co.thefc.bbl.converter.PasswordCryptConverter;
 import kr.co.thefc.bbl.service.DBConnService;
 import kr.co.thefc.bbl.service.S3Service;
@@ -13,7 +15,6 @@ import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -29,6 +30,8 @@ public class ApiController {
 
     @Autowired
     private S3Service s3Service;
+
+    private Gson gson = new Gson();
 
     @RequestMapping(value="/now", method = RequestMethod.POST)
     public HashMap now() {
@@ -1757,33 +1760,79 @@ public class ApiController {
 
     @RequestMapping(value="writeGeneralReview", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 작성 - 일반 이용 후기",
-            notes = "{\"PTTrainerIdx\":\"1\", \"userSatisfaction\":\"5\", \"useStartDate\":\"2022-06-15\", " +
-                    "\"useEndDate\":\"2022-06-22\", \"content\":\"일반 이용 후기 작성 테스트\", " +
-                    "\"hashtag\":\"#일반이용,#해시태그,#테스트\", \"userIdx\":\"1\"}")
-    public HashMap writeGeneralReview(@RequestBody String data) {
-        log.info("####writeGeneralReview##### : " + data);
+            notes = "")
+    public HashMap writeGeneralReview(
+            @ApiParam(name = "PTTrainerIdx", value = "후기 대상 식별번호", defaultValue = "1", required = true) @RequestParam(value = "PTTrainerIdx", required = true) Integer PTTrainerIdx,
+            @ApiParam(name = "userSatisfaction", value = "사용자 별점", defaultValue = "5", required = true) @RequestParam(value = "userSatisfaction", required = true) Integer userSatisfaction,
+            @ApiParam(name = "useStartDate", value = "이용권 사용 시작일", defaultValue = "2022-06-20", required = true) @RequestParam(value = "useStartDate", required = true) String useStartDate,
+            @ApiParam(name = "useEndDate", value = "이용권 사용 종료일", defaultValue = "2022-06-22", required = true) @RequestParam(value = "useEndDate", required = true) String useEndDate,
+            @ApiParam(name = "content", value = "후기 내용", defaultValue = "후기 작성 테스트", required = true) @RequestParam(value = "content", required = true) String content,
+            @ApiParam(name = "hashtag", value = "후기 해시태그", defaultValue = "#후기작성,#테스트중", required = true) @RequestParam(value = "hashtag", required = true) String hashtag,
+            @ApiParam(name = "userIdx", value = "후기 작성자 식별번호", defaultValue = "1", required = true) @RequestParam(value = "userIdx", required = true) int userIdx,
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
         HashMap rtnVal = new HashMap();
-
-        JSONParser parser = new JSONParser();
         String error = null;
 
+        List fileList = new ArrayList<>();
+
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-            HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+            HashMap data = new HashMap();
 
-            map.put("noteCategory", "3");
+            data.put("noteCategory", "3");
+            data.put("targetIdx", PTTrainerIdx);
+            data.put("userSatisfaction", userSatisfaction);
+            data.put("useStartDate", useStartDate);
+            data.put("useEndDate", useEndDate);
+            data.put("content", content);
+            data.put("hashtag", hashtag);
+            data.put("userIdx", userIdx);
 
-            int result = dbConnService.insert("writeReview", map);
+            int result = dbConnService.insert("writeReview", data);
 
             if(result == 0) {
                 error = "후기 작성 실패";
             } else {
-                //사진 등록 + photoCout 진행
+                String filename = null;
+                S3Service.FileGroupType groupType = S3Service.FileGroupType.Board;
 
+                for(MultipartFile multipartFile : multipartFiles) {
+                    if(!multipartFile.isEmpty()) {
+                        try{
+                            filename = s3Service.uploadWithUUID(multipartFile, groupType);
+
+                            log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+
+                            S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+                            log.info("uploaded image file : " + imgFileInfo.toString());
+                            S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+                            log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+
+                            log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                            BufferedImage imgBuf = null;
+                            String base64 = null;
+                            try {
+                                imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+                                base64 = S3Service.encodeBase64(imgBuf);
+                                rtnVal.put("img_data", base64);
+
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                error = "이미지파일 base64 변환 실패!";
+                            }
+
+                            data.put("filename", filename);
+                            data.put("category", "1");
+                            data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+
+                            dbConnService.insert("boardUpload", data);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            error = "파일 업로드 실패";
+                        }
+                    }
+                }
             }
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -1794,7 +1843,7 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
@@ -1842,41 +1891,81 @@ public class ApiController {
 
     @RequestMapping(value="writeExperienceReview", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 작성 - 1회 체험 후기",
-            notes = "{ \"PTTrainerIdx\":\"1\"," +
-                    " \"userSatisfaction\":\"5\"," +
-                    " \"dateStart\":\"2022-02-03\"," +
-                    " \"dateEnd\":\"2022-02-04\"," +
-                    " \"content\":\"1회 체험 후기 작성 테스트\"," +
-                    " \"hashtag\":\"#1회체험후기작성\"," +
-                    " \"userIdx\":\"15\"}" +
-                    "\n\nPTTrainerIdx, dateStart, dateEnd는 getPTTrainersPTUsers에서 반환된 값")
-    public HashMap writeExperienceReview(@RequestBody String data) {
-        log.info("####writeExperienceReview##### : " + data);
+            notes = "")
+    public HashMap writeExperienceReview(
+            @ApiParam(name = "PTTrainerIdx", value = "후기 대상 식별번호", defaultValue = "1", required = true) @RequestParam(value = "PTTrainerIdx", required = true) Integer PTTrainerIdx,
+            @ApiParam(name = "userSatisfaction", value = "사용자 별점", defaultValue = "5", required = true) @RequestParam(value = "userSatisfaction", required = true) Integer userSatisfaction,
+            @ApiParam(name = "dateStart", value = "이용권 사용 시작일", defaultValue = "2022-06-20", required = true) @RequestParam(value = "dateStart", required = true) String dateStart,
+            @ApiParam(name = "dateEnd", value = "이용권 사용 종료일", defaultValue = "2022-06-22", required = true) @RequestParam(value = "dateEnd", required = true) String dateEnd,
+            @ApiParam(name = "content", value = "후기 내용", defaultValue = "후기 작성 테스트", required = true) @RequestParam(value = "content", required = true) String content,
+            @ApiParam(name = "hashtag", value = "후기 해시태그", defaultValue = "#후기작성,#테스트중", required = true) @RequestParam(value = "hashtag", required = true) String hashtag,
+            @ApiParam(name = "userIdx", value = "후기 작성자 식별번호", defaultValue = "1", required = true) @RequestParam(value = "userIdx", required = true) int userIdx,
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
         HashMap rtnVal = new HashMap();
-
-        JSONParser parser = new JSONParser();
         String error = null;
 
+        List fileList = new ArrayList<>();
+
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-            HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+            HashMap data = new HashMap();
 
-            map.put("noteCategory", "2");
-            map.put("useStartDate", map.get("dateStart"));
-            map.put("useEndDate", map.get("dateEnd"));
+            data.put("noteCategory", "2");
+            data.put("targetIdx", PTTrainerIdx);
+            data.put("userSatisfaction", userSatisfaction);
+            data.put("useStartDate", dateStart);
+            data.put("useEndDate", dateEnd);
+            data.put("content", content);
+            data.put("hashtag", hashtag);
+            data.put("userIdx", userIdx);
 
-            int result = dbConnService.insert("writeReview", map);
+            int result = dbConnService.insert("writeReview", data);
 
             if(result == 0) {
                 error = "후기 작성 실패";
             } else {
-                //사진 등록 + photoCount 진행
+                String filename = null;
+                S3Service.FileGroupType groupType = S3Service.FileGroupType.Board;
+
+                for(MultipartFile multipartFile : multipartFiles) {
+                    if(!multipartFile.isEmpty()) {
+                        try{
+                            filename = s3Service.uploadWithUUID(multipartFile, groupType);
+
+                            log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+
+                            S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+                            log.info("uploaded image file : " + imgFileInfo.toString());
+                            S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+                            log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+
+                            log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                            BufferedImage imgBuf = null;
+                            String base64 = null;
+                            try {
+                                imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+                                base64 = S3Service.encodeBase64(imgBuf);
+                                rtnVal.put("img_data", base64);
+
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                error = "이미지파일 base64 변환 실패!";
+                            }
+
+                            data.put("filename", filename);
+                            data.put("category", "1");
+                            data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+
+                            dbConnService.insert("boardUpload", data);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            error = "파일 업로드 실패";
+                        }
+                    }
+                }
             }
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            error = "정보를 파싱하지 못했습니다.";
+                   error = "정보를 파싱하지 못했습니다.";
         }
 
         if (error!=null) {
@@ -1885,7 +1974,8 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
+
         return rtnVal;
     }
 
@@ -2050,6 +2140,7 @@ public class ApiController {
     @ApiOperation(value = "사용자의 후기 게시글 좋아요 여부",
             notes = "{\"userIdx\":\"13\", \"idx\":\"1\"}")
     public HashMap usersLikesIt(@RequestBody String data) {
+        log.info("test");
         log.info("####usersLikesIt##### : " + data);
         HashMap rtnVal = new HashMap();
 

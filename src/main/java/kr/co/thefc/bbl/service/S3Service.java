@@ -43,7 +43,8 @@ public class S3Service {
     public enum FileGroupType {
         Store("Store/"),
         PT_Trainer("PT_Trainer/"),
-        Product("Product/");
+        Product("Product/"),
+        Board("Board/");
 
         private final String value;
 
