@@ -988,31 +988,77 @@
 
     <select id="getUsersNotes" resultType="java.util.HashMap">
         SELECT
-        	un.idx,
+            un.idx as noteIdx,
+            un.note_category as noteCategory,
             un.writer as writerIdx,
             ui.user_name as writerName,
             ui.nick_name as writerNickName,
             un.reg_date as regDate,
             un.update_date as updateDate,
             un.user_satisfaction as userSatisfaction,
+            afm.image_path as imagePath,
+            afm.image_file_name as imageFileName,
             un.hashtag,
             un.content,
             un.like_count as likeCount,
             un.reply_count as replyCount,
             un.photo_count as photoCount
         FROM
-        	users_notes as un
+            users_notes as un
+        LEFT JOIN
+            users_info as ui
+        ON
+            un.writer = ui.user_idx
+        LEFT JOIN
+        	attached_file_management as afm
+        ON
+        	un.idx = afm.target_idx AND afm.category = 1
+        WHERE
+            note_category = "2" OR note_category = "3" AND un.exposeyn = "1"
+    </select>
+
+    <select id="getImagesInfo" resultType="java.util.HashMap">
+        SELECT
+        	afm.iseq,
+            afm.image_path as imagePath,
+            afm.image_file_name as imageFileName
+        FROM
+        	attached_file_management as afm
+        WHERE
+        	category = #{photoCategory} AND target_idx = #{postIdx} AND expose_yn = "0"
+    </select>
+
+    <select id="getFreeTalks" resultType="java.util.HashMap">
+        SELECT
+        	ft.idx as freeTalkIdx,
+            ft.photo_count as photoCount,
+            afm.image_path as imagePath,
+            afm.image_file_name as imageFileName,
+            ft.title,
+            ft.writer as writerIdx,
+            ft.writer_name as writerName,
+            ui.nick_name as nickName,
+            ft.reg_date as regDate,
+            ft.last_updated as updateDate,
+            ft.like_count as likeCount,
+            ft.reply_count as replyCount
+        FROM
+        	free_talks as ft
         LEFT JOIN
         	users_info as ui
         ON
-        	un.writer = ui.user_idx
+        	ft.writer = ui.user_idx
+        LEFT JOIN
+        	attached_file_management as afm
+        ON
+        	ft.idx = afm.target_idx AND afm.category = 2 AND afm.main_image_yn = 1
         WHERE
-        	note_category = #{noteCategory} AND un.exposeyn = "1"
+        	ft.exposeyn = '1'
     </select>
 
     <select id="getUsersNotesDetail" resultType="java.util.HashMap">
         SELECT
-            un.idx,
+            un.idx as noteIdx,
             un.writer as writerIdx,
             ui.user_name as writerName,
             ui.nick_name as writerNickName,
@@ -1033,7 +1079,30 @@
         WHERE
             un.idx = #{noteIdx}
     </select>
-    
+
+    <select id="getFreeTalkDetail" resultType="java.util.HashMap">
+        SELECT
+        	ft.idx as freeTalkIdx,
+            ft.title,
+            ft.writer as writerIdx,
+            ft.writer_name as writerName,
+            ui.nick_name as nickName,
+            ft.reg_date as regDate,
+            ft.last_updated as updateDate,
+            ft.photo_count as photoCount,
+            ft.content,
+            ft.like_count as likeCount,
+            ft.reply_count as replyCount
+        FROM
+        	free_talks as ft
+        LEFT JOIN
+        	users_info as ui
+        ON
+        	ft.writer = ui.user_idx
+        WHERE
+        	ft.idx = #{freeTalkIdx}
+    </select>
+
     <select id="getNotesReplies" resultType="java.util.HashMap">
         select
         	re.iseq as replyIdx,
@@ -1051,26 +1120,27 @@
         on
         	ui.user_idx = re.user_idx
         where
-        	category = #{replyCategory} AND target_idx = #{noteIdx} AND del_yn = '0'
+        	category = #{replyCategory} AND target_idx = #{postIdx} AND del_yn = '0'
     </select>
 
     <insert id="writeReview">
-        <selectKey resultType="int" keyProperty="noteIdx" order="AFTER">
-        SELECT MAX(idx) from users_notes
+        <selectKey resultType="int" keyProperty="postIdx" order="AFTER">
+            SELECT MAX(idx) from users_notes
         </selectKey>
-    INSERT INTO
-	users_notes (
-		note_category,
-        note_target,
-        user_satisfaction,
-        use_start_date,
-        use_end_date,
-        content,
-        hashtag,
-        writer,
-        reg_date
-	)
-    VALUES (
+        INSERT INTO users_notes
+        (
+		    note_category,
+            note_target,
+            user_satisfaction,
+            use_start_date,
+            use_end_date,
+            content,
+            hashtag,
+            writer,
+            reg_date
+	    )
+        VALUES
+        (
 	        #{noteCategory},
             #{targetIdx},
             #{userSatisfaction},
@@ -1080,7 +1150,29 @@
             #{hashtag},
             #{userIdx},
             now()
-            )
+        )
+    </insert>
+
+    <insert id="writeFreeTalk">
+        <selectKey resultType="int" keyProperty="postIdx" order="AFTER">
+            SELECT MAX(idx) from free_talks
+        </selectKey>
+        INSERT INTO free_talks
+        (
+            title,
+            content,
+            writer,
+            writer_name,
+            reg_date
+        )
+        VALUES
+        (
+            #{title},
+            #{content},
+            #{writerIdx},
+            #{writerName},
+            now()
+        );
     </insert>
 
     <insert id="boardUpload" parameterType="java.util.List">
@@ -1097,22 +1189,28 @@
                 #{filename},
                 #{fileurl},
                 #{category},
-                #{noteIdx},
+                #{postIdx},
                 '0'
             )
     </insert>
 
-    <select id="getPhotoCount" parameterType="INTEGER">
+    <select id="getPhotoCount" resultType="INTEGER">
         SELECT count(*)
         FROM attached_file_management
-        WHERE target_idx = "1"
+        WHERE target_idx = #{postIdx} AND category = #{category}
     </select>
 
-    <update id="updatePhotoCount" parameterType="java.util.HashMap">
+    <update id="updateNotesPhotoCount" parameterType="java.util.HashMap">
         update users_notes
         set photo_count = #{photoCount}
-        where idx = #{noteIdx}
+        where idx = #{postIdx}
     </update>
+
+    <update id="updateFreeTalksPhotoCount" parameterType="java.util.HashMap">
+         update free_talks
+         set photo_count = #{photoCount}
+         where idx = #{postIdx}
+       </update>
 
     <select id="getPTTrainersPTUsers" resultType="java.util.HashMap">
         SELECT
@@ -1132,9 +1230,15 @@
         where idx = #{noteIdx}
     </update>
 
+    <update id="deleteFreeTalk">
+        update free_talks
+        set exposeyn = "0"
+        where idx = #{freeTalkIdx}
+    </update>
+
     <insert id="writeReply">
         <selectKey resultType="int" keyProperty="replyCount" order="AFTER">
-                SELECT count(*) from reply where target_idx = #{targetIdx}
+                SELECT count(*) from reply where target_idx = #{targetIdx} AND category = #{category}
         </selectKey>
         INSERT INTO reply (category, target_idx, user_idx, content, reg_date, hidden_yn)
         VALUE (#{category}, #{targetIdx}, #{userIdx}, #{content}, now(), #{hiddenYN});
@@ -1145,29 +1249,196 @@
         where iseq = #{replyIdx}
     </delete>
 
-    <update id="updateReplyCount" parameterType="java.util.HashMap">
+    <update id="updateNotesReplyCount" parameterType="java.util.HashMap">
         update users_notes
         set reply_count = #{replyCount}
         where idx = #{targetIdx}
     </update>
 
-    <insert id="likeNotes">
-            <selectKey resultType="int" keyProperty="likeCount" order="AFTER">
-                    SELECT count(*) from bbldb.like where target_idx = #{targetIdx}
-            </selectKey>
-            INSERT INTO bbldb.like (category, target_idx, user_idx)
-            VALUE (#{category}, #{targetIdx}, #{userIdx});
+    <update id="updateFreeTalksReplyCount" parameterType="java.util.HashMap">
+        update free_talks
+        set reply_count = #{replyCount}
+        where idx = #{targetIdx}
+    </update>
+
+    <insert id="likePosts">
+        <selectKey resultType="int" keyProperty="likeCount" order="AFTER">
+            SELECT count(*) from bbldb.like where target_idx = #{targetIdx} AND category = #{category}
+        </selectKey>
+        INSERT INTO bbldb.like (category, target_idx, user_idx)
+        VALUE (#{category}, #{targetIdx}, #{userIdx});
     </insert>
 
-    <update id="updateLikeCount" parameterType="java.util.HashMap">
+    <delete id="deleteLikePosts">
+        delete from bbldb.like
+        where category = #{category} AND target_idx = #{targetIdx} AND user_idx = #{userIdx}
+    </delete>
+
+    <update id="updateNotesLikeCount" parameterType="java.util.HashMap">
         update users_notes
         set like_count = #{likeCount}
         where idx = #{targetIdx}
     </update>
-    
+
+    <update id="updateFreeTalksLikeCount" parameterType="java.util.HashMap">
+        update free_talks
+        set like_count = #{likeCount}
+        where idx = #{targetIdx}
+    </update>
+
     <select id="getUsersLikes" resultType="java.util.HashMap">
         SELECT *
         FROM bbldb.like
         WHERE user_idx = #{userIdx} AND target_idx = #{targetIdx} AND category = #{category}
+    </select>
+
+    <select id="getUserLikesFreeTalks" resultType="java.util.HashMap">
+        SELECT
+        	l.iseq,
+        	ft.idx as freeTalkIdx,
+        	ft.photo_count as photoCount,
+        	afm.image_path as imagePath,
+        	afm.image_file_name as imageFileName,
+        	ft.title,
+        	ft.writer as writerIdx,
+        	ft.writer_name as writerName,
+        	ui.nick_name as nickName,
+        	ft.reg_date as regDate,
+        	ft.last_updated as updateDate,
+        	ft.like_count as likeCount,
+        	ft.reply_count as replyCount
+        FROM
+        	bbldb.like as l
+        LEFT JOIN
+        	free_talks as ft
+        ON
+        	ft.idx = l.target_idx
+        LEFT JOIN
+        	users_info as ui
+        ON
+        	ft.writer = ui.user_idx
+        LEFT JOIN
+        	attached_file_management as afm
+        ON
+        	ft.idx = afm.target_idx AND afm.category = 2 AND afm.main_image_yn = 1
+        WHERE
+        	l.user_idx = #{userIdx} AND l.category = #{category}
+    </select>
+
+    <select id="getUserLikesNotes" resultType="java.util.HashMap">
+        SELECT
+        	l.iseq,
+        	un.idx as noteIdx,
+        	un.note_category as noteCategory,
+        	un.writer as writerIdx,
+        	ui.user_name as writerName,
+        	ui.nick_name as nickName,
+        	un.reg_date as regDate,
+        	un.update_date as updateDate,
+        	un.user_satisfaction as userSatisfaction,
+        	afm.image_path as imagePath,
+        	afm.image_file_name as imageFileName,
+        	un.hashtag,
+        	un.content,
+        	un.like_count as likeCount,
+        	un.reply_count as replyCount,
+        	un.photo_count as photoCount
+        FROM
+        	bbldb.like as l
+        LEFT JOIN
+        	users_notes as un
+        ON
+        	l.target_idx = un.idx
+        LEFT JOIN
+        	users_info as ui
+        ON
+        	un.writer = ui.user_idx
+        LEFT JOIN
+        	attached_file_management as afm
+        ON
+        	un.idx = afm.target_idx AND afm.category = '1'
+        WHERE
+        	l.user_idx = #{userIdx} AND l.category = #{category}
+    </select>
+
+    <select id="getUserWriteFreeTalks" resultType="java.util.HashMap">
+        SELECT
+            ft.idx as freeTalkIdx,
+            atm.image_path as imagePath,
+            atm.image_file_name as imageFileName,
+            ft.title,
+            ft.writer as writerIdx,
+            ft.writer_name as writerName,
+            ui.nick_name as nickName,
+            ft.reg_date as regDate,
+            ft.last_updated as updateDate,
+            ft.reply_count as replyCount,
+            ft.like_count as likeCount,
+            ft.photo_count as photoCount
+        FROM
+            free_talks as ft
+        LEFT JOIN
+            attached_file_management as atm
+        ON
+            atm.target_idx = ft.idx AND atm.category = "2" AND afm.main_image_yn = 1
+        LEFT JOIN
+            users_info as ui
+        ON
+            ui.user_idx = ft.writer
+        WHERE
+            ft.writer = #{userIdx};
+    </select>
+
+    <select id="getUserWriteNotes" resultType="java.util.HashMap">
+        SELECT
+        	un.idx as noteIdx,
+            un.note_category as noteCategory,
+        	un.writer as writerIdx,
+            ui.user_name as writerName,
+            ui.nick_name as nickName,
+            un.reg_date as regDate,
+            un.update_date as updateDate,
+            un.user_satisfaction as userSatisfaction,
+            afm.image_path as imagePath,
+            afm.image_file_name as imageFileName,
+            un.hashtag,
+            un.content,
+            un.like_count as likeCount,
+            un.reply_count as replyCount,
+            un.photo_count as photoCount
+        FROM
+        	users_notes as un
+        LEFT JOIN
+        	users_info as ui
+        ON
+        	ui.user_idx = un.writer
+        LEFT JOIN
+        	attached_file_management as afm
+        ON
+        	afm.target_idx = un.idx AND afm.category = "1"
+        WHERE
+        	writer = #{userIdx}
+    </select>
+
+    <select id="getUserWriteReply" resultType="java.util.HashMap">
+        SELECT
+        	re.iseq,
+            re.category as boardCategory,
+            re.target_idx as targetIdx,
+            re.user_idx as writerIdx,
+            ui.user_name as writerName,
+            ui.nick_name as nickName,
+            re.content,
+            re.reg_date as regDate,
+            re.update_date as updateDate,
+            re.hidden_yn as hiddenYN
+        FROM
+        	reply as re
+        LEFT JOIN
+        	users_info as ui
+        ON
+        	re.user_idx = ui.user_idx
+        WHERE
+        	re.user_idx = #{userIdx} AND re.del_yn = "0"
     </select>
 </mapper>

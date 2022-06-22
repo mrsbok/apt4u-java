@@ -3,8 +3,11 @@ package kr.co.thefc.bbl.controller.api;
 import com.amazonaws.services.s3.model.S3Object;
 import com.google.gson.Gson;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.models.auth.In;
+import kr.co.thefc.bbl.converter.JwtProvider;
 import kr.co.thefc.bbl.converter.PasswordCryptConverter;
+import kr.co.thefc.bbl.model.writeForm.FreeTalksWriteForm;
+import kr.co.thefc.bbl.model.writeForm.ReviewWriteForm;
 import kr.co.thefc.bbl.service.DBConnService;
 import kr.co.thefc.bbl.service.S3Service;
 import lombok.extern.slf4j.Slf4j;
@@ -1588,6 +1591,14 @@ public class ApiController {
 
                     int result = dbConnService.update("updateLastAccess", map);
 
+                    list = dbConnService.select("getUsersInfo", map);
+
+                    String token = new JwtProvider().jwtCreater(
+                            Integer.parseInt(list.get(0).get("userIdx").toString())
+                    );
+
+                    rtnVal.put("token", token);
+
                     if(result == 0) {
                         error = "LastAccess update failed";
                     }
@@ -1662,6 +1673,7 @@ public class ApiController {
         return rtnVal;
     }
 
+    // PT톡
     @RequestMapping(value="getUsersNotes", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 목록 보기",
             notes = "{}")
@@ -1678,15 +1690,13 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
-            map.put("noteCategory", "2");
-
             List<HashMap> list = dbConnService.select("getUsersNotes", map);
             HashMap infos = new HashMap();
 
             if(list.isEmpty()) {
                 error = "PT톡 목록을 불러올 수 없습니다.";
             } else {
-                infos.put("usersNotes", list);
+                infos.put("usersNote", list);
             }
 
             rtnVal.put("infos", infos);
@@ -1723,7 +1733,7 @@ public class ApiController {
             jsonData.forEach((key, value) -> map.put(key,value));
 
             map.put("noteCategory", "2");
-            map.put("replyCategory", "1");
+
 
             List<HashMap> list = dbConnService.select("getUsersNotesDetail", map);
             HashMap infos = new HashMap();
@@ -1733,11 +1743,24 @@ public class ApiController {
             } else {
                 infos.put("usersNotesDetail", list);
 
-                list = dbConnService.select("getNotesReplies", map);
+                Integer photoCount = (Integer) list.get(0).get("photoCount");
+                Integer replyCount = (Integer) list.get(0).get("replyCount");
 
-                if(list.isEmpty()) {
-                    infos.put("replies", "등록된 댓글이 없습니다.");
-                } else {
+                if(photoCount > 0) {
+                    map.put("photoCategory", "1");
+                    map.put("postIdx", map.get("noteIdx"));
+
+                    list = dbConnService.select("getImagesInfo", map);
+
+                    infos.put("imageInfo", list);
+                }
+
+                if(replyCount > 0) {
+                    map.put("replyCategory", "1");
+                    map.put("postIdx", map.get("noteIdx"));
+
+                    list = dbConnService.select("getNotesReplies", map);
+
                     infos.put("replies", list);
                 }
             }
@@ -1762,30 +1785,19 @@ public class ApiController {
     @ApiOperation(value = "PT톡 작성 - 일반 이용 후기",
             notes = "")
     public HashMap writeGeneralReview(
-            @ApiParam(name = "PTTrainerIdx", value = "후기 대상 식별번호", defaultValue = "1", required = true) @RequestParam(value = "PTTrainerIdx", required = true) Integer PTTrainerIdx,
-            @ApiParam(name = "userSatisfaction", value = "사용자 별점", defaultValue = "5", required = true) @RequestParam(value = "userSatisfaction", required = true) Integer userSatisfaction,
-            @ApiParam(name = "useStartDate", value = "이용권 사용 시작일", defaultValue = "2022-06-20", required = true) @RequestParam(value = "useStartDate", required = true) String useStartDate,
-            @ApiParam(name = "useEndDate", value = "이용권 사용 종료일", defaultValue = "2022-06-22", required = true) @RequestParam(value = "useEndDate", required = true) String useEndDate,
-            @ApiParam(name = "content", value = "후기 내용", defaultValue = "후기 작성 테스트", required = true) @RequestParam(value = "content", required = true) String content,
-            @ApiParam(name = "hashtag", value = "후기 해시태그", defaultValue = "#후기작성,#테스트중", required = true) @RequestParam(value = "hashtag", required = true) String hashtag,
-            @ApiParam(name = "userIdx", value = "후기 작성자 식별번호", defaultValue = "1", required = true) @RequestParam(value = "userIdx", required = true) int userIdx,
+            ReviewWriteForm reviewWriteForm,
             @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+        Integer noteCategory = 3;
+
         HashMap rtnVal = new HashMap();
         String error = null;
 
-        List fileList = new ArrayList<>();
+        reviewWriteForm.setNoteCategory(noteCategory);
 
         try{
-            HashMap data = new HashMap();
+            String converJson = gson.toJson(reviewWriteForm);
 
-            data.put("noteCategory", "3");
-            data.put("targetIdx", PTTrainerIdx);
-            data.put("userSatisfaction", userSatisfaction);
-            data.put("useStartDate", useStartDate);
-            data.put("useEndDate", useEndDate);
-            data.put("content", content);
-            data.put("hashtag", hashtag);
-            data.put("userIdx", userIdx);
+            HashMap data = gson.fromJson(converJson, HashMap.class);
 
             int result = dbConnService.insert("writeReview", data);
 
@@ -1824,7 +1836,12 @@ public class ApiController {
                             data.put("category", "1");
                             data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
 
-                            dbConnService.insert("boardUpload", data);
+                            result = dbConnService.insert("boardUpload", data);
+
+                            if(result > 0) {
+                                data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
+                                dbConnService.update("updateNotesPhotoCount", data);
+                            }
                         } catch (IOException e) {
                             e.printStackTrace();
                             error = "파일 업로드 실패";
@@ -1844,6 +1861,7 @@ public class ApiController {
             rtnVal.put("result", true);
         }
         rtnVal.put("errorMsg", error);
+
         return rtnVal;
     }
 
@@ -1893,30 +1911,19 @@ public class ApiController {
     @ApiOperation(value = "PT톡 작성 - 1회 체험 후기",
             notes = "")
     public HashMap writeExperienceReview(
-            @ApiParam(name = "PTTrainerIdx", value = "후기 대상 식별번호", defaultValue = "1", required = true) @RequestParam(value = "PTTrainerIdx", required = true) Integer PTTrainerIdx,
-            @ApiParam(name = "userSatisfaction", value = "사용자 별점", defaultValue = "5", required = true) @RequestParam(value = "userSatisfaction", required = true) Integer userSatisfaction,
-            @ApiParam(name = "dateStart", value = "이용권 사용 시작일", defaultValue = "2022-06-20", required = true) @RequestParam(value = "dateStart", required = true) String dateStart,
-            @ApiParam(name = "dateEnd", value = "이용권 사용 종료일", defaultValue = "2022-06-22", required = true) @RequestParam(value = "dateEnd", required = true) String dateEnd,
-            @ApiParam(name = "content", value = "후기 내용", defaultValue = "후기 작성 테스트", required = true) @RequestParam(value = "content", required = true) String content,
-            @ApiParam(name = "hashtag", value = "후기 해시태그", defaultValue = "#후기작성,#테스트중", required = true) @RequestParam(value = "hashtag", required = true) String hashtag,
-            @ApiParam(name = "userIdx", value = "후기 작성자 식별번호", defaultValue = "1", required = true) @RequestParam(value = "userIdx", required = true) int userIdx,
+            ReviewWriteForm reviewWriteForm,
             @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+        Integer noteCategory = 2;
+
         HashMap rtnVal = new HashMap();
         String error = null;
 
-        List fileList = new ArrayList<>();
+        reviewWriteForm.setNoteCategory(noteCategory);
 
         try{
-            HashMap data = new HashMap();
+            String converJson = gson.toJson(reviewWriteForm);
 
-            data.put("noteCategory", "2");
-            data.put("targetIdx", PTTrainerIdx);
-            data.put("userSatisfaction", userSatisfaction);
-            data.put("useStartDate", dateStart);
-            data.put("useEndDate", dateEnd);
-            data.put("content", content);
-            data.put("hashtag", hashtag);
-            data.put("userIdx", userIdx);
+            HashMap data = gson.fromJson(converJson, HashMap.class);
 
             int result = dbConnService.insert("writeReview", data);
 
@@ -1955,7 +1962,12 @@ public class ApiController {
                             data.put("category", "1");
                             data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
 
-                            dbConnService.insert("boardUpload", data);
+                            result = dbConnService.insert("boardUpload", data);
+
+                            if(result > 0) {
+                                data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
+                                dbConnService.update("updateNotesPhotoCount", data);
+                            }
                         } catch (IOException e) {
                             e.printStackTrace();
                             error = "파일 업로드 실패";
@@ -1965,7 +1977,7 @@ public class ApiController {
             }
         } catch (Exception e) {
             e.printStackTrace();
-                   error = "정보를 파싱하지 못했습니다.";
+            error = "정보를 파싱하지 못했습니다.";
         }
 
         if (error!=null) {
@@ -2041,7 +2053,7 @@ public class ApiController {
             if(result == 0) {
                 error = "후기 댓글 작성 실패";
             } else {
-                dbConnService.update("updateReplyCount", map);
+                dbConnService.update("updateNotesReplyCount", map);
             }
         } catch (ParseException e) {
             e.printStackTrace();
@@ -2114,12 +2126,20 @@ public class ApiController {
             map.put("category", "1");
             map.put("targetIdx", map.get("noteIdx"));
 
-            int result = dbConnService.insert("likeNotes", map);
+            List<HashMap> list = dbConnService.select("getUsersLikes", map);
 
-            if(result == 0) {
-                error = "후기 게시글 좋아요 실패";
+            if(list.isEmpty()) {
+                int result = dbConnService.insert("likePosts", map);
+
+                if(result == 0) {
+                    error = "후기 게시글 좋아요 실패";
+                } else {
+                    dbConnService.update("updateNotesLikeCount", map);
+                }
             } else {
-                dbConnService.update("updateLikeCount", map);
+                // 이미 좋아요 된 게시글이면 삭제 진행?
+//                dbConnService.delete("deleteLikePosts", map);
+                error = "이미 좋아요된 게시글입니다.";
             }
         } catch (ParseException e) {
             e.printStackTrace();
@@ -2136,12 +2156,12 @@ public class ApiController {
         return rtnVal;
     }
 
-    @RequestMapping(value="usersLikesIt", method = RequestMethod.POST)
+    @RequestMapping(value="usersNotesLikesIt", method = RequestMethod.POST)
     @ApiOperation(value = "사용자의 후기 게시글 좋아요 여부",
-            notes = "{\"userIdx\":\"13\", \"idx\":\"1\"}")
-    public HashMap usersLikesIt(@RequestBody String data) {
+            notes = "{\"userIdx\":\"13\", \"noteIdx\":\"1\"}")
+    public HashMap usersNotesLikesIt(@RequestBody String data) {
         log.info("test");
-        log.info("####usersLikesIt##### : " + data);
+        log.info("####usersNotesLikesIt##### : " + data);
         HashMap rtnVal = new HashMap();
 
         JSONParser parser = new JSONParser();
@@ -2154,7 +2174,7 @@ public class ApiController {
             jsonData.forEach((key, value) -> map.put(key,value));
 
             map.put("category", "1");
-            map.put("targetIdx", map.get("idx"));
+            map.put("targetIdx", map.get("noteIdx"));
 
             List<HashMap> list = dbConnService.select("getUsersLikes", map);
             HashMap infos = new HashMap();
@@ -2163,6 +2183,624 @@ public class ApiController {
                 infos.put("usersLikesYN", false);
             } else {
                 infos.put("usersLikesYN", true);
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    // 자유톡
+    @RequestMapping(value="getFreeTalks", method = RequestMethod.POST)
+    @ApiOperation(value = "자유톡 목록 보기",
+            notes = "{}")
+    public HashMap getFreeTalks(@RequestBody String data) {
+        log.info("####getFreeTalks##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("getFreeTalks", map);
+            HashMap infos = new HashMap();
+
+            if(list.isEmpty()) {
+                error = "자유톡 목록을 불러올 수 없습니다.";
+            } else {
+                infos.put("freeTalks", list);
+            }
+
+            rtnVal.put("infos", infos);
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="getFreeTalkDetail", method = RequestMethod.POST)
+    @ApiOperation(value = "자유톡 상세 보기",
+            notes = "{\"freeTalkIdx\":\"1\"}")
+    public HashMap getFreeTalkDetail(@RequestBody String data) {
+        log.info("####getFreeTalkDetail##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            List<HashMap> list = dbConnService.select("getFreeTalkDetail", map);
+            HashMap infos = new HashMap();
+
+            if(list.isEmpty()) {
+                error = "자유톡 상세보기를 불러올 수 없습니다.";
+            } else {
+                infos.put("freeTalkDetail", list);
+
+                Integer photoCount = (Integer) list.get(0).get("photoCount");
+                Integer replyCount = (Integer) list.get(0).get("replyCount");
+
+                if (photoCount > 0) {
+                    map.put("photoCategory", "2");
+                    map.put("postIdx", map.get("freeTalkIdx"));
+
+                    list = dbConnService.select("getImagesInfo", map);
+
+                    infos.put("imageInfo", list);
+                }
+
+                if(replyCount > 0) {
+                    map.put("replyCategory", "2");
+                    map.put("postIdx", map.get("freeTalkIdx"));
+
+                    list = dbConnService.select("getNotesReplies", map);
+
+                    infos.put("replies", list);
+                }
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="writeFreeTalks", method = RequestMethod.POST)
+    @ApiOperation(value = "자유톡 작성",
+            notes = "")
+    public HashMap writeFreeTalks(
+            FreeTalksWriteForm freeTalksWriteForm,
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+        HashMap rtnVal = new HashMap();
+        String error = null;
+
+        Integer writerIdx = freeTalksWriteForm.getWriterIdx();
+        HashMap map = dbConnService.selectIdx("getUsersInfo", writerIdx);
+
+        String writerName = String.valueOf(map.get("userName"));
+        freeTalksWriteForm.setWriterName(writerName);
+
+        try{
+            String converJson = gson.toJson(freeTalksWriteForm);
+
+            HashMap data = gson.fromJson(converJson, HashMap.class);
+
+            int result = dbConnService.insert("writeFreeTalk", data);
+
+            if(result == 0) {
+                error = "자유톡 작성 실패";
+            } else {
+                String filename = null;
+                S3Service.FileGroupType groupType = S3Service.FileGroupType.Board;
+
+                for(MultipartFile multipartFile : multipartFiles) {
+                    if(!multipartFile.isEmpty()) {
+                        try{
+                            filename = s3Service.uploadWithUUID(multipartFile, groupType);
+
+                            log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+
+                            S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+                            log.info("uploaded image file : " + imgFileInfo.toString());
+                            S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+                            log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+
+                            log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                            BufferedImage imgBuf = null;
+                            String base64 = null;
+                            try {
+                                imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+                                base64 = S3Service.encodeBase64(imgBuf);
+                                rtnVal.put("img_data", base64);
+
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                error = "이미지파일 base64 변환 실패!";
+                            }
+
+                            data.put("filename", filename);
+                            data.put("category", "2");
+                            data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+
+                            result = dbConnService.insert("boardUpload", data);
+
+                            if(result > 0) {
+                                data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
+                                dbConnService.update("updateFreeTalksPhotoCount", data);
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            error = "파일 업로드 실패";
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="deleteFreeTalk", method = RequestMethod.POST)
+    @ApiOperation(value = "자유톡 삭제",
+            notes = "{\"freeTalkIdx\":\"1\"}")
+    public HashMap deleteFreeTalk(@RequestBody String data) {
+        log.info("####deleteFreeTalk##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            int result = dbConnService.update("deleteFreeTalk", map);
+
+            if(result == 0) {
+                error = "자유톡 삭제 실패";
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="writeReplyToFreeTalk", method = RequestMethod.POST)
+    @ApiOperation(value = "자유톡 댓글 작성",
+            notes = "{\"freeTalkIdx\":\"2\", \"userIdx\":\"13\", \"content\":\"후기 댓글 작성\"," +
+                    " \"hiddenYN\":\"0\"\n}")
+    public HashMap writeReplyToFreeTalk(@RequestBody String data) {
+        log.info("####writeReplyToFreeTalk##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("category", "2");
+            map.put("targetIdx", map.get("freeTalkIdx"));
+
+            int result = dbConnService.insert("writeReply", map);
+
+            if(result == 0) {
+                error = "후기 댓글 작성 실패";
+            } else {
+                dbConnService.update("updateFreeTalksReplyCount", map);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="likeFreeTalks", method = RequestMethod.POST)
+    @ApiOperation(value = "자유톡 좋아요",
+            notes = "{\"freeTalkIdx\":\"2\", \"userIdx\":\"13\"}")
+    public HashMap likeFreeTalks(@RequestBody String data) {
+        log.info("####likeFreeTalks##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("category", "2");
+            map.put("targetIdx", map.get("freeTalkIdx"));
+
+            List<HashMap> list = dbConnService.select("getUsersLikes", map);
+
+            if(list.isEmpty()) {
+                int result = dbConnService.insert("likePosts", map);
+
+                if(result == 0) {
+                    error = "자유톡 게시글 좋아요 실패";
+                } else {
+                    dbConnService.update("updateFreeTalksLikeCount", map);
+                }
+            } else {
+                // 이미 좋아요 된 게시글이면 삭제 진행?
+//                dbConnService.delete("deleteLikePosts", map);
+                error = "이미 좋아요된 게시글입니다.";
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="usersFreeTalksLikesIt", method = RequestMethod.POST)
+    @ApiOperation(value = "사용자의 자유톡 게시글 좋아요 여부",
+            notes = "{\"userIdx\":\"13\", \"freeTalkIdx\":\"1\"}")
+    public HashMap usersFreeTalksLikesIt(@RequestBody String data) {
+        log.info("####usersLikesIt##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            map.put("category", "2");
+            map.put("targetIdx", map.get("freeTalkIdx"));
+
+            List<HashMap> list = dbConnService.select("getUsersLikes", map);
+            HashMap infos = new HashMap();
+
+            if(list.isEmpty()) {
+                infos.put("usersLikesYN", false);
+            } else {
+                infos.put("usersLikesYN", true);
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    // 나의 톡톡
+    @RequestMapping(value="getUserLikesList", method = RequestMethod.POST)
+    @ApiOperation(value = "나의 톡톡 - 좋아요",
+            notes = "{\"userIdx\":\"13\"}")
+    public HashMap getUserLikesList(@RequestBody String data) {
+        log.info("####getUserLikesList##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+            HashMap infos = new HashMap();
+
+            // 자유톡
+            map.put("category", "2");
+
+            List<HashMap> list = dbConnService.select("getUserLikesFreeTalks", map);
+
+            if(list.isEmpty()) {
+                error = "좋아요한 내역이 없어요.";
+            } else {
+                infos.put("userLikeFreeTalks", list);
+            }
+
+            // 운동톡
+            map.put("category", "1");
+            list = dbConnService.select("getUserLikesNotes", map);
+
+            if(list.isEmpty()) {
+                error = "좋아요한 내역이 없어요.";
+            } else {
+                infos.put("userLikeNotes", list);
+            }
+
+            // 성형톡 추가
+
+
+            rtnVal.put("infos", infos);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="getUserPostsList", method = RequestMethod.POST)
+    @ApiOperation(value = "나의 톡톡 - 톡톡",
+            notes = "{\"userIdx\":\"13\"}")
+    public HashMap getUserPostsList(@RequestBody String data) {
+        log.info("####getUserPostsList##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+            HashMap infos = new HashMap();
+
+            // 자유톡
+            List<HashMap> list = dbConnService.select("getUserWriteFreeTalks", map);
+
+            if(list.isEmpty()) {
+                error = "작성한 게시글이 없어요.";
+            } else {
+                infos.put("userWriteFreeTalks", list);
+            }
+
+            // 운동톡
+            list = dbConnService.select("getUserWriteNotes", map);
+
+            if(list.isEmpty()) {
+                error = "작성한 게시글이 없어요.";
+            } else {
+                infos.put("userWriteNotes", list);
+            }
+
+            // 성형톡 추가
+
+
+            rtnVal.put("infos", infos);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="getUserWriteReply", method = RequestMethod.POST)
+    @ApiOperation(value = "나의 톡톡 - 댓글",
+            notes = "{\"userIdx\":\"13\"}")
+    public HashMap getUserWriteReply(@RequestBody String data) {
+        log.info("####getUserWriteReply##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+            HashMap infos = new HashMap();
+
+            // 자유톡
+            List<HashMap> list = dbConnService.select("getUserWriteReply", map);
+
+            if(list.isEmpty()) {
+                error = "작성한 댓글이 없어요.";
+            } else {
+                infos.put("userWriteReply", list);
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="getReplyPost", method = RequestMethod.POST)
+    @ApiOperation(value = "나의 톡톡 - 댓글 상세보기",
+            notes = "{\"boardCategory\":\"1\", \"targetIdx\":\"2\"}")
+    public HashMap getReplyPost(@RequestBody String data) {
+        log.info("####getReplyPost##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+            HashMap infos = new HashMap();
+
+            if(map.get("boardCategory").equals("1")) {
+                // PT톡(후기)
+                map.put("noteIdx", map.get("targetIdx"));
+
+                List<HashMap> list = dbConnService.select("getUsersNotesDetail", map);
+
+                if(list.isEmpty()) {
+                    error = "인덱스" + map.get("noteIdx") + "번 게시글을 찾을 수 없습니다.";
+                } else {
+                    infos.put("usersNotesDetail", list);
+
+                    Integer photoCount = (Integer) list.get(0).get("photoCount");
+                    Integer replyCount = (Integer) list.get(0).get("replyCount");
+
+                    if(photoCount > 0) {
+                        map.put("photoCategory", "1");
+                        map.put("postIdx", map.get("noteIdx"));
+
+                        list = dbConnService.select("getImagesInfo", map);
+
+                        infos.put("imageInfo", list);
+                    }
+
+                    if(replyCount > 0) {
+                        map.put("replyCategory", "1");
+                        map.put("postIdx", map.get("noteIdx"));
+
+                        list = dbConnService.select("getNotesReplies", map);
+
+                        infos.put("replies", list);
+                    }
+                }
+            } else if(map.get("boardCategory").equals("2")) {
+                // 자유톡
+                map.put("freeTalkIdx", map.get("targetIdx"));
+
+                List<HashMap> list = dbConnService.select("getFreeTalkDetail", map);
+                if(list.isEmpty()) {
+                    error = "자유톡 상세보기를 불러올 수 없습니다.";
+                } else {
+                    infos.put("freeTalkDetil", list);
+
+                    Integer photoCount = (Integer) list.get(0).get("photoCount");
+                    Integer replyCount = (Integer) list.get(0).get("replyCount");
+
+                    if (photoCount > 0) {
+                        map.put("photoCategory", "2");
+                        map.put("postIdx", map.get("freeTalkIdx"));
+
+                        list = dbConnService.select("getImagesInfo", map);
+
+                        infos.put("imageInfo", list);
+                    }
+
+                    if (replyCount > 0) {
+                        map.put("replyCategory", "2");
+                        map.put("postIdx", map.get("freeTalkIdx"));
+
+                        list = dbConnService.select("getNotesReplies", map);
+
+                        infos.put("replies", list);
+                    }
+                }
+            } else {
+                error = "존재하지 않는 게시판 카테고리입니다.";
             }
 
             rtnVal.put("infos", infos);
