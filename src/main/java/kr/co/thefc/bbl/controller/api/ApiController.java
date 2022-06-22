@@ -1134,6 +1134,44 @@ public class ApiController {
         return rtnVal;
     }
 
+    @RequestMapping(value="/deleteUserPTRecords", method = RequestMethod.POST)
+    @ApiOperation(value = "개인 운동 일정 삭제", notes = "{\"recordIdx\":\"9\"}")
+    public HashMap deleteUserPTRecords(@RequestBody String data) {
+        log.info("####deleteUserPTRecords##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            int result = dbConnService.delete("deleteUserPTRecord", map);
+
+            if(result == 0) {
+                error = "레코드 삭제 실패";
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
     @RequestMapping(value="/getUserPTRecordsWithTrainer", method = RequestMethod.POST)
     @ApiOperation(value = "트레이너가 등록한 운동 일정 보기", notes = "{\"userIdx\":\"1\"}")
     public HashMap getUserPTRecordsWithTrainer(@RequestBody String data) {
@@ -2070,6 +2108,43 @@ public class ApiController {
         return rtnVal;
     }
 
+    @RequestMapping(value="updateReply", method = RequestMethod.POST)
+    @ApiOperation(value = "댓글 수정",
+            notes = "{\"replyIdx\":\"1\", \"content\":\"댓글 수정하기\", \"hiddenYN\":\"0\"}")
+    public HashMap updateReply(@RequestBody String data) {
+        log.info("####updateReply##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            int result = dbConnService.update("updateReply", map);
+
+            if(result == 0) {
+                error = "댓글 수정 실패";
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
     @RequestMapping(value="deleteReply", method = RequestMethod.POST)
     @ApiOperation(value = "댓글 삭제",
             notes = "{\"replyIdx\":\"1\"}")
@@ -2086,7 +2161,7 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
-            int result = dbConnService.delete("deleteReply", map);
+            int result = dbConnService.update("deleteReply", map);
 
             if(result == 0) {
                 error = "댓글 삭제 실패";

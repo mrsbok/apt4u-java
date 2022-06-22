@@ -702,7 +702,7 @@
 
     <select id="getUserPTRecords" resultType="java.util.HashMap">
     select
-        upr.idx,
+        upr.idx as recordIdx,
         upr.date,
         upr.exercise_category as exerciseCategory,
         upr.exercise_count as exerciseCount,
@@ -719,9 +719,17 @@
         upr.user_idx = #{userIdx} and upr.recorded_by = "0"
     </select>
 
+    <delete id="deleteUserPTRecord">
+    delete from upr, upc
+        using users_pt_records as upr
+        left join user_pt_contents as upc
+        on upr.idx = upc.record_idx
+    where upr.idx = #{recordIdx}
+    </delete>
+
     <select id="getUserPTRecordsWithTrainer" resultType="java.util.HashMap">
         select
-            upr.idx,
+            upr.idx as recordIdx,
             upr.pt_trainer_idx as PTTrainerIdx,
             ptib.pt_trainer_name as PTTrainerName,
             ptib.nick_name as nickName,
@@ -1244,10 +1252,25 @@
         VALUE (#{category}, #{targetIdx}, #{userIdx}, #{content}, now(), #{hiddenYN});
     </insert>
 
-    <delete id="deleteReply">
-        delete from reply
-        where iseq = #{replyIdx}
-    </delete>
+    <update id="updateReply">
+        UPDATE
+            reply
+        SET
+            content = #{content},
+            update_date = now(),
+            hidden_yn = #{hiddenYN}
+        WHERE
+            iseq = #{replyIdx};
+    </update>
+
+    <update id="deleteReply">
+        UPDATE
+            reply
+        SET
+            del_yn = '1'
+        WHERE
+            iseq = #{replyIdx};
+    </update>
 
     <update id="updateNotesReplyCount" parameterType="java.util.HashMap">
         update users_notes
