@@ -879,7 +879,8 @@
                 local_area,
                 telephone,
                 marketingyn,
-                numof_interest)
+                numof_interest,
+                user_img_idx)
         values (
                 #{userIdx},
                 #{name},
@@ -892,7 +893,8 @@
                 #{localArea},
                 #{telephone},
                 #{marketingYN},
-                "0")
+                "0",
+                #{imgIdx})
     </insert>
 
     <update id="setNumOfInterest" parameterType="java.util.HashMap">
@@ -1113,7 +1115,10 @@
 
     <select id="getNotesReplies" resultType="java.util.HashMap">
         select
-        	re.iseq as replyIdx,
+            re.iseq as replyIdx,
+            ui.user_img_idx as userImgIdx,
+            img.image_path as imagePath,
+            img.image_file_name as imageFileName,
             re.user_idx as writerIdx,
             ui.user_name as writerName,
             ui.nick_name as writerNickName,
@@ -1122,11 +1127,15 @@
             re.content,
             re.hidden_yn as hiddenYN
         from
-        	reply as re
+            reply as re
         left join
-        	users_info as ui
+            users_info as ui
         on
-        	ui.user_idx = re.user_idx
+            ui.user_idx = re.user_idx
+        left join
+        	users_images as img
+        on
+        	ui.user_img_idx = img.iseq
         where
         	category = #{replyCategory} AND target_idx = #{postIdx} AND del_yn = '0'
     </select>
@@ -1482,4 +1491,17 @@
         WHERE
         	re.user_idx = #{userIdx} AND re.del_yn = "0"
     </select>
+
+    <insert id="UserProfileImgUpload" parameterType="java.util.HashMap">
+        INSERT INTO
+            users_images(
+                image_file_name,
+                image_path
+            )
+        VALUES
+            (
+                #{filename},
+                #{fileurl}
+            )
+    </insert>
 </mapper>

@@ -1506,6 +1506,14 @@ public class ApiController {
                map.put("certType", "1");
                map.put("password", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("password")));
 
+               Random random = new Random();
+
+               // 프로필 기본 이미지 인덱스 초기단계 1~3
+               int ranInt = random.nextInt(3) + 1;
+               System.out.println(ranInt);
+
+               map.put("imgIdx", ranInt);
+
                 dbConnService.insert("registerUser", map);
                 dbConnService.insert("registerUser_authentication", map);
                 dbConnService.insert("registerUser_info", map);
@@ -2892,4 +2900,5 @@ public class ApiController {
            rtnVal.put("errorMsg", error);
         return rtnVal;
     }
+
 }
