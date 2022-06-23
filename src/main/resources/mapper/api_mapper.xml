@@ -1414,8 +1414,8 @@
     <select id="getUserWriteFreeTalks" resultType="java.util.HashMap">
         SELECT
             ft.idx as freeTalkIdx,
-            atm.image_path as imagePath,
-            atm.image_file_name as imageFileName,
+            afm.image_path as imagePath,
+            afm.image_file_name as imageFileName,
             ft.title,
             ft.writer as writerIdx,
             ft.writer_name as writerName,
@@ -1428,9 +1428,9 @@
         FROM
             free_talks as ft
         LEFT JOIN
-            attached_file_management as atm
+            attached_file_management as afm
         ON
-            atm.target_idx = ft.idx AND atm.category = "2" AND afm.main_image_yn = 1
+            afm.target_idx = ft.idx AND afm.category = "2" AND afm.main_image_yn = 1
         LEFT JOIN
             users_info as ui
         ON
