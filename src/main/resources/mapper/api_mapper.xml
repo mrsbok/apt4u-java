@@ -1222,14 +1222,32 @@
 
     <select id="getPTTrainersPTUsers" resultType="java.util.HashMap">
         SELECT
-        	pt_trainer_idx as PTTrainerIdx,
-            user_idx as userIdx,
-            date_start as dateStart,
-            date_end as dateEnd
+        	ptpu.pt_trainer_idx as PTTrainerIdx,
+        	ptpu.user_idx as userIdx,
+        	ptpu.date_start as dateStart,
+        	ptpu.date_end as dateEnd,
+            ptpu.product_idx as productIdx,
+            p.seller_idx as PTTrainerIdx,
+            ptib.pt_trainer_name as PTTrainerName,
+            ptib.nick_name as nickName,
+            ptib.affilated_center as affilatedCenter,
+        	sib.store_name as storeName
         FROM
-        	pt_trainer_pt_users
+        	pt_trainer_pt_users as ptpu
+        LEFT JOIN
+        	product as p
+        ON
+        	ptpu.product_idx = p.idx
+        LEFT JOIN
+        	pt_trainer_info_basic as ptib
+        ON
+        	p.seller_idx = ptib.pt_trainer_idx
+        LEFT JOIN
+        	stores_info_basic as sib
+        ON
+        	sib.store_idx = ptib.affilated_center
         WHERE
-        	user_idx = #{userIdx}
+        	ptpu.user_idx = #{userIdx}
     </select>
 
     <update id="deleteNote">

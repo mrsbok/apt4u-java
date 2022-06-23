@@ -3,7 +3,6 @@ package kr.co.thefc.bbl.controller.api;
 import com.amazonaws.services.s3.model.S3Object;
 import com.google.gson.Gson;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.models.auth.In;
 import kr.co.thefc.bbl.converter.JwtProvider;
 import kr.co.thefc.bbl.converter.PasswordCryptConverter;
 import kr.co.thefc.bbl.model.writeForm.FreeTalksWriteForm;
