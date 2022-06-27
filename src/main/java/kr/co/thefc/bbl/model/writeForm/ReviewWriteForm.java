@@ -29,7 +29,7 @@ public class ReviewWriteForm {
     @ApiModelProperty(value = "해시태그", required = false, example = "#해시태그")
     String hashtag;
 
-    @ApiModelProperty(value = "사용자 식별 번호", required = true, example = "1")
+    @ApiModelProperty(value = "사용자 식별 번호", example = "1")
     Integer userIdx;
 
     @ApiModelProperty(value = "리뷰 사진 공개 여부(0: 비공개, 1: 공개)", example = "1")

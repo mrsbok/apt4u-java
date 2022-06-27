@@ -15,7 +15,7 @@ public class FreeTalksWriteForm {
     @ApiModelProperty(value = "자유톡 내용", required = true, example = "테스트 내용입니다.")
     String content;
 
-    @ApiModelProperty(value = "자유톡 작성자 식별 번호", required = true, example = "1")
+    @ApiModelProperty(value = "자유톡 작성자 식별 번호", example = "1")
     Integer writerIdx;
 
     String writerName;

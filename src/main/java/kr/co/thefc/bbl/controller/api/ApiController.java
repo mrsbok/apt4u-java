@@ -2,6 +2,7 @@ package kr.co.thefc.bbl.controller.api;
 
 import com.amazonaws.services.s3.model.S3Object;
 import com.google.gson.Gson;
+import io.jsonwebtoken.Jwts;
 import io.swagger.annotations.ApiOperation;
 import kr.co.thefc.bbl.converter.JwtProvider;
 import kr.co.thefc.bbl.converter.PasswordCryptConverter;
@@ -19,8 +20,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Slf4j
@@ -317,25 +320,25 @@ public class ApiController {
 
     @RequestMapping(value="/getShoppingItems", method = RequestMethod.POST)
     @ApiOperation(value = "장바구니 목록 조회",
-            notes = "{\"userIdx\":\"1\"}")
-    public HashMap getShoppingItems(@RequestBody String data) {
-        log.info("####getShoppingItems##### : " + data);
+            notes = "")
+    public HashMap getShoppingItems(HttpServletRequest auth) {
+        log.info("####getShoppingItems#####");
         HashMap rtnVal = new HashMap();
 
-        JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             List<HashMap> list = dbConnService.select("getShoppingItems", map);
 
             if(list.isEmpty()) {
-                error = "PTTrainer index not found";
+                error = "장바구니가 비어있습니다.";
             } else {
                 HashMap infos = new HashMap();
                 infos.put("usersShoppingBasketProducts", list);
@@ -343,7 +346,7 @@ public class ApiController {
                 rtnVal.put("infos", infos);
             }
 
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -361,9 +364,9 @@ public class ApiController {
 
     @RequestMapping(value="/addShoppingItems", method = RequestMethod.POST)
     @ApiOperation(value = "장바구니 상품 추가",
-            notes = "{\"userIdx\":\"1\", \"productIdx\":\"1\", \"productCategory\":\"1\", \"quantity\":\"1\"}" +
+            notes = "{\"productIdx\":\"1\", \"productCategory\":\"1\", \"quantity\":\"1\"}" +
                     "\n\nproductCategory(=CD_ProductClassification) 1: PTVoucher")
-    public HashMap addShoppingItems(@RequestBody String data) {
+    public HashMap addShoppingItems(@RequestBody String data, HttpServletRequest auth) {
         log.info("####addShoppingItems##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -376,6 +379,11 @@ public class ApiController {
             HashMap map = new HashMap();
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
             
             int result = dbConnService.insert("addShoppingItems", map);
 
@@ -439,9 +447,9 @@ public class ApiController {
     // 찜
     @RequestMapping(value="/getUserPick", method = RequestMethod.POST)
     @ApiOperation(value = "사용자 찜 목록",
-            notes = "{\"userIdx\":\"1\", \"category\":\"1\"}" +
+            notes = "{\"category\":\"1\"}" +
                     "\n\ncategory 1:업체, 2:상품, 3:트레이너")
-    public HashMap getUserPick(@RequestBody String data) {
+    public HashMap getUserPick(@RequestBody String data, HttpServletRequest auth) {
         log.info("####getUserPick##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -454,6 +462,11 @@ public class ApiController {
             HashMap map = new HashMap();
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             List<HashMap> list = null;
 
@@ -619,9 +632,9 @@ public class ApiController {
 
     @RequestMapping(value="/getUsersPicks", method = RequestMethod.POST)
     @ApiOperation(value = "사용자의 상품 찜 여부",
-            notes = "{\"userIdx\":\"1\", \"category\":\"2\", \"pickedItemIdx\":\"1\"}" +
+            notes = "{\"category\":\"2\", \"pickedItemIdx\":\"1\"}" +
                     "\n\ncategory 1:업체, 2:상품, 3:트레이너")
-    public HashMap getUsersPicks(@RequestBody String data) {
+    public HashMap getUsersPicks(@RequestBody String data, HttpServletRequest auth) {
         log.info("####getUsersPicks##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -634,6 +647,11 @@ public class ApiController {
             HashMap map = new HashMap();
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             List<HashMap> list = dbConnService.select("getUsersPicks", map);
             HashMap infos = new HashMap();
@@ -664,9 +682,9 @@ public class ApiController {
 
     @RequestMapping(value="/addUserPick", method = RequestMethod.POST)
     @ApiOperation(value = "사용자 찜 상품 추가",
-            notes = "{\"userIdx\":\"1\", \"category\":\"2\", \"pickedItemIdx\":\"1\"}" +
+            notes = "{\"category\":\"2\", \"pickedItemIdx\":\"1\"}" +
                     "\n\ncategory 1:업체, 2:상품, 3:트레이너")
-    public HashMap addUserPick(@RequestBody String data) {
+    public HashMap addUserPick(@RequestBody String data, HttpServletRequest auth) {
         log.info("####addUserPick##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -679,6 +697,11 @@ public class ApiController {
             HashMap map = new HashMap();
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             List<HashMap> list = dbConnService.select("getUsersPicks", map);
             HashMap infos = new HashMap();
@@ -712,8 +735,8 @@ public class ApiController {
 
     @RequestMapping(value="/deleteUserPick", method = RequestMethod.POST)
     @ApiOperation(value = "사용자 찜 상품 삭제",
-            notes = "{\"userIdx\":\"1\", \"category\":\"2\", \"pickedItemIdx\":\"1\"}")
-    public HashMap deleteUserPick(@RequestBody String data) {
+            notes = "{\"category\":\"2\", \"pickedItemIdx\":\"1\"}")
+    public HashMap deleteUserPick(@RequestBody String data, HttpServletRequest auth) {
         log.info("####deleteUserPick##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -726,6 +749,11 @@ public class ApiController {
             HashMap map = new HashMap();
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             List<HashMap> list = dbConnService.select("getUsersPicks", map);
             HashMap infos = new HashMap();
@@ -760,7 +788,7 @@ public class ApiController {
 
     @RequestMapping(value="/buyProduct", method = RequestMethod.POST)
     @ApiOperation(value = "상품 구매",
-            notes = "{\"userIdx\":\"1\", \"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
+            notes = "{\"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
                     "\"totalAmount\":\"25000\", \"billingAmount\":\"15000\"," +
                     "\n\n\"products\":[\n\n{\"productCategory\":\"1\", \"productIdx\":\"8\", \"price\":\"25000\", " +
                     "\"quantity\":\"1\", \"amount\":\"25000\", \"sellerIdx\":\"16\"}\n\n]}" +
@@ -768,7 +796,7 @@ public class ApiController {
                     "\n\nproductCategory 1: PTVoucher, ... " +
                     "\n\nproducts: 여러 개의 데이터가 될 수 있음" +
                     "\n\nsellerIdx와 storeIdx 중 하나의 데이터가 필요")
-    public HashMap buyProduct(@RequestBody String data) {
+    public HashMap buyProduct(@RequestBody String data, HttpServletRequest auth) {
         log.info("####buyProduct##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -785,7 +813,10 @@ public class ApiController {
             JSONArray arr = (JSONArray) map.get("products");
 
             int kindOfItem = arr.size();
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
 
+            map.put("userIdx", idx);
             map.put("kindOfItem", kindOfItem);
 
             int result = dbConnService.insert("insertTransaction", map);
@@ -829,20 +860,21 @@ public class ApiController {
 
     @RequestMapping(value="/getTransactions", method = RequestMethod.POST)
     @ApiOperation(value = "구매 목록 보기",
-            notes = "{\"userIdx\":\"1\"}")
-    public HashMap getTransactions(@RequestBody String data) {
-        log.info("####getTransactions##### : " + data);
+            notes = "")
+    public HashMap getTransactions(HttpServletRequest auth) {
+        log.info("####getTransactions#####");
         HashMap rtnVal = new HashMap();
 
         JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             List<HashMap> list = dbConnService.select("getTransactions", map);
 
@@ -855,7 +887,7 @@ public class ApiController {
                 rtnVal.put("infos", infos);
             }
 
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -979,20 +1011,20 @@ public class ApiController {
 
     @RequestMapping(value="/getCancelTransactions", method = RequestMethod.POST)
     @ApiOperation(value = "취소/환불 목록 보기",
-            notes = "{\"userIdx\":\"1\"}")
-    public HashMap getCancelTransactions(@RequestBody String data) {
-        log.info("####getCancelTransactions##### : " + data);
+            notes = "")
+    public HashMap getCancelTransactions(HttpServletRequest auth) {
+        log.info("####getCancelTransactions#####");
         HashMap rtnVal = new HashMap();
 
-        JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             List<HashMap> list = dbConnService.select("getCancelTransactions", map);
 
@@ -1005,7 +1037,7 @@ public class ApiController {
                 rtnVal.put("infos", infos);
             }
 
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -1023,13 +1055,13 @@ public class ApiController {
 
     @RequestMapping(value="/addUserPTRecords", method = RequestMethod.POST)
     @ApiOperation(value = "개인 운동 일정 등록",
-            notes = "{\"userIdx\":\"1\", \"date\":\"2022-03-24\", \"exerciseCategory\":\"1\", \"exerciseType\":\"2\", " +
+            notes = "{\"date\":\"2022-03-24\", \"exerciseCategory\":\"1\", \"exerciseType\":\"2\", " +
                     "\"exerciseName\":\"푸쉬업\", \"exerciseDetails\":\"70,0,10,5\"}" +
                     "\n\nexerciseCategory : 운동 종목(1: PT&헬스, 2: 필라테스&요가)" +
                     "\n\nexerciseType : PT 운동 구분(열거형 데이터 정의 필요)" +
                     "\n\nexerciseName : 운동 명칭" +
                     "\n\nexerciseDetails : 중량,지속시간,운동횟수,세트수 순서대로 기입 만약 데이터가 없으면 0이 들어가게")
-    public HashMap addUserPTRecords(@RequestBody String data) {
+    public HashMap addUserPTRecords(@RequestBody String data, HttpServletRequest auth) {
         log.info("####addUserPTRecords##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -1042,6 +1074,11 @@ public class ApiController {
             HashMap map = new HashMap();
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             int result = dbConnService.insert("addUserPTRecords", map);
 
@@ -1077,25 +1114,26 @@ public class ApiController {
     }
 
     @RequestMapping(value="/getUserPTRecords", method = RequestMethod.POST)
-    @ApiOperation(value = "개인 운동 일정 보기", notes = "{\"userIdx\":\"1\"}")
-    public HashMap getUserPTRecords(@RequestBody String data) {
-        log.info("####getUserPTRecords##### : " + data);
+    @ApiOperation(value = "개인 운동 일정 보기", notes = "")
+    public HashMap getUserPTRecords(HttpServletRequest auth) {
+        log.info("####getUserPTRecords#####");
         HashMap rtnVal = new HashMap();
 
         JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             List<HashMap> list = dbConnService.select("getUserPTRecords", map);
 
             if(list.isEmpty()) {
-                error = "User index " +jsonData.values() + " not found";
+                error = "User index " + idx + " not found";
             } else {
                 HashMap infos = new HashMap();
 
@@ -1117,7 +1155,7 @@ public class ApiController {
                 rtnVal.put("infos", infos);
             }
 
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -1172,24 +1210,26 @@ public class ApiController {
     }
 
     @RequestMapping(value="/getUserPTRecordsWithTrainer", method = RequestMethod.POST)
-    @ApiOperation(value = "트레이너가 등록한 운동 일정 보기", notes = "{\"userIdx\":\"1\"}")
-    public HashMap getUserPTRecordsWithTrainer(@RequestBody String data) {
-        log.info("####getUserPTRecordsWithTrainer##### : " + data);
+    @ApiOperation(value = "트레이너가 등록한 운동 일정 보기", notes = "")
+    public HashMap getUserPTRecordsWithTrainer(HttpServletRequest auth) {
+        log.info("####getUserPTRecordsWithTrainer#####");
         HashMap rtnVal = new HashMap();
 
         JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             List<HashMap> list = dbConnService.select("getUserPTRecordsWithTrainer", map);
 
             if(list.isEmpty()) {
-                error = "User index " +jsonData.values() + " not found";
+                error = "User index " + idx + " not found";
             } else {
                 HashMap infos = new HashMap();
 
@@ -1212,7 +1252,7 @@ public class ApiController {
                 rtnVal.put("infos", infos);
             }
 
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -1229,19 +1269,21 @@ public class ApiController {
     }
 
     @RequestMapping(value="/checkedUnreadMessage", method = RequestMethod.POST)
-    @ApiOperation(value = "읽지 않은 알림 확인", notes = "{\"userIdx\":\"1\"}")
-    public HashMap checkedUnreadMessage(@RequestBody String data) {
-        log.info("####checkedUnreadMessage##### : " + data);
+    @ApiOperation(value = "읽지 않은 알림 확인", notes = "")
+    public HashMap checkedUnreadMessage(HttpServletRequest auth) {
+        log.info("####checkedUnreadMessage#####");
         HashMap rtnVal = new HashMap();
 
         JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             // IDType 1:User, 2:Store, 3:PTTrainer, 4:BBL Manager
             map.put("IDType", "1");
@@ -1258,7 +1300,7 @@ public class ApiController {
 
             rtnVal.put("infos", infos);
 
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -1275,19 +1317,21 @@ public class ApiController {
         }
 
     @RequestMapping(value="/getScheduleMessages", method = RequestMethod.POST)
-    @ApiOperation(value = "일정 알림 메세지 보기", notes = "{\"userIdx\":\"1\"}")
-    public HashMap getScheduleMessages(@RequestBody String data) {
-        log.info("####getScheduleMessages##### : " + data);
+    @ApiOperation(value = "일정 알림 메세지 보기", notes = "")
+    public HashMap getScheduleMessages(HttpServletRequest auth) {
+        log.info("####getScheduleMessages#####");
         HashMap rtnVal = new HashMap();
 
         JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             // IDType 1:User, 2:Store, 3:PTTrainer, 4:BBL Manager
             map.put("IDType", "1");
@@ -1297,7 +1341,7 @@ public class ApiController {
             List<HashMap> list = dbConnService.select("getMessages", map);
 
             if(list.isEmpty()) {
-                error = "User index " +jsonData.values() + " messages not found";
+                error = "User index " + idx + " messages not found";
             } else {
                 HashMap infos = new HashMap();
                 infos.put("messages", list);
@@ -1305,7 +1349,7 @@ public class ApiController {
                 rtnVal.put("infos", infos);
             }
 
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -1373,10 +1417,10 @@ public class ApiController {
     @RequestMapping(value="/setScheduleConfirmed", method = RequestMethod.POST)
     @ApiOperation(value = "운동일정 승인 요청",
             notes = "{\"PTScheduleIdx\":\"15\", \"confirmed\":\"1\", \"messageIdx\":\"3\", " +
-                    "\"userIdx\":\"1\", \"receiverIdx\":\"1\"}" +
+                    "\"receiverIdx\":\"1\"}" +
                     "\n\n여기서 receiverIdx는 getScheduleMessagesDetail의 senderIdx" +
             "\n\nconfirmed 1:동의 2:비동의")
-    public HashMap setScheduleConfirmed(@RequestBody String data) {
+    public HashMap setScheduleConfirmed(@RequestBody String data, HttpServletRequest auth) {
         log.info("####setScheduleConfirmed##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -1388,6 +1432,11 @@ public class ApiController {
             HashMap map = new HashMap();
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             int result = dbConnService.update("setScheduleConfirmed", map);
 
@@ -1540,9 +1589,8 @@ public class ApiController {
 
     @RequestMapping(value="user/setInterests", method = RequestMethod.POST)
     @ApiOperation(value = "유저 - 관심분야 설정",
-            notes = "{\"userIdx\":\"15\", " +
-                    "\"interests\":[{\"interestCode\":\"1\"}, {\"interestCode\":\"2\"}]}")
-    public HashMap setUsersInterests(@RequestBody String data) {
+            notes = "{\"interests\":[{\"interestCode\":\"1\"}, {\"interestCode\":\"2\"}]}")
+    public HashMap setUsersInterests(@RequestBody String data, HttpServletRequest auth) {
         log.info("####setUsersInterests##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -1554,6 +1602,11 @@ public class ApiController {
             HashMap map = new HashMap();
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             JSONArray arr = (JSONArray) map.get("interests");
 
@@ -1639,7 +1692,7 @@ public class ApiController {
                     list = dbConnService.select("getUsersInfo", map);
 
                     String token = new JwtProvider().jwtCreater(
-                            Integer.parseInt(list.get(0).get("userIdx").toString())
+                            0, Integer.parseInt(list.get(0).get("userIdx").toString())
                     );
 
                     rtnVal.put("token", token);
@@ -1647,58 +1700,6 @@ public class ApiController {
                     if(result == 0) {
                         error = "LastAccess update failed";
                     }
-                }
-            }
-
-            rtnVal.put("infos", infos);
-        } catch (ParseException e) {
-            e.printStackTrace();
-            error = "정보를 파싱하지 못했습니다.";
-        }
-
-        if (error!=null) {
-            rtnVal.put("result", false);
-        }
-        else {
-            rtnVal.put("result", true);
-        }
-        rtnVal.put("errorMsg", error);
-        return rtnVal;
-    }
-
-    @RequestMapping(value="user/getUserInfo", method = RequestMethod.POST)
-    @ApiOperation(value = "유저 - 유저 정보 가져오기 ",
-            notes = "{\"email\":\"gildong@daum.net\", \"password\":\"12345\"}")
-    public HashMap getUserInfo(@RequestBody String data) {
-        log.info("####getUserInfo##### : " + data);
-        HashMap rtnVal = new HashMap();
-
-        JSONParser parser = new JSONParser();
-        String error = null;
-
-        try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-            HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
-
-            map.put("password", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("password")));
-
-            List<HashMap> list = dbConnService.select("getUserIdx", map);
-            HashMap infos = new HashMap();
-
-            if(list.isEmpty()) {
-                error = "email : " + map.get("email") + ", password : " + map.get("password") + " Not Found";
-            } else {
-                map.put("userIdx", list.get(0).get("userIdx"));
-
-                list = dbConnService.select("getUsersInfo", map);
-                infos.put("userInfo", list);
-
-                Integer numOfInterest = (Integer) list.get(0).get("numOfInterest");
-                if(numOfInterest > 0) {
-                    list = dbConnService.select("getInterests", map);
-                    infos.put("userInterests", list);
                 }
             }
 
@@ -1831,13 +1832,18 @@ public class ApiController {
             notes = "")
     public HashMap writeGeneralReview(
             ReviewWriteForm reviewWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+            HttpServletRequest auth) {
         Integer noteCategory = 3;
 
         HashMap rtnVal = new HashMap();
         String error = null;
 
+        String token = auth.getHeader("token");
+        int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
         reviewWriteForm.setNoteCategory(noteCategory);
+        reviewWriteForm.setUserIdx(idx);
 
         try{
             String converJson = gson.toJson(reviewWriteForm);
@@ -1917,13 +1923,18 @@ public class ApiController {
             notes = "")
     public HashMap updateGeneralReview(
             ReviewWriteForm reviewWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+            HttpServletRequest auth) {
         Integer noteCategory = 3;
 
         HashMap rtnVal = new HashMap();
         String error = null;
 
+        String token = auth.getHeader("token");
+        int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
         reviewWriteForm.setNoteCategory(noteCategory);
+        reviewWriteForm.setUserIdx(idx);
 
         try{
             String converJson = gson.toJson(reviewWriteForm);
@@ -2002,19 +2013,20 @@ public class ApiController {
 
     @RequestMapping(value="getPTTrainersPTUsers", method = RequestMethod.POST)
     @ApiOperation(value = "체험권 구매내역 조회",
-            notes = "{\"userIdx\":\"15\"}")
-    public HashMap getPTTrainersPTUsers(@RequestBody String data) {
-        log.info("####getPTTrainersPTUsers##### : " + data);
+            notes = "")
+    public HashMap getPTTrainersPTUsers(HttpServletRequest auth) {
+        log.info("####getPTTrainersPTUsers#####");
         HashMap rtnVal = new HashMap();
 
-        JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             List<HashMap> list = dbConnService.select("getPTTrainersPTUsers", map);
             HashMap infos = new HashMap();
@@ -2027,7 +2039,7 @@ public class ApiController {
 
             rtnVal.put("infos", infos);
 
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -2047,13 +2059,18 @@ public class ApiController {
             notes = "")
     public HashMap writeExperienceReview(
             ReviewWriteForm reviewWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+            HttpServletRequest auth) {
         Integer noteCategory = 2;
 
         HashMap rtnVal = new HashMap();
         String error = null;
 
+        String token = auth.getHeader("token");
+        int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
         reviewWriteForm.setNoteCategory(noteCategory);
+        reviewWriteForm.setUserIdx(idx);
 
         try{
             String converJson = gson.toJson(reviewWriteForm);
@@ -2133,13 +2150,18 @@ public class ApiController {
             notes = "")
     public HashMap updateExperienceReview(
             ReviewWriteForm reviewWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+            HttpServletRequest auth) {
         Integer noteCategory = 2;
 
         HashMap rtnVal = new HashMap();
         String error = null;
 
+        String token = auth.getHeader("token");
+        int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
         reviewWriteForm.setNoteCategory(noteCategory);
+        reviewWriteForm.setUserIdx(idx);
 
         try{
             String converJson = gson.toJson(reviewWriteForm);
@@ -2256,9 +2278,9 @@ public class ApiController {
 
     @RequestMapping(value="writeReplyToNote", method = RequestMethod.POST)
     @ApiOperation(value = "후기 댓글 작성",
-            notes = "{\"noteIdx\":\"2\", \"userIdx\":\"13\", \"content\":\"후기 댓글 작성\"," +
+            notes = "{\"noteIdx\":\"2\", \"content\":\"후기 댓글 작성\"," +
                     " \"hiddenYN\":\"0\"\n}")
-    public HashMap writeReplyToNote(@RequestBody String data) {
+    public HashMap writeReplyToNote(@RequestBody String data, HttpServletRequest auth) {
         log.info("####writeReplyToNote##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -2271,6 +2293,10 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
             map.put("category", "1");
             map.put("targetIdx", map.get("noteIdx"));
 
@@ -2299,7 +2325,7 @@ public class ApiController {
     @RequestMapping(value="updateReply", method = RequestMethod.POST)
     @ApiOperation(value = "댓글 수정",
             notes = "{\"replyIdx\":\"1\", \"content\":\"댓글 수정하기\", \"hiddenYN\":\"0\"}")
-    public HashMap updateReply(@RequestBody String data) {
+    public HashMap updateReply(@RequestBody String data, HttpServletRequest auth) {
         log.info("####updateReply##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -2311,6 +2337,11 @@ public class ApiController {
             HashMap map = new HashMap();
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
 
             int result = dbConnService.update("updateReply", map);
 
@@ -2372,8 +2403,8 @@ public class ApiController {
 
     @RequestMapping(value="likeNotes", method = RequestMethod.POST)
     @ApiOperation(value = "후기 좋아요",
-            notes = "{\"noteIdx\":\"2\", \"userIdx\":\"13\"}")
-    public HashMap likeNotes(@RequestBody String data) {
+            notes = "{\"noteIdx\":\"2\"}")
+    public HashMap likeNotes(@RequestBody String data, HttpServletRequest auth) {
         log.info("####likeNotes##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -2386,6 +2417,10 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
             map.put("category", "1");
             map.put("targetIdx", map.get("noteIdx"));
 
@@ -2421,8 +2456,8 @@ public class ApiController {
 
     @RequestMapping(value="usersNotesLikesIt", method = RequestMethod.POST)
     @ApiOperation(value = "사용자의 후기 게시글 좋아요 여부",
-            notes = "{\"userIdx\":\"13\", \"noteIdx\":\"1\"}")
-    public HashMap usersNotesLikesIt(@RequestBody String data) {
+            notes = "{\"noteIdx\":\"1\"}")
+    public HashMap usersNotesLikesIt(@RequestBody String data, HttpServletRequest auth) {
         log.info("test");
         log.info("####usersNotesLikesIt##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2436,6 +2471,10 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
             map.put("category", "1");
             map.put("targetIdx", map.get("noteIdx"));
 
@@ -2574,12 +2613,17 @@ public class ApiController {
             notes = "")
     public HashMap writeFreeTalks(
             FreeTalksWriteForm freeTalksWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+            HttpServletRequest auth) {
         HashMap rtnVal = new HashMap();
         String error = null;
 
-        Integer writerIdx = freeTalksWriteForm.getWriterIdx();
-        HashMap map = dbConnService.selectIdx("getUsersInfo", writerIdx);
+        String token = auth.getHeader("token");
+        int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+        freeTalksWriteForm.setWriterIdx(idx);
+
+        HashMap map = dbConnService.selectIdx("getUsersInfo", idx);
+
 
         String writerName = String.valueOf(map.get("userName"));
         freeTalksWriteForm.setWriterName(writerName);
@@ -2663,10 +2707,16 @@ public class ApiController {
             notes = "")
     public HashMap updateFreeTalks(
             FreeTalksWriteForm freeTalksWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+            HttpServletRequest auth) {
 
         HashMap rtnVal = new HashMap();
         String error = null;
+
+        String token = auth.getHeader("token");
+        int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+        freeTalksWriteForm.setWriterIdx(idx);
 
         try{
             String converJson = gson.toJson(freeTalksWriteForm);
@@ -2783,9 +2833,9 @@ public class ApiController {
 
     @RequestMapping(value="writeReplyToFreeTalk", method = RequestMethod.POST)
     @ApiOperation(value = "자유톡 댓글 작성",
-            notes = "{\"freeTalkIdx\":\"2\", \"userIdx\":\"13\", \"content\":\"후기 댓글 작성\"," +
+            notes = "{\"freeTalkIdx\":\"2\", \"content\":\"자유톡 댓글 작성\"," +
                     " \"hiddenYN\":\"0\"\n}")
-    public HashMap writeReplyToFreeTalk(@RequestBody String data) {
+    public HashMap writeReplyToFreeTalk(@RequestBody String data, HttpServletRequest auth) {
         log.info("####writeReplyToFreeTalk##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -2798,6 +2848,10 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
             map.put("category", "2");
             map.put("targetIdx", map.get("freeTalkIdx"));
 
@@ -2825,8 +2879,8 @@ public class ApiController {
 
     @RequestMapping(value="likeFreeTalks", method = RequestMethod.POST)
     @ApiOperation(value = "자유톡 좋아요",
-            notes = "{\"freeTalkIdx\":\"2\", \"userIdx\":\"13\"}")
-    public HashMap likeFreeTalks(@RequestBody String data) {
+            notes = "{\"freeTalkIdx\":\"2\"}")
+    public HashMap likeFreeTalks(@RequestBody String data, HttpServletRequest auth) {
         log.info("####likeFreeTalks##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -2839,6 +2893,10 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
             map.put("category", "2");
             map.put("targetIdx", map.get("freeTalkIdx"));
 
@@ -2875,8 +2933,8 @@ public class ApiController {
 
     @RequestMapping(value="usersFreeTalksLikesIt", method = RequestMethod.POST)
     @ApiOperation(value = "사용자의 자유톡 게시글 좋아요 여부",
-            notes = "{\"userIdx\":\"13\", \"freeTalkIdx\":\"1\"}")
-    public HashMap usersFreeTalksLikesIt(@RequestBody String data) {
+            notes = "{\"freeTalkIdx\":\"1\"}")
+    public HashMap usersFreeTalksLikesIt(@RequestBody String data, HttpServletRequest auth) {
         log.info("####usersLikesIt##### : " + data);
         HashMap rtnVal = new HashMap();
 
@@ -2889,6 +2947,10 @@ public class ApiController {
             Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
             map.put("category", "2");
             map.put("targetIdx", map.get("freeTalkIdx"));
 
@@ -2920,19 +2982,22 @@ public class ApiController {
     // 나의 톡톡
     @RequestMapping(value="getUserLikesList", method = RequestMethod.POST)
     @ApiOperation(value = "나의 톡톡 - 좋아요",
-            notes = "{\"userIdx\":\"13\"}")
-    public HashMap getUserLikesList(@RequestBody String data) {
-        log.info("####getUserLikesList##### : " + data);
+            notes = "{}")
+    public HashMap getUserLikesList(HttpServletRequest auth) {
+        log.info("####getUserLikesList#####");
         HashMap rtnVal = new HashMap();
 
         JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
             HashMap infos = new HashMap();
 
             // 자유톡
@@ -2960,7 +3025,7 @@ public class ApiController {
 
 
             rtnVal.put("infos", infos);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -2977,19 +3042,22 @@ public class ApiController {
 
     @RequestMapping(value="getUserPostsList", method = RequestMethod.POST)
     @ApiOperation(value = "나의 톡톡 - 톡톡",
-            notes = "{\"userIdx\":\"13\"}")
-    public HashMap getUserPostsList(@RequestBody String data) {
-        log.info("####getUserPostsList##### : " + data);
+            notes = "{}")
+    public HashMap getUserPostsList(HttpServletRequest auth) {
+        log.info("####getUserPostsList#####");
         HashMap rtnVal = new HashMap();
 
         JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
             HashMap infos = new HashMap();
 
             // 자유톡
@@ -3014,7 +3082,7 @@ public class ApiController {
 
 
             rtnVal.put("infos", infos);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -3031,19 +3099,22 @@ public class ApiController {
 
     @RequestMapping(value="getUserWriteReply", method = RequestMethod.POST)
     @ApiOperation(value = "나의 톡톡 - 댓글",
-            notes = "{\"userIdx\":\"13\"}")
-    public HashMap getUserWriteReply(@RequestBody String data) {
-        log.info("####getUserWriteReply##### : " + data);
+            notes = "{}")
+    public HashMap getUserWriteReply(HttpServletRequest auth) {
+        log.info("####getUserWriteReply#####");
         HashMap rtnVal = new HashMap();
 
         JSONParser parser = new JSONParser();
         String error = null;
 
         try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
-            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
             HashMap infos = new HashMap();
 
             // 자유톡
@@ -3056,7 +3127,7 @@ public class ApiController {
             }
 
             rtnVal.put("infos", infos);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -3170,5 +3241,4 @@ public class ApiController {
            rtnVal.put("errorMsg", error);
         return rtnVal;
     }
-
 }
