@@ -18,7 +18,7 @@ public class JwtProvider {
 
 		//토큰 내용
 		Map<String,Object> claims = Map.of(
-				"idx" , idx,
+				"trainerIdx" , idx,
 				"createdDate" , createDate.format(DateTimeFormatter.ISO_DATE_TIME)
 		);
 

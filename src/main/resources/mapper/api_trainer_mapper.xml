@@ -207,7 +207,7 @@
         VALUES
         <foreach item="item" separator=" , " collection="list">
             (
-            1,
+            #{item.idx},
             #{item.notice}
             )
         </foreach>
@@ -224,7 +224,7 @@
         )
         VALUES
             (
-                1,
+                #{idx},
                 #{separatePaymentYN},
                 #{notice},
                 #{roundTime}
@@ -380,7 +380,8 @@
             #{lessonStartMinute},
             #{lessonEndMinute},
             #{tarinerIdx},
-            #{userIdx}
+            #{userIdx},
+            #{productIdx}
             )
     </insert>
 
@@ -405,6 +406,7 @@
             , user_approved
             , user_idx
             , voucher
+            , product_idx
             ) values (
                      #{approvedDate},
                      #{dateEnd},
@@ -412,7 +414,8 @@
                      #{tarinerIdx},
                      #{userApproved},
                      #{userIdx},
-                     #{voucher}
+                     #{voucher},
+                     #{productIdx}
                  )
     </insert>
 
@@ -467,6 +470,16 @@
                )
     </insert>
 
+    <select id="userPtRecordSelect" parameterType="java.util.HashMap">
+        select exerciseType,exerciseDetails,exerciseName from users_pt_records
+                          left join users u on users_pt_records.user_idx = u.idx
+                          left join pt_trainers on users_pt_records.pt_trainer_idx = pt_trainers.idx
+                          left join user_pt_contents upc on users_pt_records.idx = upc.record_idx
+            where ptr.pt_trainer_idx  = #{tarinerIdx} and
+            ptr.user_idx  = #{userIdx} and
+            ptr.date  = #{date}
+    </select>
+
     <insert id="userPtContentSave" useGeneratedKeys="true" keyProperty="idx"  parameterType="java.util.HashMap">
         insert into user_pt_contents(
                                      record_idx,
@@ -512,5 +525,23 @@
                  left join pt_trainer_authentication auth on auth.idx = pt.idx
         where
             pt.id  = #{userName};
+    </select>
+
+    <select id="transactionSelect" resultType="java.util.HashMap">
+        select p.name,
+               td.transaction_idx
+               td.product_idx
+        from transactions t
+                 left join transactions_details td on t.idx = td.transaction_idx
+                 left join product p on p.idx = td.product_idx
+                 left join transactions_cancel_reason tcr on tcr.transaction_idx = t.idx
+        where
+            t.consumer_idx  = #{userIdx} and
+            td.seller_idx = #{trainerIdx} and
+            td.product_category = #{productCategory} and
+                t.idx not IN(select tcr.iseq
+                             from transactions t
+                                      RIGHT join transactions_cancel_reason tcr on tcr.transaction_idx = t.idx
+            )
     </select>
 </mapper>
