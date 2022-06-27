@@ -2432,13 +2432,70 @@ public class ApiController {
                 if(result == 0) {
                     error = "후기 게시글 좋아요 실패";
                 } else {
+                    int likeCount = dbConnService.selectWithReturnInt("getLikeCount", map);
+                    map.put("likeCount", likeCount);
+
                     dbConnService.update("updateNotesLikeCount", map);
                 }
             } else {
-                // 이미 좋아요 된 게시글이면 삭제 진행?
-//                dbConnService.delete("deleteLikePosts", map);
                 error = "이미 좋아요된 게시글입니다.";
             }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="cancelLikeNotes", method = RequestMethod.POST)
+    @ApiOperation(value = "후기 좋아요 취소",
+            notes = "{\"noteIdx\":\"2\"}")
+    public HashMap cancelLikeNotes(@RequestBody String data, HttpServletRequest auth) {
+        log.info("####cancelLikeNotes##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+            map.put("category", "1");
+            map.put("targetIdx", map.get("noteIdx"));
+
+            List<HashMap> list = dbConnService.select("getUsersLikes", map);
+
+            if(!list.isEmpty()) {
+                int result = dbConnService.delete("deleteLikePosts", map);
+
+                if(result == 0) {
+                    error = "후기 게시글 좋아요 취소 실패";
+                } else {
+                    int likeCount = dbConnService.selectWithReturnInt("getLikeCount", map);
+                    map.put("likeCount", likeCount);
+
+                    dbConnService.update("updateNotesLikeCount", map);
+                }
+            } else {
+                error = "좋아요 되지 않은 게시글입니다.";
+            }
+
         } catch (ParseException e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
@@ -2908,12 +2965,68 @@ public class ApiController {
                 if(result == 0) {
                     error = "자유톡 게시글 좋아요 실패";
                 } else {
+                    int likeCount = dbConnService.selectWithReturnInt("getLikeCount", map);
+                    map.put("likeCount", likeCount);
+
                     dbConnService.update("updateFreeTalksLikeCount", map);
                 }
             } else {
-                // 이미 좋아요 된 게시글이면 삭제 진행?
-//                dbConnService.delete("deleteLikePosts", map);
                 error = "이미 좋아요된 게시글입니다.";
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="cancelLikeFreeTalks", method = RequestMethod.POST)
+    @ApiOperation(value = "자유톡 좋아요 취소",
+            notes = "{\"freeTalkIdx\":\"2\"}")
+    public HashMap cancelLikeFreeTalks(@RequestBody String data, HttpServletRequest auth) {
+        log.info("####cancelLikeFreeTalks##### : " + data);
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+            map.put("category", "2");
+            map.put("targetIdx", map.get("freeTalkIdx"));
+
+            List<HashMap> list = dbConnService.select("getUsersLikes", map);
+
+            if(!list.isEmpty()) {
+                int result = dbConnService.delete("deleteLikePosts", map);
+
+                if(result == 0) {
+                    error = "자유톡 게시글 좋아요 취소 실패";
+                } else {
+                    int likeCount = dbConnService.selectWithReturnInt("getLikeCount", map);
+                    map.put("likeCount", likeCount);
+
+                    dbConnService.update("updateFreeTalksLikeCount", map);
+                }
+            } else {
+                error = "좋아요 되지 않은 게시글입니다.";
             }
 
         } catch (ParseException e) {
