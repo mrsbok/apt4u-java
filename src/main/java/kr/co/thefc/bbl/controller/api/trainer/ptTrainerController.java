@@ -16,13 +16,16 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.crypto.Data;
 
 import java.util.HashMap;
 import java.util.List;
 
 @RestController
 @RequestMapping("api")
-@Api(description = "트레이너 정보 관리")
+@Api(description = "트레이너 정보 관리 \t\t\"트레이너 로그인 기능요청 -> autho+rize 버튼 클릭후 로그인 후 받은 토근 입력 -> 하단의 기능요청 순서로 진행\"")
+
+
 public class ptTrainerController {
 
 	@Autowired
@@ -41,7 +44,7 @@ public class ptTrainerController {
 	public HashMap ptTrainerProfileRegister(
 			@RequestBody PtTrainerProfileForm ptTrainerProfileForm,HttpServletRequest request)   {
 		String token = request.getHeader("token");
-		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("idx")));
+		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
 		ptTrainerProfileForm.setTarinerIdx(result);
 		return ptTrainerService.trainerInfoDetailSave(ptTrainerProfileForm);
 	}
@@ -50,7 +53,7 @@ public class ptTrainerController {
 	@PostMapping("trainer/select-information")
 	public HashMap selectInformation(HttpServletRequest request)   {
 		String token = request.getHeader("token");
-		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("idx")));
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
 		return ptTrainerService.selectInformation(idx);
 	}
 	@ApiOperation(value = "트레이너 상세 정보 조회",notes = "트레이너 상세 정보 조회")
@@ -58,7 +61,7 @@ public class ptTrainerController {
 	public HashMap selectDetailInformation(
 			HttpServletRequest request)   {
 		String token = request.getHeader("token");
-		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("idx")));
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
 		return ptTrainerService.selectDetailInformation(idx);
 	}
 
@@ -67,9 +70,8 @@ public class ptTrainerController {
 	public HashMap updateInformation(
 			@RequestBody PtTrainerForm ptTrainerForm,	HttpServletRequest request)   {
 		String token = request.getHeader("token");
-		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("idx")));
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
 		ptTrainerForm.setIdx(idx);
-		System.out.println();
 		return ptTrainerService.updateInformation(ptTrainerForm);
 	}
 
@@ -77,7 +79,10 @@ public class ptTrainerController {
 	@ApiOperation(value = "1회 체험가 설정",notes = "1회 체험가 설정")
 	@PostMapping("trainer/one-day-amount")
 	public HashMap configurationOneDayAmount(
-			@RequestBody OneDayAmountForm oneDayAmountForm)   {
+			@RequestBody OneDayAmountForm oneDayAmountForm,	HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+
 		return ptTrainerService.oneDayAmountSave(oneDayAmountForm);
 	}
 
@@ -87,12 +92,6 @@ public class ptTrainerController {
 	@ApiImplicitParams(
 			{
 					@ApiImplicitParam(
-							name = "idx"
-							, value = "트레이너 idx"
-							, required = true
-					)
-					,
-					@ApiImplicitParam(
 							name = "password"
 							, value = "비밀번호"
 							, required = true
@@ -101,8 +100,10 @@ public class ptTrainerController {
 	)
 	@PostMapping("trainer/update-password")
 	public HashMap passwordUpdate(
-			@RequestParam Integer idx,
-			@RequestParam String password)  {
+			@RequestParam String password,
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
 		return ptTrainerService.updatePassword(idx,password);
 	}
 	@ApiOperation(
@@ -110,12 +111,6 @@ public class ptTrainerController {
 			, notes = "센터 승인 요청")
 	@ApiImplicitParams(
 			{
-					@ApiImplicitParam(
-							name = "idx"
-							, value = "트레이너 idx"
-							, required = true
-					)
-					,
 					@ApiImplicitParam(
 							name = "affilatedCenter"
 							, value = "센터idx"
@@ -130,9 +125,11 @@ public class ptTrainerController {
 	)
 	@PostMapping("trainer/center-approved")
 	public HashMap ptTrainerCenterApproved(
-			@RequestParam Integer idx,
 			@RequestParam Integer affilatedCenter,
-			@RequestParam String approvalStatus)  {
+			@RequestParam String approvalStatus,
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
 		return ptTrainerService.centerApprovedSave(idx,affilatedCenter,approvalStatus);
 	}
 
@@ -142,7 +139,11 @@ public class ptTrainerController {
 			, notes = "구매 정보 등록")
 	@PostMapping("trainer/buy-information")
 	public HashMap ptTrainerBuyInformation(
-			@RequestBody List<PtTrainerBuyInformationForm> ptTrainerBuyInformationForm)  {
+			@RequestBody List<PtTrainerBuyInformationForm> ptTrainerBuyInformationForm,
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		ptTrainerBuyInformationForm.forEach(Data -> Data.setIdx(idx));
 		return ptTrainerService.buyInformtaionSave(ptTrainerBuyInformationForm);
 	}
 
@@ -151,38 +152,34 @@ public class ptTrainerController {
 			, notes = "요금 정보 등록")
 	@PostMapping("trainer/fee-information")
 	public HashMap ptFeeInformation(
-			@RequestBody PtFeeInformationDetailForm ptFeeInformationDetailForm)  {
+			@RequestBody PtFeeInformationDetailForm ptFeeInformationDetailForm,	HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		ptFeeInformationDetailForm.ptFeeInformtaionForms.setIdx(idx);
 		return ptTrainerService.feeInformationSave(ptFeeInformationDetailForm);
 	}
 
 	@ApiOperation(
 			value = "요금 정보 조회"
-			, notes = "요금 정보 조회")
-	@ApiImplicitParams(
-			{
-					@ApiImplicitParam(
-							name = "ptTrainerIdx"
-							, value = "요금정보 idx"
-							, required = true
-					)
-
-			}
-	)
+			, notes = "로그인 후 토큰 필요")
 	@PostMapping("trainer/fee-information-select")
 	public HashMap ptFeeInformationSelect(
-			@RequestParam Integer ptTrainerIdx)  {
-		return ptTrainerService.feeInformationSelect(ptTrainerIdx);
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+
+		return ptTrainerService.feeInformationSelect(idx);
 	}
 
 	@ApiOperation(
 			value = "프로필 저장"
-			, notes = "프로필 저장")
+			, notes = "프로필 저장(토큰 전송)")
 	@PostMapping("trainer/profile-save")
 	public HashMap ptProfileSave(
-			@RequestParam Integer ptTrainerIdx,
 			MultipartHttpServletRequest request)  {
-
-		return ptTrainerService.profileSave(ptTrainerIdx,request);
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		return ptTrainerService.profileSave(idx,request);
 
 		}
 
@@ -193,6 +190,9 @@ public class ptTrainerController {
 	public HashMap ptTrainerWorkExperience(
 			@RequestPart PtTrainerWorkExperienceForm ptTrainerWorkExperienceFormList,
 			MultipartHttpServletRequest request)  {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		ptTrainerWorkExperienceFormList.setTarinerIdx(idx);
 		return ptTrainerService.workExperienceSave(ptTrainerWorkExperienceFormList,request);
 
 	}
@@ -204,6 +204,9 @@ public class ptTrainerController {
 	public HashMap ptTrainerAwardWinning(
 			@RequestPart PTtrainersAwardWinningForm pTtrainersAwardWinningFormsList,
 			MultipartHttpServletRequest request)  {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		pTtrainersAwardWinningFormsList.setTarinerIdx(idx);
 		return ptTrainerService.awardWinningSave(pTtrainersAwardWinningFormsList,request);
 
 	}
@@ -215,6 +218,9 @@ public class ptTrainerController {
 	public HashMap ptTrainersQualitification(
 			@RequestPart PTtrainersQualitificationForm pTtrainersQualitificationFormList,
 			MultipartHttpServletRequest request)  {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		pTtrainersQualitificationFormList.setTarinerIdx(idx);
 		return ptTrainerService.qualitificationSave(pTtrainersQualitificationFormList,request);
 	}
 
@@ -228,11 +234,15 @@ public class ptTrainerController {
 	}
 
 	@ApiOperation(
-			value = "스케쥴링"
-			, notes = "스케쥴링")
+			value = "일정 등록"
+			, notes = "일정 등록")
 	@PostMapping("trainer/pt-schedule")
 	public HashMap ptTrainersSchedule(
-			@RequestBody PTScheduleForm ptScheduleForm)  {
+			@RequestBody PTScheduleForm ptScheduleForm,
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		ptScheduleForm.setTarinerIdx(idx);
 		return ptTrainerService.ptTrainersScheduleSave(ptScheduleForm);
 	}
 
@@ -241,8 +251,12 @@ public class ptTrainerController {
 			, notes = "피티 레슨 저장")
 	@PostMapping("trainer/reason-save")
 	public HashMap ptTrainersPTUsers(
-			@RequestBody PTLessionForm ptLessionForm)  {
-		return ptTrainerService.lessionSave(ptLessionForm);
+			@RequestBody PTLessionForm ptLessionForm,
+			HttpServletRequest request)   {
+			String token = request.getHeader("token");
+			int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+			ptLessionForm.setTarinerIdx(idx);
+			return ptTrainerService.lessionSave(ptLessionForm);
 	}
 
 
@@ -251,7 +265,11 @@ public class ptTrainerController {
 			, notes = "피티 레슨 기록 저장")
 	@PostMapping("trainer/record-save")
 	public HashMap PTUsersRecords(
-			@RequestBody UserPtRecordForm UserPtRecordForm)  {
+			@RequestBody UserPtRecordForm UserPtRecordForm,
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		UserPtRecordForm.setTarinerIdx(idx);
 		return ptTrainerService.userPtRecordSave(UserPtRecordForm);
 	}
 
@@ -260,16 +278,24 @@ public class ptTrainerController {
 			, notes = "피티 레슨 기록 조회")
 	@PostMapping("trainer/select-records")
 	public HashMap PTUsersRecordsSelect(
-			@RequestBody UserPtRecordForm UserPtRecordForm)  {
+			@RequestBody UserPtRecordForm UserPtRecordForm,
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		UserPtRecordForm.setTarinerIdx(idx);
 		return ptTrainerService.userPtRecordSelect(UserPtRecordForm);
 	}
 
 	@ApiOperation(
-			value = "스케쥴 조회"
-			, notes = "스케쥴 조회")
+			value = "일정 조회"
+			, notes = "일정 조회")
 	@PostMapping("trainer/select-Schedule")
 	public HashMap SelectSchedule(
-			@RequestBody UserPtRecordForm UserPtRecordForm)  {
+			@RequestBody UserPtRecordForm UserPtRecordForm,
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		UserPtRecordForm.setTarinerIdx(idx);
 		return ptTrainerService.getSchedule(UserPtRecordForm);
 	}
 	@ApiOperation(
@@ -277,7 +303,11 @@ public class ptTrainerController {
 			, notes = "일정 수정")
 	@PostMapping("trainer/update-Schedule")
 	public HashMap PTUsersUpdateSchedule(
-			@RequestBody PTScheduleForm ptScheduleForm)  {
+			@RequestBody PTScheduleForm ptScheduleForm,
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		ptScheduleForm.setTarinerIdx(idx);
 		return ptTrainerService.updateSchedule(ptScheduleForm);
 	}
 
@@ -286,14 +316,18 @@ public class ptTrainerController {
 			, notes = "운동 수정")
 	@PostMapping("trainer/update-records")
 	public HashMap PTUsersUpdateRecords(
-			@RequestBody UserPtRecordForm UserPtRecordForm)  {
+			@RequestBody UserPtRecordForm UserPtRecordForm,
+			HttpServletRequest request)   {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		UserPtRecordForm.setTarinerIdx(idx);
 		return ptTrainerService.updateRecords(UserPtRecordForm);
 	}
 
 
 	@ApiOperation(
 			value = "트레이너 로그인"
-			, notes = "트레이너 로그인")
+			, notes = "로그인시 토큰 발급, swagger 상단의 Authorize버튼 클릭후 토큰 입력 ")
 	@PostMapping("trainer/login")
 	public HashMap PTtrainerLogin(
 			@RequestParam String userName,
@@ -302,13 +336,16 @@ public class ptTrainerController {
 		return ptTrainerService.login(userName,password);
 	}
 
-	@ApiOperation(
-			value = "트레이너 로그인"
-			, notes = "트레이너 로그인")
-	@PostMapping("trainer/login1")
-	public void PTtrainerLogin1(HttpServletRequest request)  {
-		String token = request.getHeader("token");
-		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("idx")));
 
+	@ApiOperation(
+			value = "회원 거래내역 조회"
+			, notes = "회원 거래내역 조회")
+	@PostMapping("trainer/transaction-select")
+	public HashMap TransactionSelect(TransactionForm transactionForm,HttpServletRequest request)  {
+		String token = request.getHeader("token");
+		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		transactionForm.setTrainerIdx(result);
+		return ptTrainerService.transactionSelect(transactionForm);
 	}
+
 }

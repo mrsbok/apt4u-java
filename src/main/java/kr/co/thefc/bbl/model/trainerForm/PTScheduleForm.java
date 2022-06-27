@@ -5,7 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 
-@ApiModel(description = "1회 체험가 저장 폼")
+@ApiModel(description = "일정 저장 폼")
 @Data
 public class PTScheduleForm {
 
@@ -18,6 +18,13 @@ public class PTScheduleForm {
             required = true
         )
         Integer tarinerIdx;
+
+        @ApiModelProperty(
+            value = "거래내역 idx",
+            example = "1",
+            required = true
+        )
+        Integer transactionIdx;
 
         @ApiModelProperty(
             value = "PT 일자",

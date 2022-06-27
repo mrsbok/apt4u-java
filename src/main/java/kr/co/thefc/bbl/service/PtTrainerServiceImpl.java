@@ -754,6 +754,37 @@ public class PtTrainerServiceImpl implements PtTrainerService {
   }
 
   @Override
+  public HashMap transactionSelect(TransactionForm transactionForm) {
+    System.out.println(transactionForm);
+    System.out.println(transactionForm);
+    System.out.println(transactionForm);
+    System.out.println(transactionForm);
+    String error = null;
+    List<HashMap> findData = new ArrayList<>();
+    try {
+      String convertJson = gson.toJson(transactionForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      findData = dbConnService.select("transactionSelect",data) ;
+      System.out.println(findData);
+      System.out.println(findData);
+      System.out.println(findData);
+      System.out.println(findData);
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터를 조회하지 못했읍니다";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("data", findData);
+//      rtnVal.put("data", data2);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
   public HashMap userPtRecordSelect(UserPtRecordForm UserPtRecordForm) {
     String error = null;
     HashMap data2 = new HashMap<>();

@@ -49,4 +49,5 @@ public interface PtTrainerService {
     HashMap ptTrainersScheduleSelect(PTScheduleForm ptScheduleForm);
     HashMap updateSchedule(PTScheduleForm ptScheduleForm);
     HashMap login(String userName,String password);
+    HashMap transactionSelect(TransactionForm transactionForm);
 }
