@@ -1006,8 +1006,12 @@
             un.reg_date as regDate,
             un.update_date as updateDate,
             un.user_satisfaction as userSatisfaction,
-            afm.image_path as imagePath,
-            afm.image_file_name as imageFileName,
+            (   select group_concat(image_path separator ',')
+			    from attached_file_management as afm
+			    where afm.target_idx = un.idx and afm.category = 1) as imagePath,
+            (   select group_concat(image_file_name separator ',')
+			    from attached_file_management as afm
+			    where afm.target_idx = un.idx and afm.category = 1) as imageFileName,
             un.hashtag,
             un.content,
             un.like_count as likeCount,
@@ -1019,12 +1023,12 @@
             users_info as ui
         ON
             un.writer = ui.user_idx
-        LEFT JOIN
-        	attached_file_management as afm
-        ON
-        	un.idx = afm.target_idx AND afm.category = 1
         WHERE
             note_category = "2" OR note_category = "3" AND un.exposeyn = "1"
+		GROUP BY
+			un.idx, un.note_category, un.writer, ui.user_name, ui.nick_name, un.reg_date,
+			un.update_date, un.user_satisfaction, un.hashtag, un.content, un.like_count, un.reply_count,
+			un.photo_count
     </select>
 
     <select id="getImagesInfo" resultType="java.util.HashMap">
@@ -1040,10 +1044,14 @@
 
     <select id="getFreeTalks" resultType="java.util.HashMap">
         SELECT
-        	ft.idx as freeTalkIdx,
+            ft.idx as freeTalkIdx,
             ft.photo_count as photoCount,
-            afm.image_path as imagePath,
-            afm.image_file_name as imageFileName,
+            (   select group_concat(image_path separator ',')
+        	    from attached_file_management as afm
+        	    where afm.target_idx = ft.idx and afm.category = 2) as imagePath,
+            (   select group_concat(image_file_name separator ',')
+        		from attached_file_management as afm
+        		where afm.target_idx = ft.idx and afm.category = 2) as imageFileName,
             ft.title,
             ft.writer as writerIdx,
             ft.writer_name as writerName,
@@ -1053,17 +1061,16 @@
             ft.like_count as likeCount,
             ft.reply_count as replyCount
         FROM
-        	free_talks as ft
-        LEFT JOIN
-        	users_info as ui
+            free_talks as ft
+        JOIN
+            users_info as ui
         ON
-        	ft.writer = ui.user_idx
-        LEFT JOIN
-        	attached_file_management as afm
-        ON
-        	ft.idx = afm.target_idx AND afm.category = 2 AND afm.main_image_yn = 1
+            ft.writer = ui.user_idx
         WHERE
-        	ft.exposeyn = '1'
+            ft.exposeyn = '1'
+        GROUP BY
+        	ft.idx, ft.photo_count, ft.title, ft.writer, ft.writer_name, ui.nick_name,
+        	ft.reg_date, ft.last_updated, ft.like_count, ft.reply_count
     </select>
 
     <select id="getUsersNotesDetail" resultType="java.util.HashMap">
@@ -1170,6 +1177,21 @@
         )
     </insert>
 
+    <update id="updateReview" parameterType="java.util.HashMap">
+        update
+            users_notes
+        set
+            note_target = #{targetIdx},
+            user_satisfaction = #{userSatisfaction},
+            use_start_date = #{useStartDate},
+            use_end_date = #{useEndDate},
+            content = #{content},
+            hashtag = #{hashtag},
+            update_date = now()
+        where
+            idx = #{postIdx}
+    </update>
+
     <insert id="writeFreeTalk">
         <selectKey resultType="int" keyProperty="postIdx" order="AFTER">
             SELECT MAX(idx) from free_talks
@@ -1192,6 +1214,17 @@
         );
     </insert>
 
+    <update id="updateFreeTalk" parameterType="java.util.HashMap">
+        update
+            free_talks
+        set
+            title = #{title},
+            content = #{content},
+            last_updated = now()
+        where
+            idx = #{postIdx}
+    </update>
+
     <insert id="boardUpload" parameterType="java.util.List">
         INSERT INTO
             attached_file_management(
@@ -1199,7 +1232,8 @@
                 image_path,
                 category,
                 target_idx,
-                main_image_yn
+                main_image_yn,
+                expose_yn
             )
         VALUES
             (
@@ -1207,9 +1241,19 @@
                 #{fileurl},
                 #{category},
                 #{postIdx},
-                '0'
+                '0',
+                #{exposeYN}
             )
     </insert>
+
+    <update id="updateBoardFile" parameterType="java.util.HashMap">
+        update
+            attached_file_management
+        set
+            target_idx = '0'
+        where
+            target_idx = #{postIdx} AND category = #{category}
+    </update>
 
     <select id="getPhotoCount" resultType="INTEGER">
         SELECT count(*)

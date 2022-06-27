@@ -7,6 +7,8 @@ import lombok.Data;
 @ApiModel(description = "자유톡 작성 폼")
 @Data
 public class FreeTalksWriteForm {
+    Integer freeTalkIdx = null;
+
     @ApiModelProperty(value = "자유톡 제목", required = true, example = "테스트 제목입니다.")
     String title;
 

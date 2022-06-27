@@ -7,6 +7,7 @@ import lombok.Data;
 @ApiModel(description = "후기 작성 폼")
 @Data
 public class ReviewWriteForm {
+    Integer noteIdx = null;
 
     Integer noteCategory;
 
@@ -30,4 +31,7 @@ public class ReviewWriteForm {
 
     @ApiModelProperty(value = "사용자 식별 번호", required = true, example = "1")
     Integer userIdx;
+
+    @ApiModelProperty(value = "리뷰 사진 공개 여부(0: 비공개, 1: 공개)", example = "1")
+    Integer exposeYN;
 }

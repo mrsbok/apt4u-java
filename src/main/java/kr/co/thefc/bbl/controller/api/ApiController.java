@@ -1852,47 +1852,137 @@ public class ApiController {
                 String filename = null;
                 S3Service.FileGroupType groupType = S3Service.FileGroupType.Board;
 
-                for(MultipartFile multipartFile : multipartFiles) {
-                    if(!multipartFile.isEmpty()) {
-                        try{
-                            filename = s3Service.uploadWithUUID(multipartFile, groupType);
-
-                            log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
-
-                            S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
-                            log.info("uploaded image file : " + imgFileInfo.toString());
-                            S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
-                            log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
-
-                            log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
-                            BufferedImage imgBuf = null;
-                            String base64 = null;
+                if (multipartFiles != null) {
+                    for (MultipartFile multipartFile : multipartFiles) {
+                        if (!multipartFile.isEmpty()) {
                             try {
-                                imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
-                                base64 = S3Service.encodeBase64(imgBuf);
-                                rtnVal.put("img_data", base64);
+                                filename = s3Service.uploadWithUUID(multipartFile, groupType);
 
+                                log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+
+                                S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+                                log.info("uploaded image file : " + imgFileInfo.toString());
+                                S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+                                log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+
+                                log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                                BufferedImage imgBuf = null;
+                                String base64 = null;
+                                try {
+                                    imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+                                    base64 = S3Service.encodeBase64(imgBuf);
+                                    rtnVal.put("img_data", base64);
+
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    error = "이미지파일 base64 변환 실패!";
+                                }
+
+                                data.put("filename", filename);
+                                data.put("category", "1");
+                                data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+
+                                result = dbConnService.insert("boardUpload", data);
+
+                                if (result > 0) {
+                                    data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
+                                    dbConnService.update("updateNotesPhotoCount", data);
+                                }
                             } catch (IOException e) {
                                 e.printStackTrace();
-                                error = "이미지파일 base64 변환 실패!";
+                                error = "파일 업로드 실패";
                             }
-
-                            data.put("filename", filename);
-                            data.put("category", "1");
-                            data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
-
-                            result = dbConnService.insert("boardUpload", data);
-
-                            if(result > 0) {
-                                data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
-                                dbConnService.update("updateNotesPhotoCount", data);
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            error = "파일 업로드 실패";
                         }
                     }
                 }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="updateGeneralReview", method = RequestMethod.POST)
+    @ApiOperation(value = "PT톡 수정 - 일반 이용 후기",
+            notes = "")
+    public HashMap updateGeneralReview(
+            ReviewWriteForm reviewWriteForm,
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+        Integer noteCategory = 3;
+
+        HashMap rtnVal = new HashMap();
+        String error = null;
+
+        reviewWriteForm.setNoteCategory(noteCategory);
+
+        try{
+            String converJson = gson.toJson(reviewWriteForm);
+
+            HashMap data = gson.fromJson(converJson, HashMap.class);
+
+            data.put("postIdx", data.get("noteIdx"));
+
+            int result = dbConnService.update("updateReview", data);
+
+            if(result == 0) {
+                error = "후기 작성 실패";
+            } else {
+                String filename = null;
+                S3Service.FileGroupType groupType = S3Service.FileGroupType.Board;
+
+                data.put("category", "1");
+                result = dbConnService.update("updateBoardFile", data);
+
+                if(multipartFiles != null) {
+                    for (MultipartFile multipartFile : multipartFiles) {
+                        if (!multipartFile.isEmpty()) {
+                            try {
+                                filename = s3Service.uploadWithUUID(multipartFile, groupType);
+
+                                log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+
+                                S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+                                log.info("uploaded image file : " + imgFileInfo.toString());
+                                S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+                                log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+
+                                log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                                BufferedImage imgBuf = null;
+                                String base64 = null;
+                                try {
+                                    imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+                                    base64 = S3Service.encodeBase64(imgBuf);
+                                    rtnVal.put("img_data", base64);
+
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    error = "이미지파일 base64 변환 실패!";
+                                }
+
+                                data.put("filename", filename);
+                                data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+
+                                result = dbConnService.insert("boardUpload", data);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                error = "파일 업로드 실패";
+                            }
+                        }
+                    }
+                }
+
+                data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
+                dbConnService.update("updateNotesPhotoCount", data);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1978,47 +2068,138 @@ public class ApiController {
                 String filename = null;
                 S3Service.FileGroupType groupType = S3Service.FileGroupType.Board;
 
-                for(MultipartFile multipartFile : multipartFiles) {
-                    if(!multipartFile.isEmpty()) {
-                        try{
-                            filename = s3Service.uploadWithUUID(multipartFile, groupType);
+                if(multipartFiles != null) {
+                    for(MultipartFile multipartFile : multipartFiles) {
+                        if(!multipartFile.isEmpty()) {
+                            try{
+                                filename = s3Service.uploadWithUUID(multipartFile, groupType);
 
-                            log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+                                log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
 
-                            S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
-                            log.info("uploaded image file : " + imgFileInfo.toString());
-                            S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
-                            log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+                                S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+                                log.info("uploaded image file : " + imgFileInfo.toString());
+                                S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+                                log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
 
-                            log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
-                            BufferedImage imgBuf = null;
-                            String base64 = null;
-                            try {
-                                imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
-                                base64 = S3Service.encodeBase64(imgBuf);
-                                rtnVal.put("img_data", base64);
+                                log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                                BufferedImage imgBuf = null;
+                                String base64 = null;
+                                try {
+                                    imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+                                    base64 = S3Service.encodeBase64(imgBuf);
+                                    rtnVal.put("img_data", base64);
 
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    error = "이미지파일 base64 변환 실패!";
+                                }
+
+                                data.put("filename", filename);
+                                data.put("category", "1");
+                                data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+
+                                result = dbConnService.insert("boardUpload", data);
+
+                                if(result > 0) {
+                                    data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
+                                    dbConnService.update("updateNotesPhotoCount", data);
+                                }
                             } catch (IOException e) {
                                 e.printStackTrace();
-                                error = "이미지파일 base64 변환 실패!";
+                                error = "파일 업로드 실패";
                             }
-
-                            data.put("filename", filename);
-                            data.put("category", "1");
-                            data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
-
-                            result = dbConnService.insert("boardUpload", data);
-
-                            if(result > 0) {
-                                data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
-                                dbConnService.update("updateNotesPhotoCount", data);
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            error = "파일 업로드 실패";
                         }
                     }
                 }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="updateExperienceReview", method = RequestMethod.POST)
+    @ApiOperation(value = "PT톡 수정 - 1회 체험 후기",
+            notes = "")
+    public HashMap updateExperienceReview(
+            ReviewWriteForm reviewWriteForm,
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+        Integer noteCategory = 2;
+
+        HashMap rtnVal = new HashMap();
+        String error = null;
+
+        reviewWriteForm.setNoteCategory(noteCategory);
+
+        try{
+            String converJson = gson.toJson(reviewWriteForm);
+
+            HashMap data = gson.fromJson(converJson, HashMap.class);
+
+            data.put("postIdx", data.get("noteIdx"));
+
+            int result = dbConnService.update("updateReview", data);
+
+            if(result == 0) {
+                error = "후기 작성 실패";
+            } else {
+                String filename = null;
+                S3Service.FileGroupType groupType = S3Service.FileGroupType.Board;
+
+                data.put("category", "1");
+                result = dbConnService.update("updateBoardFile", data);
+
+                if(multipartFiles != null) {
+                    for(MultipartFile multipartFile : multipartFiles) {
+                        if(!multipartFile.isEmpty()) {
+                            try{
+                                filename = s3Service.uploadWithUUID(multipartFile, groupType);
+
+                                log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+
+                                S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+                                log.info("uploaded image file : " + imgFileInfo.toString());
+                                S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+                                log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+
+                                log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                                BufferedImage imgBuf = null;
+                                String base64 = null;
+                                try {
+                                    imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+                                    base64 = S3Service.encodeBase64(imgBuf);
+                                    rtnVal.put("img_data", base64);
+
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    error = "이미지파일 base64 변환 실패!";
+                                }
+
+                                data.put("filename", filename);
+                                data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+
+                                data.put("exposeYN", '1');
+                                result = dbConnService.insert("boardUpload", data);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                error = "파일 업로드 실패";
+                            }
+                        }
+                    }
+                }
+
+                data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
+                dbConnService.update("updateNotesPhotoCount", data);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -2416,47 +2597,136 @@ public class ApiController {
                 String filename = null;
                 S3Service.FileGroupType groupType = S3Service.FileGroupType.Board;
 
-                for(MultipartFile multipartFile : multipartFiles) {
-                    if(!multipartFile.isEmpty()) {
-                        try{
-                            filename = s3Service.uploadWithUUID(multipartFile, groupType);
-
-                            log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
-
-                            S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
-                            log.info("uploaded image file : " + imgFileInfo.toString());
-                            S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
-                            log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
-
-                            log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
-                            BufferedImage imgBuf = null;
-                            String base64 = null;
+                if (multipartFiles != null) {
+                    for (MultipartFile multipartFile : multipartFiles) {
+                        if (!multipartFile.isEmpty()) {
                             try {
-                                imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
-                                base64 = S3Service.encodeBase64(imgBuf);
-                                rtnVal.put("img_data", base64);
+                                filename = s3Service.uploadWithUUID(multipartFile, groupType);
 
+                                log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+
+                                S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+                                log.info("uploaded image file : " + imgFileInfo.toString());
+                                S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+                                log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+
+                                log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                                BufferedImage imgBuf = null;
+                                String base64 = null;
+                                try {
+                                    imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+                                    base64 = S3Service.encodeBase64(imgBuf);
+                                    rtnVal.put("img_data", base64);
+
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    error = "이미지파일 base64 변환 실패!";
+                                }
+
+                                data.put("filename", filename);
+                                data.put("category", "2");
+                                data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                                data.put("exposeYN", '1');
+
+                                result = dbConnService.insert("boardUpload", data);
+
+                                if (result > 0) {
+                                    data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
+                                    dbConnService.update("updateFreeTalksPhotoCount", data);
+                                }
                             } catch (IOException e) {
                                 e.printStackTrace();
-                                error = "이미지파일 base64 변환 실패!";
+                                error = "파일 업로드 실패";
                             }
-
-                            data.put("filename", filename);
-                            data.put("category", "2");
-                            data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
-
-                            result = dbConnService.insert("boardUpload", data);
-
-                            if(result > 0) {
-                                data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
-                                dbConnService.update("updateFreeTalksPhotoCount", data);
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            error = "파일 업로드 실패";
                         }
                     }
                 }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="updateFreeTalks", method = RequestMethod.POST)
+    @ApiOperation(value = "자유톡 수정",
+            notes = "")
+    public HashMap updateFreeTalks(
+            FreeTalksWriteForm freeTalksWriteForm,
+            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles) {
+
+        HashMap rtnVal = new HashMap();
+        String error = null;
+
+        try{
+            String converJson = gson.toJson(freeTalksWriteForm);
+
+            HashMap data = gson.fromJson(converJson, HashMap.class);
+
+            data.put("postIdx", data.get("freeTalkIdx"));
+
+            int result = dbConnService.update("updateFreeTalk", data);
+
+            if(result == 0) {
+                error = "후기 작성 실패";
+            } else {
+                String filename = null;
+                S3Service.FileGroupType groupType = S3Service.FileGroupType.Board;
+
+                data.put("category", "2");
+                result = dbConnService.update("updateBoardFile", data);
+
+                if(multipartFiles != null) {
+                    for (MultipartFile multipartFile : multipartFiles) {
+                        if (!multipartFile.isEmpty()) {
+                            try {
+                                filename = s3Service.uploadWithUUID(multipartFile, groupType);
+
+                                log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+
+                                S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+                                log.info("uploaded image file : " + imgFileInfo.toString());
+                                S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+                                log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+
+                                log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                                BufferedImage imgBuf = null;
+                                String base64 = null;
+                                try {
+                                    imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+                                    base64 = S3Service.encodeBase64(imgBuf);
+                                    rtnVal.put("img_data", base64);
+
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    error = "이미지파일 base64 변환 실패!";
+                                }
+
+                                data.put("filename", filename);
+                                data.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                                data.put("exposeYN", '1');
+
+                                result = dbConnService.insert("boardUpload", data);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                error = "파일 업로드 실패";
+                            }
+                        }
+                    }
+                }
+
+                data.put("photoCount", dbConnService.selectWithReturnInt("getPhotoCount", data));
+                dbConnService.update("updateNotesPhotoCount", data);
             }
         } catch (Exception e) {
             e.printStackTrace();
