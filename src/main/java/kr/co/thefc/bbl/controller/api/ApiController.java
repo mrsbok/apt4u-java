@@ -122,6 +122,9 @@ public class ApiController {
                 // 1:store, 2:product, 3:trainer
                 map.put("noteCategory", "2");
 
+                // imageType : 프로필, 근무경력, 수상경력, 자격증 등등
+                map.put("imageType", "프로필");
+
                 List<HashMap> list = dbConnService.select("getPTLessionVoucharsDetail", map);
 
                 if(list.isEmpty()) {
@@ -147,6 +150,10 @@ public class ApiController {
                             Integer qualification = Integer.parseInt(String.valueOf(list.get(0).get("qualificationCount")));
                             Integer photoCount = Integer.parseInt(String.valueOf(list.get(0).get("photoCount")));
 
+                            Integer affiliatedCenterIdx = (Integer) list.get(0).get("affilatedCenterIdx");
+
+                            map.put("storeIdx", affiliatedCenterIdx);
+
                             if (workExperience > 0) {
                                 list = dbConnService.select("getPTTrainerDetail_workExperience", map);
                                 infos.put("workExperience", list);
@@ -163,11 +170,20 @@ public class ApiController {
                             }
 
                             if (photoCount > 0) {
-                                // imageType : 프로필, 근무경력, 수상경력, 자격증 등등
-                                map.put("imageType", "프로필");
-
                                 list = dbConnService.select("getPTTrainerDetail_photo", map);
                                 infos.put("trainerPhoto", list);
+                            }
+
+                            if (affiliatedCenterIdx != null) {
+                                list = dbConnService.select("getAffiliatedCenterDetail", map);
+                                infos.put("storeInfo", list);
+
+                                photoCount = Integer.parseInt(String.valueOf(list.get(0).get("photoCount")));
+
+                                if (photoCount > 0) {
+                                    list = dbConnService.select("getAffiliatedCenter_photo", map);
+                                    infos.put("storePhoto", list);
+                                }
                             }
                         }
                     }
@@ -260,6 +276,9 @@ public class ApiController {
                 Set set = jsonData.keySet();
                 jsonData.forEach((key, value) -> map.put(key, value));
 
+                // imageType : 프로필, 근무경력, 수상경력, 자격증 등등
+                map.put("imageType", "프로필");
+
                 List<HashMap> list = dbConnService.select("getPTTrainerDetail", map);
 
                 if(list.isEmpty()) {
@@ -292,9 +311,6 @@ public class ApiController {
                         }
 
                         if(photoCount > 0) {
-                            // imageType : 프로필, 근무경력, 수상경력, 자격증 등등
-                            map.put("imageType", "프로필");
-
                             list = dbConnService.select("getPTTrainerDetail_photo", map);
                             infos.put("trainerPhoto", list);
                         }
@@ -574,6 +590,9 @@ public class ApiController {
                 // 1:store, 2:product, 3:trainer
                 map.put("noteCategory", "3");
 
+                // imageType 중 "프로필" 사진인 데이터만 가져옴
+                map.put("imageType", "프로필");
+
                 list = dbConnService.select("getUsersPickDetail_PTTrainer", map);
 
                 if (list.get(0).get("PTTrainerIdx") == null) {
@@ -604,8 +623,6 @@ public class ApiController {
                     }
 
                     if(photoCount > 0) {
-                        // imageType 중 "프로필" 사진인 데이터만 가져옴
-                        map.put("imageType", "프로필");
                         list = dbConnService.select("getPTTrainerDetail_photo", map);
                         infos.put("trainerPhoto", list);
                     }

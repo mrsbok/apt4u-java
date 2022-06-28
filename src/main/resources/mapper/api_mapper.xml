@@ -134,7 +134,7 @@
             ifnull(ptid.work_experience, 0) as workExperienceCount, /** 220602추가 **/
             ifnull(ptid.award_winning, 0) as awardWinningCount, /** 220602추가 **/
             ifnull(ptid.qualification, 0) as qualificationCount, /** 220602추가 **/
-            count(case when pti.pt_trainer_idx = p.pt_trainer_idx then 1 end) as photoCount /** 220602추가 **/
+            count(case when pti.pt_trainer_idx = p.pt_trainer_idx AND pti.image_type = #{imageType} then 1 end) as photoCount /** 220628수정 **/
         from
             pt_trainer_info_basic as p
         left join
@@ -199,6 +199,49 @@
             pt_trainer_images as pti
         where
             pti.pt_trainer_idx = #{PTTrainerIdx} AND image_type = #{imageType}
+    </select>
+
+    <select id="getAffiliatedCenterDetail" resultType="java.util.HashMap">
+        SELECT
+        	sib.store_idx as storeIdx,
+            fgsi.image_path as imagePath,
+            fgsi.image_file_name as imageFileName,
+            sib.store_name as storeName,
+            sib.president_name as presidentName,
+            sib.biz_type as bizType,
+            sib.biz_topics as bizTopic,
+            sib.address,
+            sib.service_region as serviceRegion,
+            sib.service_local_area as serviceLocalArea,
+            sib.main_telephone as mainTelephone,
+            sib.person_in_charge as personInCharge,
+            sib.contract_number as contractNumber,
+            count(case when sib.store_idx = fgsi.store_idx then 1 end) as photoCount
+        FROM
+        	stores_info_basic as sib
+        LEFT JOIN
+        	fitness_gym_stores_images as fgsi
+        ON
+        	sib.store_idx = fgsi.store_idx AND fgsi.main_image_yn = '1'
+        WHERE
+        	sib.store_idx = #{storeIdx}
+        GROUP BY
+        	sib.store_idx, fgsi.image_path, fgsi.image_file_name, sib.store_name, sib.president_name,
+        	sib.biz_type, sib.biz_topics, sib.address, sib.service_region, sib.service_local_area,
+        	sib.main_telephone, sib.person_in_charge, sib.contract_number
+    </select>
+
+    <select id="getAffiliatedCenter_photo" resultType="java.util.HashMap">
+        SELECT
+        	fgsi.iseq,
+            fgsi.store_idx as storeIdx,
+            fgsi.image_path as imagePath,
+            fgsi.image_file_name as imageFileName,
+            fgsi.main_image_yn as mainImageYN
+        FROM
+        	fitness_gym_stores_images as fgsi
+        WHERE
+        	fgsi.store_idx = #{storeIdx}
     </select>
 
     <select id="getShoppingItems" resultType="java.util.HashMap">
@@ -380,7 +423,7 @@
             ifnull(ptid.work_experience, 0) as workExperienceCount, /** 220602추가 **/
             ifnull(ptid.award_winning, 0) as awardWinningCount, /** 220602추가 **/
             ifnull(ptid.qualification, 0) as qualificationCount, /** 220602추가 **/
-            count(case when pti.pt_trainer_idx = p.pt_trainer_idx then 1 end) as photoCount /** 220602추가 **/
+            count(case when pti.pt_trainer_idx = p.pt_trainer_idx AND pti.image_type = #{imageType} then 1 end) as photoCount /** 220602추가 **/
         from
             pt_trainer_info_basic as p
         left join
