@@ -2,6 +2,7 @@ package kr.co.thefc.bbl.service;
 
 import kr.co.thefc.bbl.model.trainerForm.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.util.HashMap;
@@ -27,15 +28,15 @@ public interface PtTrainerService {
     HashMap feeInformationSave(PtFeeInformationDetailForm ptFeeInformationDetailForm);
     HashMap feeInformationSelect(Integer ptTrainerIdx);
 
-    HashMap profileSave(Integer ptTrainerIdx, MultipartHttpServletRequest request);
+    HashMap profileSave(Integer ptTrainerIdx, List<MultipartFile> request);
     HashMap workExperienceSave(PtTrainerWorkExperienceForm ptTrainerWorkExperienceFormList
-        ,MultipartHttpServletRequest request);
+        ,List<MultipartFile> request);
 
     HashMap awardWinningSave(PTtrainersAwardWinningForm pTtrainersAwardWinningFormsList
-        ,MultipartHttpServletRequest request);
+        ,List<MultipartFile> request);
 
     HashMap qualitificationSave(PTtrainersQualitificationForm pTtrainersQualitificationFormList
-        ,MultipartHttpServletRequest request);
+        ,List<MultipartFile> request);
 
     HashMap qualitificationDelete(DeleteQualitificationForm deleteQualitificationForm);
 
@@ -50,4 +51,6 @@ public interface PtTrainerService {
     HashMap updateSchedule(PTScheduleForm ptScheduleForm);
     HashMap login(String userName,String password);
     HashMap transactionSelect(TransactionForm transactionForm);
+
+     HashMap emailCheck(String userName);
 }

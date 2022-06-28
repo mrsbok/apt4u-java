@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -110,7 +109,7 @@ public class PtTrainerServiceImpl implements PtTrainerService {
   @Override
   public HashMap selectInformation(Integer idx) {
     String error = null;
-    HashMap data  = new HashMap();
+    HashMap data = new HashMap();
     try {
 
       data = dbConnService.selectIdx("selectInformation", idx);
@@ -133,11 +132,11 @@ public class PtTrainerServiceImpl implements PtTrainerService {
   @Override
   public HashMap selectDetailInformation(Integer idx) {
     String error = null;
-    HashMap data  = new HashMap();
+    HashMap data = new HashMap();
     try {
 
-      data.put("trainerDetailInformation",dbConnService.selectIdx("selectDetailInformation", idx));
-      data.put("imageList",dbConnService.selectIdxList("selectTrainerImages", idx));
+      data.put("trainerDetailInformation", dbConnService.selectIdx("selectDetailInformation", idx));
+      data.put("imageList", dbConnService.selectIdxList("selectTrainerImages", idx));
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -324,74 +323,131 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     return rtnVal;
   }
 
-//프로필 저장
-  public List<HashMap> s3upload(MultipartHttpServletRequest request, String imageType) {
-    log.info("####s3upload#####");
-    HashMap rtnVal = new HashMap();
+  public List<HashMap> test(List<MultipartFile> request, String imageType) {
+    String filename = null;
     String error = null;
+    S3Service.FileGroupType groupType = S3Service.FileGroupType.Board;
     List fileList = new ArrayList<>();
-    List filePath = new ArrayList<>();
-    Iterator itr = request.getFileNames();
-    if (itr.hasNext()) {
-      List mpf = request.getFiles((String) itr.next());
-      for (int i = 0; i < mpf.size(); i++) {
-        MultipartFile mf = ((MultipartFile) mpf.get(i));
-        String filename = null;
-        S3Service.FileGroupType groupType = S3Service.FileGroupType.PT_Trainer;
+    for (MultipartFile multipartFile : request) {
+      if (!multipartFile.isEmpty()) {
         try {
-          filename = s3Service.uploadWithUUID(mf, groupType);
-        } catch (IOException e) {
-          e.printStackTrace();
-          error = "파일 업로드 실패!";
-        }
-        log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+          filename = s3Service.uploadWithUUID(multipartFile, groupType);
 
-        S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
-        log.info("uploaded image file : " + imgFileInfo.toString());
-        S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
-        log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+          log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
 
-        log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
-        BufferedImage imgBuf = null;
-        String base64 = null;
-        try {
-          imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
-          base64 = S3Service.encodeBase64(imgBuf);
-          rtnVal.put("img_data", base64);
-//                    log.info("base64 : " + base64);
-        } catch (IOException e) {
-          e.printStackTrace();
-          error = "이미지파일 base64 변환 실패!";
-        }
+          S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+          log.info("uploaded image file : " + imgFileInfo.toString());
+          S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+          log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
 
-        HashMap infos = new HashMap();
-        infos.put("filepath", groupType.getValue());
-        infos.put("filename", filename);
-        infos.put("imagetype", imageType);
-        infos.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+          log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+          BufferedImage imgBuf = null;
+          String base64 = null;
+          try {
+            imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+            base64 = S3Service.encodeBase64(imgBuf);
+            rtnVal.put("img_data", base64);
+
+          } catch (IOException e) {
+            e.printStackTrace();
+            error = "이미지파일 base64 변환 실패!";
+          }
+
+          HashMap infos = new HashMap();
+          infos.put("filepath", groupType.getValue());
+          infos.put("filename", filename);
+          infos.put("imagetype", imageType);
+          infos.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
 //        infos.put("filedata", base64);
-        String ext = filename.substring(filename.lastIndexOf('.') + 1);
-        infos.put("fileext", ext);
-        fileList.add(infos);
-        rtnVal.put("infos", infos);
+          String ext = filename.substring(filename.lastIndexOf('.') + 1);
+          infos.put("fileext", ext);
+          fileList.add(infos);
+          rtnVal.put("infos", infos);
+        } catch (IOException e) {
+          e.printStackTrace();
+          error = "파일 업로드 실패";
+        }
       }
+//    if (error != null) {
+//      rtnVal.put("result", false);
+//    } else {
+//      rtnVal.put("result", true);
+//    }
+//    rtnVal.put("errorMsg", error);
+//    System.out.println(fileList);
     }
-
-    if (error != null) {
-      rtnVal.put("result", false);
-    } else {
-      rtnVal.put("result", true);
-    }
-    rtnVal.put("errorMsg", error);
-    System.out.println(fileList);
     return fileList;
   }
 
+//프로필 저장
+//  public List<HashMap> s3upload(MultipartFile request, String imageType) {
+//    log.info("####s3upload#####");
+//    HashMap rtnVal = new HashMap();
+//    String error = null;
+//    List fileList = new ArrayList<>();
+//    List filePath = new ArrayList<>();
+//    Iterator itr = request.getFileNames();
+//    if (itr.hasNext()) {
+//      List mpf = request.getFiles((String) itr.next());
+//      for (int i = 0; i < mpf.size(); i++) {
+//        MultipartFile mf = ((MultipartFile) mpf.get(i));
+//        String filename = null;
+//        S3Service.FileGroupType groupType = S3Service.FileGroupType.PT_Trainer;
+//        try {
+//          filename = s3Service.uploadWithUUID(mf, groupType);
+//        } catch (IOException e) {
+//          e.printStackTrace();
+//          error = "파일 업로드 실패!";
+//        }
+//        log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+//
+//        S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+//        log.info("uploaded image file : " + imgFileInfo.toString());
+//        S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+//        log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+//
+//        log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+//        BufferedImage imgBuf = null;
+//        String base64 = null;
+//        try {
+//          imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+//          base64 = S3Service.encodeBase64(imgBuf);
+//          rtnVal.put("img_data", base64);
+////                    log.info("base64 : " + base64);
+//        } catch (IOException e) {
+//          e.printStackTrace();
+//          error = "이미지파일 base64 변환 실패!";
+//        }
+//
+//        HashMap infos = new HashMap();
+//        infos.put("filepath", groupType.getValue());
+//        infos.put("filename", filename);
+//        infos.put("imagetype", imageType);
+//        infos.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+////        infos.put("filedata", base64);
+//        String ext = filename.substring(filename.lastIndexOf('.') + 1);
+//        infos.put("fileext", ext);
+//        fileList.add(infos);
+//        rtnVal.put("infos", infos);
+//      }
+//    }
+//
+//    if (error != null) {
+//      rtnVal.put("result", false);
+//    } else {
+//      rtnVal.put("result", true);
+//    }
+//    rtnVal.put("errorMsg", error);
+//    System.out.println(fileList);
+//    return fileList;
+//  }
+
   //프로필 저장
   @Override
-  public HashMap profileSave(Integer ptTrainerIdx, MultipartHttpServletRequest request) {
+  public HashMap profileSave(Integer ptTrainerIdx, List<MultipartFile> request) {
     String imageType = "프로필";
-    List<HashMap> profileData = s3upload(request, imageType);
+    List<HashMap> profileData = test(request, imageType);
+    profileData.forEach(data  -> data.put("trainerIdx" , ptTrainerIdx) );
     String error = null;
     try {
       dbConnService.insertList("trainerProfileSave", profileData);
@@ -414,9 +470,10 @@ public class PtTrainerServiceImpl implements PtTrainerService {
 
   //근무경력저장
   @Override
-  public HashMap workExperienceSave(PtTrainerWorkExperienceForm ptTrainerWorkExperienceForm, MultipartHttpServletRequest request) {
+  public HashMap workExperienceSave(PtTrainerWorkExperienceForm ptTrainerWorkExperienceForm, List<MultipartFile> request) {
     String imageType = "근무 경력";
-    List<HashMap> profileData = s3upload(request, imageType);
+    List<HashMap> profileData = test(request, imageType);
+    System.out.println(ptTrainerWorkExperienceForm.getTarinerIdx());
     String error = null;
     try {
 
@@ -448,9 +505,9 @@ public class PtTrainerServiceImpl implements PtTrainerService {
 
   //수상경력 저장
   @Override
-  public HashMap awardWinningSave(PTtrainersAwardWinningForm pTtrainersAwardWinningFormsList, MultipartHttpServletRequest request) {
+  public HashMap awardWinningSave(PTtrainersAwardWinningForm pTtrainersAwardWinningFormsList, List<MultipartFile> request) {
     String imageType = "수상 경력";
-    List<HashMap> profileData = s3upload(request, imageType);
+    List<HashMap> profileData = test(request, imageType);
     String error = null;
     try {
       String convertJson = gson.toJson(pTtrainersAwardWinningFormsList);
@@ -481,9 +538,9 @@ public class PtTrainerServiceImpl implements PtTrainerService {
 
   //자격증 저장
   @Override
-  public HashMap qualitificationSave(PTtrainersQualitificationForm pTtrainersQualitificationForm, MultipartHttpServletRequest request) {
+  public HashMap qualitificationSave(PTtrainersQualitificationForm pTtrainersQualitificationForm, List<MultipartFile> request) {
     String imageType = "자격증";
-    List<HashMap> profileData = s3upload(request, imageType);
+    List<HashMap> profileData = test(request, imageType);
     String error = null;
     try {
 
@@ -732,7 +789,8 @@ public class PtTrainerServiceImpl implements PtTrainerService {
       loginData = dbConnService.selectOne("findUser",data) ;
       if(Objects.equals(loginData.get("password").toString(), new PasswordCryptConverter().convertToDatabaseColumn(password))){
         String token = new JwtProvider().jwtCreater(
-            Integer.parseInt(loginData.get("idx").toString())
+            Integer.parseInt(loginData.get("idx").toString()),
+            0
         );
         rtnVal.put("token", token);
       }else{
@@ -755,20 +813,12 @@ public class PtTrainerServiceImpl implements PtTrainerService {
 
   @Override
   public HashMap transactionSelect(TransactionForm transactionForm) {
-    System.out.println(transactionForm);
-    System.out.println(transactionForm);
-    System.out.println(transactionForm);
-    System.out.println(transactionForm);
     String error = null;
     List<HashMap> findData = new ArrayList<>();
     try {
       String convertJson = gson.toJson(transactionForm);
       HashMap data = gson.fromJson(convertJson, HashMap.class);
       findData = dbConnService.select("transactionSelect",data) ;
-      System.out.println(findData);
-      System.out.println(findData);
-      System.out.println(findData);
-      System.out.println(findData);
     } catch (Exception e) {
       e.printStackTrace();
       error = "데이터를 조회하지 못했읍니다";
@@ -778,6 +828,40 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     } else {
       rtnVal.put("result", true);
       rtnVal.put("data", findData);
+//      rtnVal.put("data", data2);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap emailCheck(String userName) {
+    String error = null;
+    String message = null;
+    HashMap emailData = new HashMap<>();
+    try {
+      emailData.put("username" , userName);
+      String convertJson = gson.toJson(emailData);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      System.out.println(data);
+      HashMap flag = dbConnService.selectOne("findEmail",data) ;
+      if(flag == null){
+        message = "사용 가능한 아이디입니다";
+        rtnVal.put("flag", true);
+        rtnVal.put("message", message);
+      }else {
+        message = "중복된 아이디 입니다.";
+        rtnVal.put("flag", false);
+        rtnVal.put("message", message);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터를 조회하지 못했읍니다";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
 //      rtnVal.put("data", data2);
     }
     rtnVal.put("errorMsg", error);

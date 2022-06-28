@@ -176,6 +176,14 @@
             pt_trainer_idx  = #{idx};
     </select>
 
+    <select id="findEmail" resultType="java.util.HashMap">
+        select
+            *
+        from users
+        where
+            id  = #{username}
+    </select>
+
     <update id="updateInformation" parameterType="hashmap">
         UPDATE pt_trainer_info_basic
             left join pt_trainers pt on pt.idx = pt_trainer_info_basic.pt_trainer_idx
@@ -318,7 +326,7 @@
         VALUES
         <foreach item="item" separator=" , " collection="list">
             (
-            1,
+            #{item.trainerIdx},
             #{item.filename},
             #{item.fileurl},
             #{item.imagetype},
