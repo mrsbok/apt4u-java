@@ -8,11 +8,18 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.models.media.Encoding;
+import io.swagger.v3.oas.models.media.MediaType;
 import kr.co.thefc.bbl.converter.JwtProvider;
 import kr.co.thefc.bbl.model.trainerForm.*;
 import kr.co.thefc.bbl.service.PtTrainerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +27,8 @@ import javax.xml.crypto.Data;
 
 import java.util.HashMap;
 import java.util.List;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping("api")
@@ -176,9 +185,9 @@ public class ptTrainerController {
 			, notes = "프로필 저장(토큰 전송)")
 	@PostMapping("trainer/profile-save")
 	public HashMap ptProfileSave(
-			MultipartHttpServletRequest request)  {
-		String token = request.getHeader("token");
-		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+			@RequestParam Integer idx,  @RequestPart List<MultipartFile> request)  {
+//		String token = request.getHeader("token");
+//		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
 		return ptTrainerService.profileSave(idx,request);
 
 		}
@@ -186,11 +195,13 @@ public class ptTrainerController {
 	@ApiOperation(
 			value = "근무경력 저장"
 			, notes = "근무경력 저장")
-	@PostMapping("trainer/work-experience-save")
+	@PostMapping(
+			path = "trainer/work-experience-save")
 	public HashMap ptTrainerWorkExperience(
 			@RequestPart PtTrainerWorkExperienceForm ptTrainerWorkExperienceFormList,
-			MultipartHttpServletRequest request)  {
-		String token = request.getHeader("token");
+			@RequestPart List<MultipartFile> request
+			,	HttpServletRequest tekoen)  {
+		String token = tekoen.getHeader("token");
 		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
 		ptTrainerWorkExperienceFormList.setTarinerIdx(idx);
 		return ptTrainerService.workExperienceSave(ptTrainerWorkExperienceFormList,request);
@@ -203,8 +214,9 @@ public class ptTrainerController {
 	@PostMapping("trainer/award-winning-save")
 	public HashMap ptTrainerAwardWinning(
 			@RequestPart PTtrainersAwardWinningForm pTtrainersAwardWinningFormsList,
-			MultipartHttpServletRequest request)  {
-		String token = request.getHeader("token");
+			@RequestPart List<MultipartFile> request
+			,	HttpServletRequest auth)  {
+		String token = auth.getHeader("token");
 		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
 		pTtrainersAwardWinningFormsList.setTarinerIdx(idx);
 		return ptTrainerService.awardWinningSave(pTtrainersAwardWinningFormsList,request);
@@ -214,11 +226,14 @@ public class ptTrainerController {
 	@ApiOperation(
 			value = "자격증 등록"
 			, notes = "자격증 등록")
-	@PostMapping("trainer/qualitification-save")
+	@PostMapping(value = "trainer/qualitification-save",
+			consumes= APPLICATION_JSON_VALUE,
+			produces = APPLICATION_JSON_VALUE)
 	public HashMap ptTrainersQualitification(
-			@RequestPart PTtrainersQualitificationForm pTtrainersQualitificationFormList,
-			MultipartHttpServletRequest request)  {
-		String token = request.getHeader("token");
+			@RequestPart List<MultipartFile> request,
+			@RequestPart PTtrainersQualitificationForm pTtrainersQualitificationFormList
+			,	HttpServletRequest auth)  {
+		String token = auth.getHeader("token");
 		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
 		pTtrainersQualitificationFormList.setTarinerIdx(idx);
 		return ptTrainerService.qualitificationSave(pTtrainersQualitificationFormList,request);
@@ -347,5 +362,17 @@ public class ptTrainerController {
 		transactionForm.setTrainerIdx(result);
 		return ptTrainerService.transactionSelect(transactionForm);
 	}
+
+	@ApiOperation(
+			value = "이메일 중복확인"
+			, notes = "이메일 중복확인")
+	@PostMapping("trainer/email-check")
+	public HashMap emailcheck(@RequestParam String userName,HttpServletRequest request)  {
+		String token = request.getHeader("token");
+		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+;
+		return ptTrainerService.emailCheck(userName);
+	}
+
 
 }

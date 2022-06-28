@@ -210,7 +210,7 @@ public class ApiController {
 
     @RequestMapping(value="/getPTTrainers", method = RequestMethod.POST)
     @ApiOperation(value = "PT 트레이너 목록 조회",
-            notes = "{}")
+        notes = "{}")
     public HashMap getPTTrainers(@RequestBody String data) {
         log.info("####getPTTrainers##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -258,7 +258,7 @@ public class ApiController {
 
     @RequestMapping(value="/getPTTrainerDetail", method = RequestMethod.POST)
     @ApiOperation(value = "PT 트레이너 상세 조회",
-            notes = "{\"PTTrainerIdx\":\"1\"}")
+        notes = "{\"PTTrainerIdx\":\"1\"}")
     public HashMap getPTTrainerDetail(@RequestBody String data) {
         log.info("####getPTTrainerDetail##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -336,7 +336,7 @@ public class ApiController {
 
     @RequestMapping(value="/getShoppingItems", method = RequestMethod.POST)
     @ApiOperation(value = "장바구니 목록 조회",
-            notes = "")
+        notes = "")
     public HashMap getShoppingItems(HttpServletRequest auth) {
         log.info("####getShoppingItems#####");
         HashMap rtnVal = new HashMap();
@@ -380,8 +380,8 @@ public class ApiController {
 
     @RequestMapping(value="/addShoppingItems", method = RequestMethod.POST)
     @ApiOperation(value = "장바구니 상품 추가",
-            notes = "{\"productIdx\":\"1\", \"productCategory\":\"1\", \"quantity\":\"1\"}" +
-                    "\n\nproductCategory(=CD_ProductClassification) 1: PTVoucher")
+        notes = "{\"productIdx\":\"1\", \"productCategory\":\"1\", \"quantity\":\"1\"}" +
+            "\n\nproductCategory(=CD_ProductClassification) 1: PTVoucher")
     public HashMap addShoppingItems(@RequestBody String data, HttpServletRequest auth) {
         log.info("####addShoppingItems##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -400,7 +400,7 @@ public class ApiController {
             int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
 
             map.put("userIdx", idx);
-            
+
             int result = dbConnService.insert("addShoppingItems", map);
 
             if(result == 0) {
@@ -424,7 +424,7 @@ public class ApiController {
 
     @RequestMapping(value="/deleteShoppingItems", method = RequestMethod.POST)
     @ApiOperation(value = "장바구니 상품 삭제",
-            notes = "{\"usersShoppingBasketIdx\":\"1\"}")
+        notes = "{\"usersShoppingBasketIdx\":\"1\"}")
     public HashMap deleteShoppingItems(@RequestBody String data) {
         log.info("####deleteShoppingItems##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -463,8 +463,8 @@ public class ApiController {
     // 찜
     @RequestMapping(value="/getUserPick", method = RequestMethod.POST)
     @ApiOperation(value = "사용자 찜 목록",
-            notes = "{\"category\":\"1\"}" +
-                    "\n\ncategory 1:업체, 2:상품, 3:트레이너")
+        notes = "{\"category\":\"1\"}" +
+            "\n\ncategory 1:업체, 2:상품, 3:트레이너")
     public HashMap getUserPick(@RequestBody String data, HttpServletRequest auth) {
         log.info("####getUserPick##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -530,8 +530,8 @@ public class ApiController {
 
     @RequestMapping(value="/getUserPickDetail", method = RequestMethod.POST)
     @ApiOperation(value = "사용자 찜 상품 상세 보기",
-            notes = "{\"pickedItemIdx\":\"1\", \"category\":\"1\"}" +
-                    "\n\ncategory 1:업체, 2:상품, 3:트레이너")
+        notes = "{\"pickedItemIdx\":\"1\", \"category\":\"1\"}" +
+            "\n\ncategory 1:업체, 2:상품, 3:트레이너")
     public HashMap getUserPickDetail(@RequestBody String data) {
         log.info("####getUserPickDetail##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -649,8 +649,8 @@ public class ApiController {
 
     @RequestMapping(value="/getUsersPicks", method = RequestMethod.POST)
     @ApiOperation(value = "사용자의 상품 찜 여부",
-            notes = "{\"category\":\"2\", \"pickedItemIdx\":\"1\"}" +
-                    "\n\ncategory 1:업체, 2:상품, 3:트레이너")
+        notes = "{\"category\":\"2\", \"pickedItemIdx\":\"1\"}" +
+            "\n\ncategory 1:업체, 2:상품, 3:트레이너")
     public HashMap getUsersPicks(@RequestBody String data, HttpServletRequest auth) {
         log.info("####getUsersPicks##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -699,8 +699,8 @@ public class ApiController {
 
     @RequestMapping(value="/addUserPick", method = RequestMethod.POST)
     @ApiOperation(value = "사용자 찜 상품 추가",
-            notes = "{\"category\":\"2\", \"pickedItemIdx\":\"1\"}" +
-                    "\n\ncategory 1:업체, 2:상품, 3:트레이너")
+        notes = "{\"category\":\"2\", \"pickedItemIdx\":\"1\"}" +
+            "\n\ncategory 1:업체, 2:상품, 3:트레이너")
     public HashMap addUserPick(@RequestBody String data, HttpServletRequest auth) {
         log.info("####addUserPick##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -752,7 +752,7 @@ public class ApiController {
 
     @RequestMapping(value="/deleteUserPick", method = RequestMethod.POST)
     @ApiOperation(value = "사용자 찜 상품 삭제",
-            notes = "{\"category\":\"2\", \"pickedItemIdx\":\"1\"}")
+        notes = "{\"category\":\"2\", \"pickedItemIdx\":\"1\"}")
     public HashMap deleteUserPick(@RequestBody String data, HttpServletRequest auth) {
         log.info("####deleteUserPick##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -805,14 +805,14 @@ public class ApiController {
 
     @RequestMapping(value="/buyProduct", method = RequestMethod.POST)
     @ApiOperation(value = "상품 구매",
-            notes = "{\"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
-                    "\"totalAmount\":\"25000\", \"billingAmount\":\"15000\"," +
-                    "\n\n\"products\":[\n\n{\"productCategory\":\"1\", \"productIdx\":\"8\", \"price\":\"25000\", " +
-                    "\"quantity\":\"1\", \"amount\":\"25000\", \"sellerIdx\":\"16\"}\n\n]}" +
-                    "\n\nbillingMethod 1: 무통장입금, 2: 신용/체크카드, 3: 카카오페이, 4: 삼성페이, 5: 페이코, 6: 토스" +
-                    "\n\nproductCategory 1: PTVoucher, ... " +
-                    "\n\nproducts: 여러 개의 데이터가 될 수 있음" +
-                    "\n\nsellerIdx와 storeIdx 중 하나의 데이터가 필요")
+        notes = "{\"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
+            "\"totalAmount\":\"25000\", \"billingAmount\":\"15000\"," +
+            "\n\n\"products\":[\n\n{\"productCategory\":\"1\", \"productIdx\":\"8\", \"price\":\"25000\", " +
+            "\"quantity\":\"1\", \"amount\":\"25000\", \"sellerIdx\":\"16\"}\n\n]}" +
+            "\n\nbillingMethod 1: 무통장입금, 2: 신용/체크카드, 3: 카카오페이, 4: 삼성페이, 5: 페이코, 6: 토스" +
+            "\n\nproductCategory 1: PTVoucher, ... " +
+            "\n\nproducts: 여러 개의 데이터가 될 수 있음" +
+            "\n\nsellerIdx와 storeIdx 중 하나의 데이터가 필요")
     public HashMap buyProduct(@RequestBody String data, HttpServletRequest auth) {
         log.info("####buyProduct##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -877,7 +877,7 @@ public class ApiController {
 
     @RequestMapping(value="/getTransactions", method = RequestMethod.POST)
     @ApiOperation(value = "구매 목록 보기",
-            notes = "")
+        notes = "")
     public HashMap getTransactions(HttpServletRequest auth) {
         log.info("####getTransactions#####");
         HashMap rtnVal = new HashMap();
@@ -999,13 +999,13 @@ public class ApiController {
                         // 환불 진행(:포인트 사용여부도 확인) 후 refundYN, refundDate update
                         System.out.println("환불 처리 ,,,");
                         updateResult = dbConnService.update("updateRefund", map);
-                        
+
                         if(updateResult > 0) {
                             System.out.println("환불 완료");
                         }
                     }
                 }
-                
+
             } else {
                 error = "이미 취소된 구매 목록입니다.";
             }
@@ -1028,7 +1028,7 @@ public class ApiController {
 
     @RequestMapping(value="/getCancelTransactions", method = RequestMethod.POST)
     @ApiOperation(value = "취소/환불 목록 보기",
-            notes = "")
+        notes = "")
     public HashMap getCancelTransactions(HttpServletRequest auth) {
         log.info("####getCancelTransactions#####");
         HashMap rtnVal = new HashMap();
@@ -1072,12 +1072,12 @@ public class ApiController {
 
     @RequestMapping(value="/addUserPTRecords", method = RequestMethod.POST)
     @ApiOperation(value = "개인 운동 일정 등록",
-            notes = "{\"date\":\"2022-03-24\", \"exerciseCategory\":\"1\", \"exerciseType\":\"2\", " +
-                    "\"exerciseName\":\"푸쉬업\", \"exerciseDetails\":\"70,0,10,5\"}" +
-                    "\n\nexerciseCategory : 운동 종목(1: PT&헬스, 2: 필라테스&요가)" +
-                    "\n\nexerciseType : PT 운동 구분(열거형 데이터 정의 필요)" +
-                    "\n\nexerciseName : 운동 명칭" +
-                    "\n\nexerciseDetails : 중량,지속시간,운동횟수,세트수 순서대로 기입 만약 데이터가 없으면 0이 들어가게")
+        notes = "{\"date\":\"2022-03-24\", \"exerciseCategory\":\"1\", \"exerciseType\":\"2\", " +
+            "\"exerciseName\":\"푸쉬업\", \"exerciseDetails\":\"70,0,10,5\"}" +
+            "\n\nexerciseCategory : 운동 종목(1: PT&헬스, 2: 필라테스&요가)" +
+            "\n\nexerciseType : PT 운동 구분(열거형 데이터 정의 필요)" +
+            "\n\nexerciseName : 운동 명칭" +
+            "\n\nexerciseDetails : 중량,지속시간,운동횟수,세트수 순서대로 기입 만약 데이터가 없으면 0이 들어가게")
     public HashMap addUserPTRecords(@RequestBody String data, HttpServletRequest auth) {
         log.info("####addUserPTRecords##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -1331,7 +1331,7 @@ public class ApiController {
         rtnVal.put("errorMsg", error);
 
         return rtnVal;
-        }
+    }
 
     @RequestMapping(value="/getScheduleMessages", method = RequestMethod.POST)
     @ApiOperation(value = "일정 알림 메세지 보기", notes = "")
@@ -1433,9 +1433,9 @@ public class ApiController {
 
     @RequestMapping(value="/setScheduleConfirmed", method = RequestMethod.POST)
     @ApiOperation(value = "운동일정 승인 요청",
-            notes = "{\"PTScheduleIdx\":\"15\", \"confirmed\":\"1\", \"messageIdx\":\"3\", " +
-                    "\"receiverIdx\":\"1\"}" +
-                    "\n\n여기서 receiverIdx는 getScheduleMessagesDetail의 senderIdx" +
+        notes = "{\"PTScheduleIdx\":\"15\", \"confirmed\":\"1\", \"messageIdx\":\"3\", " +
+            "\"receiverIdx\":\"1\"}" +
+            "\n\n여기서 receiverIdx는 getScheduleMessagesDetail의 senderIdx" +
             "\n\nconfirmed 1:동의 2:비동의")
     public HashMap setScheduleConfirmed(@RequestBody String data, HttpServletRequest auth) {
         log.info("####setScheduleConfirmed##### : " + data);
@@ -1549,10 +1549,10 @@ public class ApiController {
 
     @RequestMapping(value="user/register", method = RequestMethod.POST)
     @ApiOperation(value = "유저 - 이메일로 시작하기",
-            notes = "{\"email\":\"gildong@naver.com\", \"password\":\"12345\", \"name\":\"홍길동\", " +
-                    "\"nickName\":\"길동이\", \"birthYYYYMMDD\":\"19900101\", \"gender\":\"1\", " +
-                    "\"elDas\":\"1\", \"region\":\"1\", \"localArea\":\"1\", " +
-                    "\"telephone\":\"01012345678\", \"marketingYN\":\"1\"}")
+        notes = "{\"email\":\"gildong@naver.com\", \"password\":\"12345\", \"name\":\"홍길동\", " +
+            "\"nickName\":\"길동이\", \"birthYYYYMMDD\":\"19900101\", \"gender\":\"1\", " +
+            "\"elDas\":\"1\", \"region\":\"1\", \"localArea\":\"1\", " +
+            "\"telephone\":\"01012345678\", \"marketingYN\":\"1\"}")
     public HashMap registerUser(@RequestBody String data) {
         log.info("####registerUser##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -1569,16 +1569,16 @@ public class ApiController {
             List<HashMap> list = dbConnService.select("checkId", map);
 
             if(list.isEmpty()) {
-               map.put("certType", "1");
-               map.put("password", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("password")));
+                map.put("certType", "1");
+                map.put("password", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("password")));
 
-               Random random = new Random();
+                Random random = new Random();
 
-               // 프로필 기본 이미지 인덱스 초기단계 1~3
-               int ranInt = random.nextInt(3) + 1;
-               System.out.println(ranInt);
+                // 프로필 기본 이미지 인덱스 초기단계 1~3
+                int ranInt = random.nextInt(3) + 1;
+                System.out.println(ranInt);
 
-               map.put("imgIdx", ranInt);
+                map.put("imgIdx", ranInt);
 
                 dbConnService.insert("registerUser", map);
                 dbConnService.insert("registerUser_authentication", map);
@@ -1606,7 +1606,7 @@ public class ApiController {
 
     @RequestMapping(value="user/setInterests", method = RequestMethod.POST)
     @ApiOperation(value = "유저 - 관심분야 설정",
-            notes = "{\"interests\":[{\"interestCode\":\"1\"}, {\"interestCode\":\"2\"}]}")
+        notes = "{\"interests\":[{\"interestCode\":\"1\"}, {\"interestCode\":\"2\"}]}")
     public HashMap setUsersInterests(@RequestBody String data, HttpServletRequest auth) {
         log.info("####setUsersInterests##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -1667,7 +1667,7 @@ public class ApiController {
 
     @RequestMapping(value="user/login", method = RequestMethod.POST)
     @ApiOperation(value = "유저 - 이메일로 로그인 ",
-            notes = "{\"email\":\"gildong@daum.net\", \"password\":\"12345\"}")
+        notes = "{\"email\":\"gildong@daum.net\", \"password\":\"12345\"}")
     public HashMap loginUser(@RequestBody String data) {
         log.info("####loginUser##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -1709,7 +1709,7 @@ public class ApiController {
                     list = dbConnService.select("getUsersInfo", map);
 
                     String token = new JwtProvider().jwtCreater(
-                            0, Integer.parseInt(list.get(0).get("userIdx").toString())
+                        0, Integer.parseInt(list.get(0).get("userIdx").toString())
                     );
 
                     rtnVal.put("token", token);
@@ -1739,7 +1739,7 @@ public class ApiController {
     // PT톡
     @RequestMapping(value="getUsersNotes", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 목록 보기",
-            notes = "{}")
+        notes = "{}")
     public HashMap getUsersNotes(@RequestBody String data) {
         log.info("####getUsersNotes##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -1781,7 +1781,7 @@ public class ApiController {
 
     @RequestMapping(value="getUsersNotesDetail", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 상세 보기",
-            notes = "{\"noteIdx\":\"1\"}")
+        notes = "{\"noteIdx\":\"1\"}")
     public HashMap getUsersNotesDetail(@RequestBody String data) {
         log.info("####getUsersNotesDetail##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -1846,11 +1846,11 @@ public class ApiController {
 
     @RequestMapping(value="writeGeneralReview", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 작성 - 일반 이용 후기",
-            notes = "")
+        notes = "")
     public HashMap writeGeneralReview(
-            ReviewWriteForm reviewWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
-            HttpServletRequest auth) {
+        ReviewWriteForm reviewWriteForm,
+        @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+        HttpServletRequest auth) {
         Integer noteCategory = 3;
 
         HashMap rtnVal = new HashMap();
@@ -1937,11 +1937,11 @@ public class ApiController {
 
     @RequestMapping(value="updateGeneralReview", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 수정 - 일반 이용 후기",
-            notes = "")
+        notes = "")
     public HashMap updateGeneralReview(
-            ReviewWriteForm reviewWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
-            HttpServletRequest auth) {
+        ReviewWriteForm reviewWriteForm,
+        @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+        HttpServletRequest auth) {
         Integer noteCategory = 3;
 
         HashMap rtnVal = new HashMap();
@@ -2030,7 +2030,7 @@ public class ApiController {
 
     @RequestMapping(value="getPTTrainersPTUsers", method = RequestMethod.POST)
     @ApiOperation(value = "체험권 구매내역 조회",
-            notes = "")
+        notes = "")
     public HashMap getPTTrainersPTUsers(HttpServletRequest auth) {
         log.info("####getPTTrainersPTUsers#####");
         HashMap rtnVal = new HashMap();
@@ -2073,11 +2073,11 @@ public class ApiController {
 
     @RequestMapping(value="writeExperienceReview", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 작성 - 1회 체험 후기",
-            notes = "")
+        notes = "")
     public HashMap writeExperienceReview(
-            ReviewWriteForm reviewWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
-            HttpServletRequest auth) {
+        ReviewWriteForm reviewWriteForm,
+        @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+        HttpServletRequest auth) {
         Integer noteCategory = 2;
 
         HashMap rtnVal = new HashMap();
@@ -2164,11 +2164,11 @@ public class ApiController {
 
     @RequestMapping(value="updateExperienceReview", method = RequestMethod.POST)
     @ApiOperation(value = "PT톡 수정 - 1회 체험 후기",
-            notes = "")
+        notes = "")
     public HashMap updateExperienceReview(
-            ReviewWriteForm reviewWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
-            HttpServletRequest auth) {
+        ReviewWriteForm reviewWriteForm,
+        @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+        HttpServletRequest auth) {
         Integer noteCategory = 2;
 
         HashMap rtnVal = new HashMap();
@@ -2258,7 +2258,7 @@ public class ApiController {
 
     @RequestMapping(value="deleteNote", method = RequestMethod.POST)
     @ApiOperation(value = "후기 삭제",
-            notes = "{\"noteIdx\":\"1\"}")
+        notes = "{\"noteIdx\":\"1\"}")
     public HashMap deleteNote(@RequestBody String data) {
         log.info("####deleteNote##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2295,8 +2295,8 @@ public class ApiController {
 
     @RequestMapping(value="writeReplyToNote", method = RequestMethod.POST)
     @ApiOperation(value = "후기 댓글 작성",
-            notes = "{\"noteIdx\":\"2\", \"content\":\"후기 댓글 작성\"," +
-                    " \"hiddenYN\":\"0\"\n}")
+        notes = "{\"noteIdx\":\"2\", \"content\":\"후기 댓글 작성\"," +
+            " \"hiddenYN\":\"0\"\n}")
     public HashMap writeReplyToNote(@RequestBody String data, HttpServletRequest auth) {
         log.info("####writeReplyToNote##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2335,13 +2335,13 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     @RequestMapping(value="updateReply", method = RequestMethod.POST)
     @ApiOperation(value = "댓글 수정",
-            notes = "{\"replyIdx\":\"1\", \"content\":\"댓글 수정하기\", \"hiddenYN\":\"0\"}")
+        notes = "{\"replyIdx\":\"1\", \"content\":\"댓글 수정하기\", \"hiddenYN\":\"0\"}")
     public HashMap updateReply(@RequestBody String data, HttpServletRequest auth) {
         log.info("####updateReply##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2383,7 +2383,7 @@ public class ApiController {
 
     @RequestMapping(value="deleteReply", method = RequestMethod.POST)
     @ApiOperation(value = "댓글 삭제",
-            notes = "{\"replyIdx\":\"1\"}")
+        notes = "{\"replyIdx\":\"1\"}")
     public HashMap deleteReply(@RequestBody String data) {
         log.info("####deleteReply##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2420,7 +2420,7 @@ public class ApiController {
 
     @RequestMapping(value="likeNotes", method = RequestMethod.POST)
     @ApiOperation(value = "후기 좋아요",
-            notes = "{\"noteIdx\":\"2\"}")
+        notes = "{\"noteIdx\":\"2\"}")
     public HashMap likeNotes(@RequestBody String data, HttpServletRequest auth) {
         log.info("####likeNotes##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2469,13 +2469,13 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     @RequestMapping(value="cancelLikeNotes", method = RequestMethod.POST)
     @ApiOperation(value = "후기 좋아요 취소",
-            notes = "{\"noteIdx\":\"2\"}")
+        notes = "{\"noteIdx\":\"2\"}")
     public HashMap cancelLikeNotes(@RequestBody String data, HttpServletRequest auth) {
         log.info("####cancelLikeNotes##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2524,13 +2524,13 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     @RequestMapping(value="usersNotesLikesIt", method = RequestMethod.POST)
     @ApiOperation(value = "사용자의 후기 게시글 좋아요 여부",
-            notes = "{\"noteIdx\":\"1\"}")
+        notes = "{\"noteIdx\":\"1\"}")
     public HashMap usersNotesLikesIt(@RequestBody String data, HttpServletRequest auth) {
         log.info("test");
         log.info("####usersNotesLikesIt##### : " + data);
@@ -2573,14 +2573,14 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     // 자유톡
     @RequestMapping(value="getFreeTalks", method = RequestMethod.POST)
     @ApiOperation(value = "자유톡 목록 보기",
-            notes = "{}")
+        notes = "{}")
     public HashMap getFreeTalks(@RequestBody String data) {
         log.info("####getFreeTalks##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2622,7 +2622,7 @@ public class ApiController {
 
     @RequestMapping(value="getFreeTalkDetail", method = RequestMethod.POST)
     @ApiOperation(value = "자유톡 상세 보기",
-            notes = "{\"freeTalkIdx\":\"1\"}")
+        notes = "{\"freeTalkIdx\":\"1\"}")
     public HashMap getFreeTalkDetail(@RequestBody String data) {
         log.info("####getFreeTalkDetail##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2684,11 +2684,11 @@ public class ApiController {
 
     @RequestMapping(value="writeFreeTalks", method = RequestMethod.POST)
     @ApiOperation(value = "자유톡 작성",
-            notes = "")
+        notes = "")
     public HashMap writeFreeTalks(
-            FreeTalksWriteForm freeTalksWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
-            HttpServletRequest auth) {
+        FreeTalksWriteForm freeTalksWriteForm,
+        @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+        HttpServletRequest auth) {
         HashMap rtnVal = new HashMap();
         String error = null;
 
@@ -2778,11 +2778,11 @@ public class ApiController {
 
     @RequestMapping(value="updateFreeTalks", method = RequestMethod.POST)
     @ApiOperation(value = "자유톡 수정",
-            notes = "")
+        notes = "")
     public HashMap updateFreeTalks(
-            FreeTalksWriteForm freeTalksWriteForm,
-            @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
-            HttpServletRequest auth) {
+        FreeTalksWriteForm freeTalksWriteForm,
+        @RequestPart(value = "multiFile", required = false) List<MultipartFile> multipartFiles,
+        HttpServletRequest auth) {
 
         HashMap rtnVal = new HashMap();
         String error = null;
@@ -2870,7 +2870,7 @@ public class ApiController {
 
     @RequestMapping(value="deleteFreeTalk", method = RequestMethod.POST)
     @ApiOperation(value = "자유톡 삭제",
-            notes = "{\"freeTalkIdx\":\"1\"}")
+        notes = "{\"freeTalkIdx\":\"1\"}")
     public HashMap deleteFreeTalk(@RequestBody String data) {
         log.info("####deleteFreeTalk##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2907,8 +2907,8 @@ public class ApiController {
 
     @RequestMapping(value="writeReplyToFreeTalk", method = RequestMethod.POST)
     @ApiOperation(value = "자유톡 댓글 작성",
-            notes = "{\"freeTalkIdx\":\"2\", \"content\":\"자유톡 댓글 작성\"," +
-                    " \"hiddenYN\":\"0\"\n}")
+        notes = "{\"freeTalkIdx\":\"2\", \"content\":\"자유톡 댓글 작성\"," +
+            " \"hiddenYN\":\"0\"\n}")
     public HashMap writeReplyToFreeTalk(@RequestBody String data, HttpServletRequest auth) {
         log.info("####writeReplyToFreeTalk##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -2947,13 +2947,13 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     @RequestMapping(value="likeFreeTalks", method = RequestMethod.POST)
     @ApiOperation(value = "자유톡 좋아요",
-            notes = "{\"freeTalkIdx\":\"2\"}")
+        notes = "{\"freeTalkIdx\":\"2\"}")
     public HashMap likeFreeTalks(@RequestBody String data, HttpServletRequest auth) {
         log.info("####likeFreeTalks##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -3002,13 +3002,13 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     @RequestMapping(value="cancelLikeFreeTalks", method = RequestMethod.POST)
     @ApiOperation(value = "자유톡 좋아요 취소",
-            notes = "{\"freeTalkIdx\":\"2\"}")
+        notes = "{\"freeTalkIdx\":\"2\"}")
     public HashMap cancelLikeFreeTalks(@RequestBody String data, HttpServletRequest auth) {
         log.info("####cancelLikeFreeTalks##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -3057,13 +3057,13 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     @RequestMapping(value="usersFreeTalksLikesIt", method = RequestMethod.POST)
     @ApiOperation(value = "사용자의 자유톡 게시글 좋아요 여부",
-            notes = "{\"freeTalkIdx\":\"1\"}")
+        notes = "{\"freeTalkIdx\":\"1\"}")
     public HashMap usersFreeTalksLikesIt(@RequestBody String data, HttpServletRequest auth) {
         log.info("####usersLikesIt##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -3105,14 +3105,14 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     // 나의 톡톡
     @RequestMapping(value="getUserLikesList", method = RequestMethod.POST)
     @ApiOperation(value = "나의 톡톡 - 좋아요",
-            notes = "{}")
+        notes = "{}")
     public HashMap getUserLikesList(HttpServletRequest auth) {
         log.info("####getUserLikesList#####");
         HashMap rtnVal = new HashMap();
@@ -3166,13 +3166,13 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     @RequestMapping(value="getUserPostsList", method = RequestMethod.POST)
     @ApiOperation(value = "나의 톡톡 - 톡톡",
-            notes = "{}")
+        notes = "{}")
     public HashMap getUserPostsList(HttpServletRequest auth) {
         log.info("####getUserPostsList#####");
         HashMap rtnVal = new HashMap();
@@ -3223,13 +3223,13 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     @RequestMapping(value="getUserWriteReply", method = RequestMethod.POST)
     @ApiOperation(value = "나의 톡톡 - 댓글",
-            notes = "{}")
+        notes = "{}")
     public HashMap getUserWriteReply(HttpServletRequest auth) {
         log.info("####getUserWriteReply#####");
         HashMap rtnVal = new HashMap();
@@ -3268,13 +3268,13 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 
     @RequestMapping(value="getReplyPost", method = RequestMethod.POST)
     @ApiOperation(value = "나의 톡톡 - 댓글 상세보기",
-            notes = "{\"boardCategory\":\"1\", \"targetIdx\":\"2\"}")
+        notes = "{\"boardCategory\":\"1\", \"targetIdx\":\"2\"}")
     public HashMap getReplyPost(@RequestBody String data) {
         log.info("####getReplyPost##### : " + data);
         HashMap rtnVal = new HashMap();
@@ -3368,7 +3368,7 @@ public class ApiController {
         else {
             rtnVal.put("result", true);
         }
-           rtnVal.put("errorMsg", error);
+        rtnVal.put("errorMsg", error);
         return rtnVal;
     }
 }
