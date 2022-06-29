@@ -3371,4 +3371,279 @@ public class ApiController {
         rtnVal.put("errorMsg", error);
         return rtnVal;
     }
+
+    @RequestMapping(value="modifyUserInfo", method = RequestMethod.POST)
+    @ApiOperation(value = "마이 페이지 - 내 정보 수정 화면",
+            notes = "{}")
+    public HashMap modifyUserInfo(HttpServletRequest auth) {
+        log.info("####getUserWriteReply#####");
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            HashMap infos = new HashMap();
+
+            // 자유톡
+            List<HashMap> list = dbConnService.select("getUsersInfo", map);
+
+            if(list.isEmpty()) {
+                error = "유저 정보가 없어요.";
+            } else {
+                infos.put("userInfo", list);
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="modifyUserInfo_photo", method = RequestMethod.POST)
+    @ApiOperation(value = "마이 페이지 - 내 정보 수정 - 프로필 사진 변경",
+            notes = "{}")
+    public HashMap modifyUserInfo_photo(HttpServletRequest auth,
+                                        @RequestPart MultipartFile multipartFile) {
+        log.info("####modifyUserInfo_photo#####");
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            if(!multipartFile.isEmpty()) {
+                String filename = null;
+                S3Service.FileGroupType groupType = S3Service.FileGroupType.User;
+
+                try {
+                    filename = s3Service.uploadWithUUID(multipartFile, groupType);
+
+                    log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
+
+                    S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
+                    log.info("uploaded image file : " + imgFileInfo.toString());
+                    S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
+                    log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
+
+                    log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+                    BufferedImage imgBuf = null;
+                    String base64 = null;
+                    try {
+                        imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
+                        base64 = S3Service.encodeBase64(imgBuf);
+                        rtnVal.put("img_data", base64);
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        error = "이미지파일 base64 변환 실패!";
+                    }
+
+                    map.put("filename", filename);
+                    map.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
+
+                    int result = dbConnService.insert("userProfileImgUpload", map);
+
+                    if (result > 0) {
+                        result = dbConnService.update("modifyUserImgIdx", map);
+
+                        if (result == 0) {
+                            error = "프로필 이미지 변경 실패";
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    error = "파일 업로드 실패";
+                }
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="modifyUserInfo_nickname", method = RequestMethod.POST)
+    @ApiOperation(value = "마이 페이지 - 내 정보 수정 - 닉네임 변경",
+            notes = "{\"nickName\":\"동동이\"}")
+    public HashMap modifyUserInfo_nickname(HttpServletRequest auth, @RequestBody String data) {
+        log.info("####modifyUserInfo_nickname#####");
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            int result = dbConnService.update("modifyUserNickname", map);
+
+            if(result == 0) {
+                error = "닉네임 변경 실패";
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="modifyUserInfo_telephone", method = RequestMethod.POST)
+    @ApiOperation(value = "마이 페이지 - 내 정보 수정 - 휴대폰 변경",
+            notes = "{\"telephone\":\"01098764321\"}")
+    public HashMap modifyUserInfo_telephone(HttpServletRequest auth, @RequestBody String data) {
+        log.info("####modifyUserInfo_telephone#####");
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            int result = dbConnService.update("modifyUserTelephone", map);
+
+            if(result == 0) {
+                error = "휴대폰 변경 실패";
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="modifyUserInfo_password", method = RequestMethod.POST)
+    @ApiOperation(value = "마이 페이지 - 내 정보 수정 - 비밀번호 재설정",
+            notes = "{\"oldPassword\":\"12345\", \"newPassword\":\"67890\", \"checkNewPassword\":\"67890\"}")
+    public HashMap modifyUserInfo_password(HttpServletRequest auth, @RequestBody String data) {
+        log.info("####modifyUserInfo_password#####");
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            map.put("password", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("oldPassword")));
+
+            List<HashMap> list = dbConnService.select("checkPw", map);
+
+            if(list.isEmpty()) {
+                error = "현재 비밀번호가 일치하지 않습니다.";
+            } else {
+                if(!map.get("newPassword").equals(map.get("checkNewPassword"))){
+                    error = "새 비밀번호가 서로 일치하지 않습니다.";
+                } else {
+                    map.put("newPassword", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("newPassword")));
+
+                    int result = dbConnService.update("modifyUserPassword", map);
+
+                    if(result == 0) {
+                        error = "비밀번호 변경 실패";
+                    }
+                }
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
 }

@@ -1585,7 +1585,10 @@
         	re.user_idx = #{userIdx} AND re.del_yn = "0"
     </select>
 
-    <insert id="UserProfileImgUpload" parameterType="java.util.HashMap">
+    <insert id="userProfileImgUpload" parameterType="java.util.HashMap">
+        <selectKey resultType="int" keyProperty="userImgIdx" order="BEFORE">
+            SELECT MAX(iseq)+1 from users_images
+        </selectKey>
         INSERT INTO
             users_images(
                 image_file_name,
@@ -1597,4 +1600,28 @@
                 #{fileurl}
             )
     </insert>
+
+    <update id="modifyUserImgIdx" parameterType="java.util.HashMap">
+        update users_info
+        set user_img_idx = #{userImgIdx}
+        where user_idx = #{userIdx}
+    </update>
+
+    <update id="modifyUserNickname" parameterType="java.util.HashMap">
+        update users_info
+        set nick_name = #{nickName}, user_name = #{nickName}
+        where user_idx = #{userIdx}
+    </update>
+
+    <update id="modifyUserTelephone" parameterType="java.util.HashMap">
+        update users_info
+        set telephone = #{telephone}
+        where user_idx = #{userIdx}
+    </update>
+
+    <update id="modifyUserPassword" parameterType="java.util.HashMap">
+        update users_authentication
+        set password = #{newPassword}
+        where user_idx = #{userIdx}
+    </update>
 </mapper>

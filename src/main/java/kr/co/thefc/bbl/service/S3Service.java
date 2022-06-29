@@ -44,7 +44,8 @@ public class S3Service {
         Store("Store/"),
         PT_Trainer("PT_Trainer/"),
         Product("Product/"),
-        Board("Board/");
+        Board("Board/"),
+        User("User/");
 
         private final String value;
 
