@@ -1682,7 +1682,7 @@ public class ApiController {
                 List<HashMap> list = dbConnService.select("getInterestCode", map);
 
                 if(list.isEmpty()) {
-                    int result = result = dbConnService.insert("setInterests", map);
+                    int result = dbConnService.insert("setInterests", map);
 
                     if(result == 0) {
                         error = "users interests insert failed";
