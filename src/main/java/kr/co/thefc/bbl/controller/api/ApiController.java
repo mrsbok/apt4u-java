@@ -803,9 +803,58 @@ public class ApiController {
         return rtnVal;
     }
 
+    @RequestMapping(value="/buyProduct_getConsumerInfo", method = RequestMethod.POST)
+    @ApiOperation(value = "상품 구매 - 구매하시는 분 정보",
+        notes = "")
+    public HashMap buyProduct_getConsumerInfo(HttpServletRequest auth) {
+        log.info("####buyProduct_getConsumerInfo#####");
+        HashMap rtnVal = new HashMap();
+
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            List<HashMap> list = dbConnService.select("getUsersInfo", map);
+
+            if(list.isEmpty()) {
+                error = idx + "번 인덱스 유저를 찾지 못했습니다";
+            } else {
+                HashMap data = new HashMap();
+
+                data.put("userName", list.get(0).get("userName"));
+                data.put("userTelephone", list.get(0).get("telephone"));
+
+                infos.put("consumerInfo", data);
+            }
+
+            rtnVal.put("infos", infos);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
     @RequestMapping(value="/buyProduct", method = RequestMethod.POST)
     @ApiOperation(value = "상품 구매",
-        notes = "{\"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
+        notes = "{\"userTelephone\":\"01012341234\", \"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
             "\"totalAmount\":\"25000\", \"billingAmount\":\"15000\"," +
             "\n\n\"products\":[\n\n{\"productCategory\":\"1\", \"productIdx\":\"8\", \"price\":\"25000\", " +
             "\"quantity\":\"1\", \"amount\":\"25000\", \"sellerIdx\":\"16\"}\n\n]}" +
@@ -1576,7 +1625,6 @@ public class ApiController {
 
                 // 프로필 기본 이미지 인덱스 초기단계 1~3
                 int ranInt = random.nextInt(3) + 1;
-                System.out.println(ranInt);
 
                 map.put("imgIdx", ranInt);
 
@@ -3470,6 +3518,7 @@ public class ApiController {
                     int result = dbConnService.insert("userProfileImgUpload", map);
 
                     if (result > 0) {
+                        map.put("defaultImg", 0);
                         result = dbConnService.update("modifyUserImgIdx", map);
 
                         if (result == 0) {
@@ -3497,6 +3546,54 @@ public class ApiController {
            rtnVal.put("errorMsg", error);
         return rtnVal;
     }
+
+    @RequestMapping(value="modifyUserInfo_defaultPhoto", method = RequestMethod.POST)
+    @ApiOperation(value = "마이 페이지 - 내 정보 수정 - 프로필 사진 기본 이미지로 변경",
+            notes = "{}")
+    public HashMap modifyUserInfo_defaultPhoto(HttpServletRequest auth) {
+        log.info("####modifyUserInfo_defaultPhoto#####");
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+            Random random = new Random();
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            int ranInt = random.nextInt(3) + 1;
+
+            map.put("userImgIdx", ranInt);
+
+            map.put("defaultImg", 1);
+            int result = dbConnService.update("modifyUserImgIdx", map);
+
+            if (result == 0) {
+                error = "프로필 기본 이미지로 변경 실패";
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
 
     @RequestMapping(value="modifyUserInfo_nickname", method = RequestMethod.POST)
     @ApiOperation(value = "마이 페이지 - 내 정보 수정 - 닉네임 변경",
