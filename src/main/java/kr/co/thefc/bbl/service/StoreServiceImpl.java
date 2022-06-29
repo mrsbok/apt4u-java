@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.google.gson.Gson;
 import kr.co.thefc.bbl.converter.JwtProvider;
 import kr.co.thefc.bbl.converter.PasswordCryptConverter;
+import kr.co.thefc.bbl.model.storeForm.StoreForm;
 import kr.co.thefc.bbl.model.trainerForm.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,5 +39,100 @@ public class StoreServiceImpl implements StoreService {
   private S3Service s3Service;
 
 
+  @Override
+  public HashMap storeRegister(StoreForm storeForm) {
+    String error = null;
+    try {
+      storeForm.setPassword(
+          new PasswordCryptConverter()
+              .convertToDatabaseColumn(storeForm.getPassword()
+              )
+      );
+      String convertJson = gson.toJson(storeForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      dbConnService.insert("storeSave", data);
+      dbConnService.insert("storeInfoSave", data);
+      dbConnService.insert("storeAuthenticateSave", data);
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap emailCheck(String userName) {
+    String error = null;
+    String message = null;
+    HashMap emailData = new HashMap<>();
+    try {
+      emailData.put("username" , userName);
+      String convertJson = gson.toJson(emailData);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      System.out.println(data);
+      HashMap flag = dbConnService.selectOne("storeCheckEmail",data) ;
+      if(flag == null){
+        message = "사용 가능한 아이디입니다";
+        rtnVal.put("flag", true);
+        rtnVal.put("message", message);
+      }else {
+        message = "중복된 아이디 입니다.";
+        rtnVal.put("flag", false);
+        rtnVal.put("message", message);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터를 조회하지 못했읍니다";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+//      rtnVal.put("data", data2);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap login(String userName, String password) {
+    String error = null;
+    HashMap loginData = new HashMap<>();
+    try {
+      loginData.put("userName",userName);
+      loginData.put("password",password);
+      String convertJson = gson.toJson(loginData);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      loginData = dbConnService.selectOne("storeLogin",data) ;
+      if(Objects.equals(loginData.get("password").toString(), new PasswordCryptConverter().convertToDatabaseColumn(password))){
+        String token = new JwtProvider().jwtCreater(
+            0,
+            0,
+            Integer.parseInt(loginData.get("idx").toString())
+        );
+        rtnVal.put("token", token);
+      }else{
+        error = "로그인 실패 패스워드 또는 ID를 확인하여 주십시오";
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "로그인 실패 패스워드 또는 ID를 확인하여 주십시오.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+      rtnVal.put("token", null);
+    } else {
+      rtnVal.put("result", true);
+//      rtnVal.put("data", data2);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
 
 }
