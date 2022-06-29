@@ -1049,12 +1049,6 @@
             un.reg_date as regDate,
             un.update_date as updateDate,
             un.user_satisfaction as userSatisfaction,
-            (   select group_concat(image_path separator ',')
-			    from attached_file_management as afm
-			    where afm.target_idx = un.idx and afm.category = 1) as imagePath,
-            (   select group_concat(image_file_name separator ',')
-			    from attached_file_management as afm
-			    where afm.target_idx = un.idx and afm.category = 1) as imageFileName,
             un.hashtag,
             un.content,
             un.like_count as likeCount,
@@ -1068,33 +1062,25 @@
             un.writer = ui.user_idx
         WHERE
             note_category = "2" OR note_category = "3" AND un.exposeyn = "1"
-		GROUP BY
-			un.idx, un.note_category, un.writer, ui.user_name, ui.nick_name, un.reg_date,
-			un.update_date, un.user_satisfaction, un.hashtag, un.content, un.like_count, un.reply_count,
-			un.photo_count
     </select>
 
     <select id="getImagesInfo" resultType="java.util.HashMap">
         SELECT
         	afm.iseq,
             afm.image_path as imagePath,
-            afm.image_file_name as imageFileName
+            afm.image_file_name as imageFileName,
+            afm.main_image_yn as mainImageYN,
+            afm.expose_yn as exposeYN
         FROM
         	attached_file_management as afm
         WHERE
-        	category = #{photoCategory} AND target_idx = #{postIdx} AND expose_yn = "0"
+        	category = #{photoCategory} AND target_idx = #{postIdx}
     </select>
 
     <select id="getFreeTalks" resultType="java.util.HashMap">
         SELECT
             ft.idx as freeTalkIdx,
             ft.photo_count as photoCount,
-            (   select group_concat(image_path separator ',')
-        	    from attached_file_management as afm
-        	    where afm.target_idx = ft.idx and afm.category = 2) as imagePath,
-            (   select group_concat(image_file_name separator ',')
-        		from attached_file_management as afm
-        		where afm.target_idx = ft.idx and afm.category = 2) as imageFileName,
             ft.title,
             ft.writer as writerIdx,
             ft.writer_name as writerName,
@@ -1111,9 +1097,6 @@
             ft.writer = ui.user_idx
         WHERE
             ft.exposeyn = '1'
-        GROUP BY
-        	ft.idx, ft.photo_count, ft.title, ft.writer, ft.writer_name, ui.nick_name,
-        	ft.reg_date, ft.last_updated, ft.like_count, ft.reply_count
     </select>
 
     <select id="getUsersNotesDetail" resultType="java.util.HashMap">
@@ -1624,4 +1607,49 @@
         set password = #{newPassword}
         where user_idx = #{userIdx}
     </update>
+
+    <insert id="writeInquiries">
+        INSERT INTO
+            inquiries(
+                title,
+                content,
+                writer,
+                writer_name,
+                reg_date,
+                processing_status
+            )
+        VALUES
+            (
+                #{title},
+                #{content},
+                #{userIdx},
+                #{writerName},
+                now(),
+                "1"
+            )
+    </insert>
+
+    <select id="getInquiriesList" resultType="java.util.HashMap">
+        SELECT
+            idx,
+            writer_name as writerName,
+            title,
+            reg_date as regDate,
+            processing_status as processingStatus
+        FROM
+            inquiries
+        WHERE
+            writer = #{userIdx}
+    </select>
+
+    <select id="getAnswersToInquiries" resultType="java.util.HashMap">
+        SELECT
+            idx,
+            content,
+            reg_date as regDate
+        FROM
+            answers_to_inquiries
+        WHERE
+            inquiries_idx = #{inquiriesIdx}
+    </select>
 </mapper>

@@ -23,7 +23,6 @@ import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Slf4j
@@ -1807,6 +1806,18 @@ public class ApiController {
             if(list.isEmpty()) {
                 error = "PT톡 목록을 불러올 수 없습니다.";
             } else {
+                for(int i=0; i<list.size(); i++) {
+                    int photoCount = (int) list.get(i).get("photoCount");
+
+                    if(photoCount > 0){
+                        map.put("photoCategory", 1);
+                        map.put("postIdx", list.get(i).get("noteIdx"));
+
+                        List<HashMap> list2 = dbConnService.select("getImagesInfo", map);
+
+                        list.get(i).put("imagesInfo", list2);
+                    }
+                }
                 infos.put("usersNote", list);
             }
 
@@ -2648,6 +2659,18 @@ public class ApiController {
             if(list.isEmpty()) {
                 error = "자유톡 목록을 불러올 수 없습니다.";
             } else {
+                for(int i=0; i<list.size(); i++) {
+                    int photoCount = (int) list.get(i).get("photoCount");
+
+                    if(photoCount > 0){
+                        map.put("photoCategory", 2);
+                        map.put("postIdx", list.get(i).get("freeTalkIdx"));
+
+                        List<HashMap> list2 = dbConnService.select("getImagesInfo", map);
+
+                        list.get(i).put("imagesInfo", list2);
+                    }
+                }
                 infos.put("freeTalks", list);
             }
 
@@ -3726,6 +3749,102 @@ public class ApiController {
                         error = "비밀번호 변경 실패";
                     }
                 }
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="writeInquiries", method = RequestMethod.POST)
+    @ApiOperation(value = "설정 - 문의 - 문의글 작성",
+            notes = "{\"title\":\"1회 체험이 뭔가요?\", \"content\":\"1회 체험이 뭔지 자세한 설명이 궁금해요.\"}")
+    public HashMap writeInquiries(HttpServletRequest auth, @RequestBody String data) {
+        log.info("####writeInquiries#####");
+        HashMap rtnVal = new HashMap();
+
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            Set set = jsonData.keySet();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            List<HashMap> list = dbConnService.select("getUsersInfo", map);
+            String userName = String.valueOf(list.get(0).get("userName"));
+            map.put("writerName", userName);
+
+            int result = dbConnService.insert("writeInquiries", map);
+
+            rtnVal.put("infos", infos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="getInquiriesList", method = RequestMethod.POST)
+    @ApiOperation(value = "설정 - 문의 - 문의 및 답변",
+            notes = "")
+    public HashMap getInquiriesList(HttpServletRequest auth) {
+        log.info("####getInquiriesList#####");
+        HashMap rtnVal = new HashMap();
+
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            List<HashMap> list = dbConnService.select("getInquiriesList", map);
+
+            if(list.isEmpty()){
+                error = "문의 및 답변을 불러올 수 없습니다.";
+            } else {
+                for(int i = 0; i < list.size(); i++) {
+                    map.put("inquiriesIdx", list.get(i).get("idx"));
+
+                    if("3".equals(list.get(i).get("processingStatus").toString())) { // 3: 답변 완료 상태
+                        List<HashMap> list2 = dbConnService.select("getAnswersToInquiries", map);
+
+                        list.get(i).put("answers", list2);
+                    }
+                }
+                infos.put("inquiries", list);
             }
 
             rtnVal.put("infos", infos);
