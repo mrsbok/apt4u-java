@@ -790,6 +790,7 @@ public class PtTrainerServiceImpl implements PtTrainerService {
       if(Objects.equals(loginData.get("password").toString(), new PasswordCryptConverter().convertToDatabaseColumn(password))){
         String token = new JwtProvider().jwtCreater(
             Integer.parseInt(loginData.get("idx").toString()),
+            0,
             0
         );
         rtnVal.put("token", token);

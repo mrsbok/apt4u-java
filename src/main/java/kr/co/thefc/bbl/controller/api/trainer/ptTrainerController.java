@@ -4,30 +4,15 @@ package kr.co.thefc.bbl.controller.api.trainer;
 import com.amazonaws.services.s3.model.S3Object;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.models.media.Encoding;
-import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.annotations.*;
 import kr.co.thefc.bbl.converter.JwtProvider;
 import kr.co.thefc.bbl.model.trainerForm.*;
 import kr.co.thefc.bbl.service.PtTrainerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
-
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.crypto.Data;
-
-import java.util.HashMap;
-import java.util.List;
-
+import java.util.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
@@ -342,7 +327,8 @@ public class ptTrainerController {
 
 	@ApiOperation(
 			value = "트레이너 로그인"
-			, notes = "로그인시 토큰 발급, swagger 상단의 Authorize버튼 클릭후 토큰 입력 ")
+			, notes = "로그인시 토큰 발급, swagger 상단의 Authorize버튼 클릭후 토큰 입력 " +
+			"id: asd123 pw :  ")
 	@PostMapping("trainer/login")
 	public HashMap PTtrainerLogin(
 			@RequestParam String userName,

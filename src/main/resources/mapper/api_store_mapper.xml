@@ -1,5 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.co.onedatatech.bs_hdc.main_mapper">
+    <insert id="storeSave" parameterType="hashmap" useGeneratedKeys="true" keyProperty="idx">
+        INSERT INTO stores(id,last_access)
+        VALUES (#{id},now())
+    </insert>
 
+
+    <insert id="storeAuthenticateSave" parameterType="hashmap">
+        INSERT INTO
+            stores_authentication(
+            store_idx,
+            password
+        )
+        VALUES
+            (
+                #{idx},
+                #{password}
+            )
+    </insert>
+
+
+    <insert id="storeInfoSave" parameterType="hashmap">
+        INSERT INTO
+            stores_info_basic(
+            store_idx,
+            store_name,
+            corp_reg_number,
+            president_name,
+            biz_type,
+            biz_topics,
+            zip_code,
+            address,
+            service_region,
+            service_local_area,
+            main_telephone,
+            person_in_charge,
+            contract_number,
+            store_type,
+            approval_status,
+            registered_date,
+            approved_date
+        )
+        VALUES
+            (
+                #{idx},
+                #{storeName},
+                #{corpRegNumber},
+                #{presidentName},
+                #{bizType},
+                #{bizTopic},
+                #{zipCode},
+                #{address},
+                #{serviceRegion},
+                #{serviceLocalArea},
+                #{mainTelephone},
+                #{personInCharge},
+                #{contactNumber},
+                #{storeType},
+                #{approvalStatus},
+                #{registeredDate},
+                #{approvedDate}
+            )
+    </insert>
+
+    <select id="storeCheckEmail" resultType="java.util.HashMap">
+        select id
+        from stores
+        where id = #{username}
+
+    </select>
+    <select id="storeLogin" resultType="java.util.HashMap">
+        select
+            st.id,
+            st.idx,
+            auth.password
+        from stores st
+            left join stores_authentication auth on auth.store_idx = st.idx
+        where
+            st.id  = #{userName};
+
+    </select>
 </mapper>
