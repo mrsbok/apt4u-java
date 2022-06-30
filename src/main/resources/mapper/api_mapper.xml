@@ -1671,7 +1671,7 @@
 
     <insert id="insertDeletedUsers" parameterType="java.util.HashMap">
         <selectKey resultType="int" keyProperty="delUserIseq" order="AFTER">
-            SELECT iseq from deleted_users
+            SELECT MAX(iseq) from deleted_users
         </selectKey>
         INSERT INTO deleted_users(user_idx, id, last_access)
         (SELECT idx, id, last_access FROM users WHERE idx = #{userIdx})

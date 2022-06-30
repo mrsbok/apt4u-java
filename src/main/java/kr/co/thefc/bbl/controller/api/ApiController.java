@@ -3927,16 +3927,21 @@ public class ApiController {
 
     @RequestMapping(value="deleteAccount", method = RequestMethod.POST)
     @ApiOperation(value = "설정 - 회원탈퇴",
-            notes = "")
-    public HashMap deleteAccount(HttpServletRequest auth) {
+            notes = "{\"deletedReason\":\"5\", \"reasonDetail\":\"가나다라마바사\"}")
+    public HashMap deleteAccount(HttpServletRequest auth, @RequestBody String data) {
         log.info("####deleteAccount#####");
 
         HashMap rtnVal = new HashMap();
+        JSONParser parser = new JSONParser();
         String error = null;
 
         try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
             HashMap map = new HashMap();
             HashMap infos = new HashMap();
+
+            jsonData.forEach((key, value) -> map.put(key,value));
 
             String token = auth.getHeader("token");
             int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
