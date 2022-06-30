@@ -1652,4 +1652,42 @@
         WHERE
             inquiries_idx = #{inquiriesIdx}
     </select>
+
+    <select id="getNotices" resultType="java.util.HashMap">
+        SELECT
+            idx,
+            title,
+            reg_date as regDate,
+            last_updated as lastUpdated,
+            writer,
+            set_period as setPeriod,
+            notice_start as noticeStart,
+            notice_end as noticeEnd
+        FROM
+            notice
+        WHERE
+            noticeyn ='1'
+    </select>
+
+    <insert id="insertDeletedUsers" parameterType="java.util.HashMap">
+        <selectKey resultType="int" keyProperty="delUserIseq" order="AFTER">
+            SELECT iseq from deleted_users
+        </selectKey>
+        INSERT INTO deleted_users(user_idx, id, last_access)
+        (SELECT idx, id, last_access FROM users WHERE idx = #{userIdx})
+    </insert>
+
+    <update id="updateDeletedUsers" parameterType="java.util.HashMap">
+        update deleted_users
+        set deleted_reason = #{deletedReason}, reason_detail = #{reasonDetail}, deleted_date = now()
+        where iseq = #{delUserIseq}
+    </update>
+
+    <!--  데이터 삭제 쿼리 작성부분  -->
+
+
+    <delete id="deletedUsers">
+        DELETE FROM users
+        WHERE idx = #{userIdx};
+    </delete>
 </mapper>
