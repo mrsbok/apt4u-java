@@ -3463,13 +3463,26 @@ public class ApiController {
 
             HashMap infos = new HashMap();
 
-            // 자유톡
             List<HashMap> list = dbConnService.select("getUsersInfo", map);
 
             if(list.isEmpty()) {
                 error = "유저 정보가 없어요.";
             } else {
-                infos.put("userInfo", list);
+                HashMap data = new HashMap();
+
+                data.put("email", list.get(0).get("userId"));
+                data.put("userName", list.get(0).get("userName"));
+                data.put("nickName", list.get(0).get("userNickName"));
+                data.put("telephone", list.get(0).get("telephone"));
+                data.put("userPw", list.get(0).get("userPw"));
+
+                if(Integer.parseInt(list.get(0).get("numOfInterest").toString()) > 0) {
+                    List<HashMap> interestsCode = dbConnService.select("getInterests", map);
+
+                    data.put("interestsCode", interestsCode);
+                }
+
+                infos.put("userInfo", data);
             }
 
             rtnVal.put("infos", infos);
@@ -3710,7 +3723,7 @@ public class ApiController {
 
     @RequestMapping(value="modifyUserInfo_password", method = RequestMethod.POST)
     @ApiOperation(value = "마이 페이지 - 내 정보 수정 - 비밀번호 재설정",
-            notes = "{\"oldPassword\":\"12345\", \"newPassword\":\"67890\", \"checkNewPassword\":\"67890\"}")
+            notes = "{\"oldPassword\":\"12345\", \"newPassword\":\"67890\"}")
     public HashMap modifyUserInfo_password(HttpServletRequest auth, @RequestBody String data) {
         log.info("####modifyUserInfo_password#####");
         HashMap rtnVal = new HashMap();
@@ -3738,16 +3751,12 @@ public class ApiController {
             if(list.isEmpty()) {
                 error = "현재 비밀번호가 일치하지 않습니다.";
             } else {
-                if(!map.get("newPassword").equals(map.get("checkNewPassword"))){
-                    error = "새 비밀번호가 서로 일치하지 않습니다.";
-                } else {
-                    map.put("newPassword", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("newPassword")));
+                map.put("newPassword", new PasswordCryptConverter().convertToDatabaseColumn((String) map.get("newPassword")));
 
-                    int result = dbConnService.update("modifyUserPassword", map);
+                int result = dbConnService.update("modifyUserPassword", map);
 
-                    if(result == 0) {
-                        error = "비밀번호 변경 실패";
-                    }
+                if(result == 0) {
+                    error = "비밀번호 변경 실패";
                 }
             }
 

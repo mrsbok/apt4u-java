@@ -1074,7 +1074,7 @@
         FROM
         	attached_file_management as afm
         WHERE
-        	category = #{photoCategory} AND target_idx = #{postIdx}
+        	category = #{photoCategory} AND target_idx = #{postIdx} AND afm.expose_yn = '1'
     </select>
 
     <select id="getFreeTalks" resultType="java.util.HashMap">
@@ -1592,7 +1592,7 @@
 
     <update id="modifyUserNickname" parameterType="java.util.HashMap">
         update users_info
-        set nick_name = #{nickName}, user_name = #{nickName}
+        set nick_name = #{nickName}
         where user_idx = #{userIdx}
     </update>
 
