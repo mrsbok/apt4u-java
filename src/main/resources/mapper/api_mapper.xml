@@ -685,7 +685,7 @@
             td.quantity, /** 220616 추가 **/
             td.price, /** 220616 추가 **/
             td.amount, /** 220616 추가 **/
-            t.point_useㅇ as pointUse, /** 220616 추가 **/
+            t.point_use as pointUse, /** 220616 추가 **/
             t.transaction_date as transactionDate,
             p.product_type as productType,
             p.seller_idx as sellerIdx,
