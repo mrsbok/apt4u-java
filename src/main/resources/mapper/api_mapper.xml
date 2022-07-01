@@ -509,6 +509,12 @@
         where item_category = #{category} and picked_item = #{pickedItemIdx} and user_idx = #{userIdx}
     </delete>
 
+    <select id="getTotalPoint" resultType="INTEGER">
+        SELECT ifnull(sum(in_practical_point), 0) as totalHoldPoint
+        FROM bbldb.users_saving_points
+        WHERE user_idx = #{userIdx} AND period_of_validity > current_date();
+    </select>
+
     <insert id="insertTransaction">
         <selectKey resultType="int" keyProperty="transactionIdx" order="BEFORE">
             SELECT MAX(idx)+1 from transactions
@@ -654,7 +660,12 @@
 
     <update id="updateRefund" parameterType="java.util.HashMap">
         update transactions
-        set refundyn = "1", refund_date = now()
+        set
+            refundyn = "1",
+            refund_date = now(),
+            refund_fee = #{refundFee},
+            refund_amount = #{refundAmount},
+            refund_method = #{refundMethod}
         where idx = #{transactionIdx}
     </update>
     
@@ -716,6 +727,10 @@
 			ptib.affilated_center = sib.store_idx
         where
             consumer_idx = #{userIdx} AND cancelyn = "1"
+    </select>
+
+    <select id="getCancelTransactionDetail" resultType="java.util.HashMap">
+
     </select>
 
     <insert id="addUserPTRecords">
@@ -1078,6 +1093,26 @@
     </select>
 
     <select id="getFreeTalks" resultType="java.util.HashMap">
+--         SELECT
+--             ft.idx as freeTalkIdx,
+--             ft.photo_count as photoCount,
+--             ft.title,
+--             ft.writer as writerIdx,
+--             ft.writer_name as writerName,
+--             ui.nick_name as writerNickName,
+--             ft.reg_date as regDate,
+--             ft.last_updated as updateDate,
+--             ft.like_count as likeCount,
+--             ft.reply_count as replyCount
+--         FROM
+--             free_talks as ft
+--         JOIN
+--             users_info as ui
+--         ON
+--             ft.writer = ui.user_idx
+--         WHERE
+--             ft.exposeyn = '1'
+
         SELECT
             ft.idx as freeTalkIdx,
             ft.photo_count as photoCount,
@@ -1088,10 +1123,16 @@
             ft.reg_date as regDate,
             ft.last_updated as updateDate,
             ft.like_count as likeCount,
-            ft.reply_count as replyCount
+            ft.reply_count as replyCount,
+            (   select group_concat(image_path separator ',')
+        	    from attached_file_management as afm
+        	    where afm.target_idx = ft.idx and afm.category = 2) as imagePath,
+            (   select group_concat(image_file_name separator ',')
+        		from attached_file_management as afm
+        		where afm.target_idx = ft.idx and afm.category = 2) as imageFileName
         FROM
             free_talks as ft
-        JOIN
+        LEFT JOIN
             users_info as ui
         ON
             ft.writer = ui.user_idx
@@ -1690,4 +1731,27 @@
         DELETE FROM users
         WHERE idx = #{userIdx};
     </delete>
+
+    <select id="getUsersSavingPoints" resultType="java.util.HashMap">
+        SELECT
+            *
+        FROM
+            users_saving_points
+        WHERE
+            user_idx = #{userIdx} AND period_of_validity > current_date()
+        ORDER BY saving_date asc
+    </select>
+
+    <update id="updateInPracticalPoints" parameterType="java.util.HashMap">
+        update users_saving_points
+        set in_practical_point = #{inPracticalPoint}
+        where iseq = #{savingPointsIseq}
+    </update>
+
+    <insert id="updateSubtractionPoints" parameterType="java.util.HashMap">
+        INSERT INTO
+            users_subtraction_points(subtraction_date, user_idx, saving_point_idx, subtraction_type, subtraction_point, transaction_idx)
+        VALUES
+            (now(), #{userIdx}, #{savingPointsIseq}, #{subtractionType}, #{subtractionPoint}, #{transactionIdx})
+    </insert>
 </mapper>

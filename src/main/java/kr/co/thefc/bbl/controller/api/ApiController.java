@@ -837,6 +837,7 @@ public class ApiController {
 
                 data.put("userName", list.get(0).get("userName"));
                 data.put("userTelephone", list.get(0).get("telephone"));
+                data.put("totalPoint", dbConnService.selectWithReturnInt("getTotalPoint", map));
 
                 infos.put("consumerInfo", data);
             }
@@ -880,7 +881,6 @@ public class ApiController {
             JSONObject jsonData = (JSONObject) parser.parse(data);
 
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
             JSONArray arr = (JSONArray) map.get("products");
@@ -900,20 +900,25 @@ public class ApiController {
                     obj.forEach((key, value) -> map.put(key, value));
 
                     result = dbConnService.insert("insertTransactionDetail", map);
+                    if(result == 0) {
+                        error = "INSERT Transaction Detail FAILED";
+                    }
+                }
+
+                int billingMethod = Integer.parseInt(map.get("billingMethod").toString());
+
+                if(billingMethod == 1) {
+                    // 무통장 입금 안내 메세지
+                } else if (billingMethod == 2) {
+                    // 카드 결제 시스템 호출
+                    // 카드 결제 성공 시 결제 여부와 결제 일시(tbl_transactions : billingYN, billingDate UPDATE)
+                    // 카드 결제 실패 시 재시도
                 }
             } else {
                 error = "transaction insert failed";
             }
 
-            int billingMethod = Integer.parseInt(map.get("billingMethod").toString());
 
-            if(billingMethod == 1) {
-                // 무통장 입금 안내 메세지
-            } else if (billingMethod == 2) {
-                // 카드 결제 시스템 호출
-                // 카드 결제 성공 시 결제 여부와 결제 일시(tbl_transactions : billingYN, billingDate UPDATE)
-                // 카드 결제 실패 시 재시도
-            }
 
         } catch (ParseException e) {
             e.printStackTrace();
@@ -1022,7 +1027,7 @@ public class ApiController {
     }
 
     @RequestMapping(value="/cancelTransaction", method = RequestMethod.POST)
-    @ApiOperation(value = "구매 취소 신청", notes = "{\"transactionIdx\":\"10\", \"cancelReason\":\"3\", \"reasonDetail\":\"지역이 멀어요.\"}")
+    @ApiOperation(value = "구매 취소 신청", notes = "{\"transactionIdx\":\"10\", \"refundFee\":\"3000\", \"refundAmount\":\"\", \"cancelReason\":\"3\", \"reasonDetail\":\"지역이 멀어요.\"}")
     public HashMap cancelTransaction(@RequestBody String data) {
         log.info("####cancelTransaction##### : " + data);
 
@@ -1099,6 +1104,54 @@ public class ApiController {
             map.put("userIdx", idx);
 
             List<HashMap> list = dbConnService.select("getCancelTransactions", map);
+
+            if(list.isEmpty()) {
+                error = "User index number " + map.get("userIdx") + " and category number " + map.get("category") +  " is not found";
+            } else {
+                HashMap infos = new HashMap();
+                infos.put("CancelTransactions", list);
+
+                rtnVal.put("infos", infos);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="/getCancelTransactionDetail", method = RequestMethod.POST)
+    @ApiOperation(value = "취소/환불 내역 상세 보기",
+        notes = "{\"transactionIdx\":\"1\"}")
+    public HashMap getCancelTransactionDetail(HttpServletRequest auth, @RequestBody String data) {
+        log.info("####getCancelTransactionDetail##### : " + data);
+
+        HashMap rtnVal = new HashMap();
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            List<HashMap> list = dbConnService.select("getCancelTransactionDetail", map);
 
             if(list.isEmpty()) {
                 error = "User index number " + map.get("userIdx") + " and category number " + map.get("category") +  " is not found";
@@ -2659,18 +2712,18 @@ public class ApiController {
             if(list.isEmpty()) {
                 error = "자유톡 목록을 불러올 수 없습니다.";
             } else {
-                for(int i=0; i<list.size(); i++) {
-                    int photoCount = (int) list.get(i).get("photoCount");
-
-                    if(photoCount > 0){
-                        map.put("photoCategory", 2);
-                        map.put("postIdx", list.get(i).get("freeTalkIdx"));
-
-                        List<HashMap> list2 = dbConnService.select("getImagesInfo", map);
-
-                        list.get(i).put("imagesInfo", list2);
-                    }
-                }
+//                for(int i=0; i<list.size(); i++) {
+//                    int photoCount = (int) list.get(i).get("photoCount");
+//
+//                    if(photoCount > 0){
+//                        map.put("photoCategory", 2);
+//                        map.put("postIdx", list.get(i).get("freeTalkIdx"));
+//
+//                        List<HashMap> list2 = dbConnService.select("getImagesInfo", map);
+//
+//                        list.get(i).put("imagesInfo", list2);
+//                    }
+//                }
                 infos.put("freeTalks", list);
             }
 
@@ -3973,5 +4026,95 @@ public class ApiController {
         }
            rtnVal.put("errorMsg", error);
         return rtnVal;
+    }
+
+    @RequestMapping(value = "/pointUse", method = RequestMethod.POST)
+    @ApiOperation(value = "포인트 사용 테스트", notes = "{\"pointUse\":\"5000\"}")
+    public HashMap pointUse(HttpServletRequest auth, @RequestBody String data) {
+        log.info("####pointUse##### : " + data);
+
+                HashMap rtnVal = new HashMap();
+                JSONParser parser = new JSONParser();
+                String error = null;
+
+                try{
+                    JSONObject jsonData = (JSONObject) parser.parse(data);
+
+                    HashMap map = new HashMap();
+                    HashMap infos = new HashMap();
+                    jsonData.forEach((key, value) -> map.put(key,value));
+
+                    String token = auth.getHeader("token");
+                    int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+                    map.put("userIdx", idx);
+
+                    List<HashMap> list = dbConnService.select("getUsersSavingPoints", map);
+
+                    if(list.isEmpty()) {
+                        error = "포인트 정보가 없습니다.";
+                    } else {
+                        int pointUse = Integer.parseInt(map.get("pointUse").toString());
+                        int totalHoldPoint = 0;
+
+                        for (int i = 0; i < list.size(); i++) {
+                            int inPracticalPoint = Integer.parseInt(list.get(i).get("in_practical_point").toString());
+
+                            totalHoldPoint += inPracticalPoint;
+                        }
+
+                        if (totalHoldPoint > pointUse) {
+                            for (int i = 0; i < list.size(); i++) {
+                                int inPracticalPoint = Integer.parseInt(list.get(i).get("in_practical_point").toString());
+
+                                map.put("savingPointsIseq", list.get(i).get("iseq"));
+                                map.put("subtractionType", 1);
+
+                                if (inPracticalPoint > 0) {
+                                    if (pointUse > 0) {
+                                        if (pointUse > inPracticalPoint) {
+                                            map.put("subtractionPoint", inPracticalPoint);
+
+                                            pointUse = pointUse - inPracticalPoint;
+                                            inPracticalPoint = 0;
+
+                                            map.put("inPracticalPoint", inPracticalPoint);
+
+                                            dbConnService.update("updateInPracticalPoints", map);
+                                            dbConnService.insert("updateSubtractionPoints", map);
+                                        } else if (pointUse <= inPracticalPoint) {
+                                            map.put("subtractionPoint", pointUse);
+
+                                            inPracticalPoint = inPracticalPoint - pointUse;
+                                            pointUse = 0;
+
+                                            map.put("inPracticalPoint", inPracticalPoint);
+
+                                            dbConnService.update("updateInPracticalPoints", map);
+                                            dbConnService.insert("updateSubtractionPoints", map);
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            error = "사용하고자 하는 포인트가 보유 포인트보다 적습니다.";
+                        }
+                    }
+
+                    rtnVal.put("infos", infos);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                    error = "정보를 파싱하지 못했습니다.";
+                }
+
+                if (error!=null) {
+                    rtnVal.put("result", false);
+                }
+                else {
+                    rtnVal.put("result", true);
+                }
+                rtnVal.put("errorMsg", error);
+
+                return rtnVal;
     }
 }
