@@ -136,14 +136,16 @@
         pt_trainer_idx,
         affilated_center,
         approval_status,
-        approval_date
+        approval_date,
+        notice
         )
         VALUES
         (
             #{idx},
             #{affiliateCenter},
             #{approvalStatus},
-            now()
+            now(),
+            #{notice}
         )
     </insert>
 
@@ -551,5 +553,14 @@
                              from transactions t
                                       RIGHT join transactions_cancel_reason tcr on tcr.transaction_idx = t.idx
             )
+    </select>
+
+    <select id="approveFind" resultType="java.util.HashMap">
+        select (case when ptcaas.status = '승인대기' then '1' else '2' end) as flag
+        from (
+                 select approval_status as status
+                 from pt_trainer_center_approved
+                 where notice = #{notice} and pt_trainer_idx = #{trainerIdx}
+             ) as ptcaas;
     </select>
 </mapper>
