@@ -508,6 +508,39 @@
         delete from users_pick
         where item_category = #{category} and picked_item = #{pickedItemIdx} and user_idx = #{userIdx}
     </delete>
+    
+    <select id="getPurchaseInfo_product" resultType="java.util.HashMap">
+        SELECT
+        	p.idx as productIdx,
+            p.product_type as productType,
+            p.name as productName,
+            p.seller_idx as sellerIdx,
+            (select group_concat(image_path separator ',')
+        	from pt_trainer_images as pti
+        	where pti.pt_trainer_idx = ptib.pt_trainer_idx and pti.image_type = "프로필") as imagePath,
+        	(select group_concat(image_file_name separator ',')
+        	from  pt_trainer_images as pti
+        	where pti.pt_trainer_idx = ptib.pt_trainer_idx and pti.image_type = "프로필") as imageFileName,
+            ptib.pt_trainer_name as sellerName,
+            ptib.nick_name as nickName,
+            ptib.affilated_center as affilatedCenter,
+            sib.store_name as storeName,
+            p.price,
+            p.discount,
+            p.discount_price as discountPrice
+        FROM
+        	product as p
+        LEFT JOIN
+        	pt_trainer_info_basic as ptib
+        ON
+        	p.seller_idx = ptib.pt_trainer_idx
+        LEFT JOIN
+        	stores_info_basic as sib
+        ON
+        	ptib.affilated_center = sib.store_idx
+        WHERE
+        	p.idx = #{productIdx}
+    </select>
 
     <select id="getTotalPoint" resultType="INTEGER">
         SELECT ifnull(sum(in_practical_point), 0) as totalHoldPoint
@@ -1055,6 +1088,28 @@
     </select>
 
     <select id="getUsersNotes" resultType="java.util.HashMap">
+--         SELECT
+--             un.idx as noteIdx,
+--             un.note_category as noteCategory,
+--             un.writer as writerIdx,
+--             ui.user_name as writerName,
+--             ui.nick_name as writerNickName,
+--             un.reg_date as regDate,
+--             un.update_date as updateDate,
+--             un.user_satisfaction as userSatisfaction,
+--             un.hashtag,
+--             un.content,
+--             un.like_count as likeCount,
+--             un.reply_count as replyCount,
+--             un.photo_count as photoCount
+--         FROM
+--             users_notes as un
+--         LEFT JOIN
+--             users_info as ui
+--         ON
+--             un.writer = ui.user_idx
+--         WHERE
+--             note_category = "2" OR note_category = "3" AND un.exposeyn = "1"
         SELECT
             un.idx as noteIdx,
             un.note_category as noteCategory,
@@ -1068,7 +1123,12 @@
             un.content,
             un.like_count as likeCount,
             un.reply_count as replyCount,
-            un.photo_count as photoCount
+            (   select group_concat(image_path separator ',')
+                from attached_file_management as afm
+                where afm.target_idx = un.idx and afm.category = 1) as imagePath,
+            (   select group_concat(image_file_name separator ',')
+                from attached_file_management as afm
+                where afm.target_idx = un.idx and afm.category = 1) as imageFileName
         FROM
             users_notes as un
         LEFT JOIN

@@ -24,7 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -810,37 +809,119 @@ public class ApiController {
         return rtnVal;
     }
 
-    @RequestMapping(value="/buyProduct_getConsumerInfo", method = RequestMethod.POST)
-    @ApiOperation(value = "상품 구매 - 구매하시는 분 정보",
-        notes = "")
-    public HashMap buyProduct_getConsumerInfo(HttpServletRequest auth) {
-        log.info("####buyProduct_getConsumerInfo#####");
+    @RequestMapping(value="/buySingleProduct_purchaseInfo", method = RequestMethod.POST)
+    @ApiOperation(value = "상품 구매 - 구매 정보(단일 상품 구매)",
+        notes = "{\"productIdx\":\"8\"}")
+    public HashMap buySingleProduct_purchaseInfo(HttpServletRequest auth, @RequestBody String data) {
+        log.info("####buySingleProduct_purchaseInfo#####");
 
         HashMap rtnVal = new HashMap();
+        JSONParser parser = new JSONParser();
         String error = null;
 
         try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
             HashMap map = new HashMap();
             HashMap infos = new HashMap();
+
+            jsonData.forEach((key, value) -> map.put(key,value));
 
             String token = auth.getHeader("token");
             int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
 
             map.put("userIdx", idx);
 
-            List<HashMap> list = dbConnService.select("getUsersInfo", map);
+            HashMap product = dbConnService.selectOne("getPurchaseInfo_product", map);
 
-            if(list.isEmpty()) {
-                error = idx + "번 인덱스 유저를 찾지 못했습니다";
+            if(product.isEmpty()) {
+                error = map.get("productIdx") + "번 인덱스 상품을 찾지 못했습니다";
             } else {
-                HashMap data = new HashMap();
-
-                data.put("userName", list.get(0).get("userName"));
-                data.put("userTelephone", list.get(0).get("telephone"));
-                data.put("totalPoint", dbConnService.selectWithReturnInt("getTotalPoint", map));
-
-                infos.put("consumerInfo", data);
+                infos.put("productInfo", product);
             }
+
+            HashMap temp = dbConnService.selectOne("getUsersInfo", map);
+
+            HashMap user = new HashMap();
+
+            if(!temp.isEmpty()) {
+                user.put("userName", temp.get("userName"));
+                user.put("userTelephone", temp.get("telephone"));
+                user.put("totalPoint", dbConnService.selectWithReturnInt("getTotalPoint", map));
+            }
+
+            infos.put("consumerInfo", user);
+
+            rtnVal.put("infos", infos);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="/buyBundleProduct_purchaseInfo", method = RequestMethod.POST)
+    @ApiOperation(value = "상품 구매 - 구매 정보(묶음 상품 구매)",
+        notes = "{\"products\":[{\"productIdx\":\"8\"}, {\"productIdx\":\"4\"}]}")
+    public HashMap buyBundleProduct_purchaseInfo(HttpServletRequest auth, @RequestBody String data) {
+        log.info("####buySingleProduct_purchaseInfo#####");
+
+        HashMap rtnVal = new HashMap();
+        JSONParser parser = new JSONParser();
+        String error = null;
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+
+            jsonData.forEach((key, value) -> map.put(key,value));
+
+            JSONArray arr = (JSONArray) map.get("products");
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            List<HashMap> list = new ArrayList<>();
+
+            for(int i=0; i<arr.size(); i++) {
+                JSONObject obj = (JSONObject) arr.get(i);
+                obj.forEach((key, value) -> map.put(key, value));
+
+                HashMap product = dbConnService.selectOne("getPurchaseInfo_product", map);
+
+                if(product.isEmpty()) {
+                    error = map.get("productIdx") + "번 인덱스 상품을 찾지 못했습니다";
+                } else {
+                    list.add(product);
+                }
+            }
+            infos.put("productInfo", list);
+
+            HashMap temp = dbConnService.selectOne("getUsersInfo", map);
+
+            HashMap user = new HashMap();
+
+            if(!temp.isEmpty()) {
+                user.put("userName", temp.get("userName"));
+                user.put("userTelephone", temp.get("telephone"));
+                user.put("totalPoint", dbConnService.selectWithReturnInt("getTotalPoint", map));
+            }
+
+            infos.put("consumerInfo", user);
 
             rtnVal.put("infos", infos);
 
@@ -862,7 +943,7 @@ public class ApiController {
 
     @RequestMapping(value="/buyProduct", method = RequestMethod.POST)
     @ApiOperation(value = "상품 구매",
-        notes = "{\"userTelephone\":\"01012341234\", \"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
+        notes = "{\"userTelephone\":\"01012341234\", \"totalPoint\":\"50000\", \"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
             "\"totalAmount\":\"25000\", \"billingAmount\":\"15000\"," +
             "\n\n\"products\":[\n\n{\"productCategory\":\"1\", \"productIdx\":\"8\", \"price\":\"25000\", " +
             "\"quantity\":\"1\", \"amount\":\"25000\", \"sellerIdx\":\"16\"}\n\n]}" +
@@ -905,6 +986,11 @@ public class ApiController {
                     }
                 }
 
+                // 포인트 사용
+                if(Integer.parseInt(map.get("pointUse").toString()) > 0) {
+                    pointUse(auth, map);
+                }
+
                 int billingMethod = Integer.parseInt(map.get("billingMethod").toString());
 
                 if(billingMethod == 1) {
@@ -934,6 +1020,89 @@ public class ApiController {
         rtnVal.put("errorMsg", error);
 
         return rtnVal;
+    }
+
+    public HashMap pointUse(HttpServletRequest auth, @RequestBody HashMap map) {
+        log.info("####pointUse#####");
+
+                HashMap rtnVal = new HashMap();
+                String error = null;
+
+                try{
+                    HashMap infos = new HashMap();
+
+                    String token = auth.getHeader("token");
+                    int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+                    map.put("userIdx", idx);
+
+                    List<HashMap> list = dbConnService.select("getUsersSavingPoints", map);
+
+                    if(list.isEmpty()) {
+                        error = "포인트 정보가 없습니다.";
+                    } else {
+                        int pointUse = Integer.parseInt(map.get("pointUse").toString());
+                        int totalHoldPoint = 0;
+
+                        for (int i = 0; i < list.size(); i++) {
+                            int inPracticalPoint = Integer.parseInt(list.get(i).get("in_practical_point").toString());
+
+                            totalHoldPoint += inPracticalPoint;
+                        }
+
+                        if (totalHoldPoint > pointUse) {
+                            for (int i = 0; i < list.size(); i++) {
+                                int inPracticalPoint = Integer.parseInt(list.get(i).get("in_practical_point").toString());
+
+                                map.put("savingPointsIseq", list.get(i).get("iseq"));
+                                map.put("subtractionType", 1);
+
+                                if (inPracticalPoint > 0) {
+                                    if (pointUse > 0) {
+                                        if (pointUse > inPracticalPoint) {
+                                            map.put("subtractionPoint", inPracticalPoint);
+
+                                            pointUse = pointUse - inPracticalPoint;
+                                            inPracticalPoint = 0;
+
+                                            map.put("inPracticalPoint", inPracticalPoint);
+
+                                            dbConnService.update("updateInPracticalPoints", map);
+                                            dbConnService.insert("updateSubtractionPoints", map);
+                                        } else if (pointUse <= inPracticalPoint) {
+                                            map.put("subtractionPoint", pointUse);
+
+                                            inPracticalPoint = inPracticalPoint - pointUse;
+                                            pointUse = 0;
+
+                                            map.put("inPracticalPoint", inPracticalPoint);
+
+                                            dbConnService.update("updateInPracticalPoints", map);
+                                            dbConnService.insert("updateSubtractionPoints", map);
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            error = "사용하고자 하는 포인트가 보유 포인트보다 적습니다.";
+                        }
+                    }
+
+                    rtnVal.put("infos", infos);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    error = "정보를 파싱하지 못했습니다.";
+                }
+
+                if (error!=null) {
+                    rtnVal.put("result", false);
+                }
+                else {
+                    rtnVal.put("result", true);
+                }
+                rtnVal.put("errorMsg", error);
+
+                return rtnVal;
     }
 
     @RequestMapping(value="/getTransactions", method = RequestMethod.POST)
@@ -1668,7 +1837,6 @@ public class ApiController {
         try{
             JSONObject jsonData = (JSONObject) parser.parse(data);
             HashMap map = new HashMap();
-            Set set = jsonData.keySet();
             jsonData.forEach((key, value) -> map.put(key,value));
 
             List<HashMap> list = dbConnService.select("checkId", map);
@@ -1859,18 +2027,18 @@ public class ApiController {
             if(list.isEmpty()) {
                 error = "PT톡 목록을 불러올 수 없습니다.";
             } else {
-                for(int i=0; i<list.size(); i++) {
-                    int photoCount = (int) list.get(i).get("photoCount");
-
-                    if(photoCount > 0){
-                        map.put("photoCategory", 1);
-                        map.put("postIdx", list.get(i).get("noteIdx"));
-
-                        List<HashMap> list2 = dbConnService.select("getImagesInfo", map);
-
-                        list.get(i).put("imagesInfo", list2);
-                    }
-                }
+//                for(int i=0; i<list.size(); i++) {
+//                    int photoCount = (int) list.get(i).get("photoCount");
+//
+//                    if(photoCount > 0){
+//                        map.put("photoCategory", 1);
+//                        map.put("postIdx", list.get(i).get("noteIdx"));
+//
+//                        List<HashMap> list2 = dbConnService.select("getImagesInfo", map);
+//
+//                        list.get(i).put("imagesInfo", list2);
+//                    }
+//                }
                 infos.put("usersNote", list);
             }
 
@@ -4028,93 +4196,35 @@ public class ApiController {
         return rtnVal;
     }
 
-    @RequestMapping(value = "/pointUse", method = RequestMethod.POST)
-    @ApiOperation(value = "포인트 사용 테스트", notes = "{\"pointUse\":\"5000\"}")
-    public HashMap pointUse(HttpServletRequest auth, @RequestBody String data) {
-        log.info("####pointUse##### : " + data);
-
-                HashMap rtnVal = new HashMap();
-                JSONParser parser = new JSONParser();
-                String error = null;
-
-                try{
-                    JSONObject jsonData = (JSONObject) parser.parse(data);
-
-                    HashMap map = new HashMap();
-                    HashMap infos = new HashMap();
-                    jsonData.forEach((key, value) -> map.put(key,value));
-
-                    String token = auth.getHeader("token");
-                    int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
-
-                    map.put("userIdx", idx);
-
-                    List<HashMap> list = dbConnService.select("getUsersSavingPoints", map);
-
-                    if(list.isEmpty()) {
-                        error = "포인트 정보가 없습니다.";
-                    } else {
-                        int pointUse = Integer.parseInt(map.get("pointUse").toString());
-                        int totalHoldPoint = 0;
-
-                        for (int i = 0; i < list.size(); i++) {
-                            int inPracticalPoint = Integer.parseInt(list.get(i).get("in_practical_point").toString());
-
-                            totalHoldPoint += inPracticalPoint;
-                        }
-
-                        if (totalHoldPoint > pointUse) {
-                            for (int i = 0; i < list.size(); i++) {
-                                int inPracticalPoint = Integer.parseInt(list.get(i).get("in_practical_point").toString());
-
-                                map.put("savingPointsIseq", list.get(i).get("iseq"));
-                                map.put("subtractionType", 1);
-
-                                if (inPracticalPoint > 0) {
-                                    if (pointUse > 0) {
-                                        if (pointUse > inPracticalPoint) {
-                                            map.put("subtractionPoint", inPracticalPoint);
-
-                                            pointUse = pointUse - inPracticalPoint;
-                                            inPracticalPoint = 0;
-
-                                            map.put("inPracticalPoint", inPracticalPoint);
-
-                                            dbConnService.update("updateInPracticalPoints", map);
-                                            dbConnService.insert("updateSubtractionPoints", map);
-                                        } else if (pointUse <= inPracticalPoint) {
-                                            map.put("subtractionPoint", pointUse);
-
-                                            inPracticalPoint = inPracticalPoint - pointUse;
-                                            pointUse = 0;
-
-                                            map.put("inPracticalPoint", inPracticalPoint);
-
-                                            dbConnService.update("updateInPracticalPoints", map);
-                                            dbConnService.insert("updateSubtractionPoints", map);
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            error = "사용하고자 하는 포인트가 보유 포인트보다 적습니다.";
-                        }
-                    }
-
-                    rtnVal.put("infos", infos);
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                    error = "정보를 파싱하지 못했습니다.";
-                }
-
-                if (error!=null) {
-                    rtnVal.put("result", false);
-                }
-                else {
-                    rtnVal.put("result", true);
-                }
-                rtnVal.put("errorMsg", error);
-
-                return rtnVal;
-    }
+//    @RequestMapping(value="myPTTrainers", method = RequestMethod.POST)
+//    @ApiOperation(value = "마이 페이지 - 트레이너관리",
+//            notes = "{\"oldPassword\":\"12345\", \"newPassword\":\"67890\"}")
+//    public HashMap myPTTrainers(HttpServletRequest auth) {
+//        log.info("####myPTTrainers#####");
+//
+//        HashMap rtnVal = new HashMap();
+//        String error = null;
+//
+//        try{
+//            HashMap map = new HashMap();
+//            HashMap infos = new HashMap();
+//
+//            String token = auth.getHeader("token");
+//            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+//
+//            map.put("userIdx", idx);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            error = "정보를 파싱하지 못했습니다.";
+//        }
+//
+//        if (error!=null) {
+//            rtnVal.put("result", false);
+//        }
+//        else {
+//            rtnVal.put("result", true);
+//        }
+//           rtnVal.put("errorMsg", error);
+//        return rtnVal;
+//    }
 }
