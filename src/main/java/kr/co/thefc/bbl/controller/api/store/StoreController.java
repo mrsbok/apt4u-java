@@ -26,7 +26,7 @@ public class StoreController {
 			value = "업체 회원가입"
 			, notes = "업체 회원가입")
 	@PostMapping("store/register")
-	public HashMap PTtrainerLogin1(
+	public HashMap storeRegister(
 			@RequestBody StoreForm storeForm
 			)  {
 		return storeService.storeRegister(storeForm);
@@ -62,4 +62,6 @@ public class StoreController {
 	)  {
 		return storeService.login(userName,password);
 	}
+
+
 }

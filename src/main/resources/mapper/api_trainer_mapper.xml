@@ -137,15 +137,17 @@
         affilated_center,
         approval_status,
         approval_date,
-        notice
+        notice,
+                                   targer_idx
         )
         VALUES
         (
-            #{idx},
+            #{trainerIdx},
             #{affiliateCenter},
             #{approvalStatus},
             now(),
-            #{notice}
+            #{notice},
+            #{targerIdx}
         )
     </insert>
 
@@ -563,4 +565,17 @@
                  where notice = #{notice} and pt_trainer_idx = #{trainerIdx}
              ) as ptcaas;
     </select>
+
+    <select id="workExperienceFind" resultType="java.util.HashMap">
+    select * from pt_trainer_work_experience where pt_trainer_idx = #{trainerIdx};
+    </select>
+
+    <select id="AwardWinningFind" resultType="java.util.HashMap">
+    select * from pt_trainer_award_winning where pt_trainer_idx = #{trainerIdx};
+    </select>
+
+    <select id="qualitificationFind" resultType="java.util.HashMap">
+    select * from pt_trainer_qualitification where pt_trainer_idx = #{trainerIdx};
+    </select>
+
 </mapper>

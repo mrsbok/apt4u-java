@@ -22,7 +22,7 @@ public interface PtTrainerService {
     HashMap selectDetailInformation(Integer idx);
     HashMap updateInformation(PtTrainerForm ptTrainerForm);
     HashMap updatePassword(Integer idx,String password);
-    HashMap centerApprovedSave(Integer idx,Integer AffiliateCenter,String ApprovalStatus);
+    HashMap centerApprovedSave(Integer idx,CenterApproveForm centerApproveForm);
 
     HashMap buyInformtaionSave(List<PtTrainerBuyInformationForm> ptTrainerBuyInformationForm);
     HashMap feeInformationSave(PtFeeInformationDetailForm ptFeeInformationDetailForm);
@@ -31,6 +31,12 @@ public interface PtTrainerService {
     HashMap profileSave(Integer ptTrainerIdx, List<MultipartFile> request);
     HashMap workExperienceSave(PtTrainerWorkExperienceForm ptTrainerWorkExperienceFormList
         ,List<MultipartFile> request);
+
+    HashMap workExperienceSelect(Integer idx);
+
+    HashMap awardWinningSelect(Integer idx);
+
+    HashMap qualitificationSelect(Integer idx);
 
     HashMap awardWinningSave(PTtrainersAwardWinningForm pTtrainersAwardWinningFormsList
         ,List<MultipartFile> request);

@@ -218,14 +218,13 @@ public class PtTrainerServiceImpl implements PtTrainerService {
 
   //소속 센터 변경
   @Override
-  public HashMap centerApprovedSave(Integer idx, Integer AffiliateCenter, String ApprovalStatus) {
+  public HashMap centerApprovedSave(Integer idx, CenterApproveForm centerApproveForm) {
     String error = null;
+    centerApproveForm.setTrainerIdx(idx);
     try {
       HashMap form = new HashMap();
-      form.put("idx", idx);
-      form.put("affiliateCenter", AffiliateCenter);
-      form.put("approvalStatus", ApprovalStatus);
-      String convertJson = gson.toJson(form);
+
+      String convertJson = gson.toJson(centerApproveForm);
       HashMap data = gson.fromJson(convertJson, HashMap.class);
       dbConnService.insert("centerApprovedSave", data);
 
@@ -423,6 +422,7 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     List<HashMap> profileData = test(request, imageType);
     System.out.println(ptTrainerWorkExperienceForm.getTarinerIdx());
     String error = null;
+    HashMap approveData = new HashMap();
     try {
 
       String convertJson = gson.toJson(ptTrainerWorkExperienceForm);
@@ -437,7 +437,11 @@ public class PtTrainerServiceImpl implements PtTrainerService {
       System.out.println("---------------");
       System.out.println(profileData);
       dbConnService.insertList("trainerProfileSave", profileData);
-
+      approveData.put("trainerIdx",ptTrainerWorkExperienceForm.getTarinerIdx());
+      approveData.put("targerIdx" , idx);
+      approveData.put("approvalStatus", "승인대기");
+      approveData.put("notice",imageType);
+      dbConnService.insert("centerApprovedSave", approveData);
     } catch (Exception e) {
       e.printStackTrace();
       error = "데이터 저장 실패.";
@@ -451,11 +455,41 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     return rtnVal;
   }
 
+
+  //근무경력 저장장
+ @Override
+  public HashMap workExperienceSelect(Integer idx) {
+    String error = null;
+    HashMap data = new HashMap();
+    HashMap data2 = new HashMap();
+    try {
+//      data2.put("notice","프로필");
+//      data2.put("trainerIdx", idx);
+//      HashMap flag =  dbConnService.selectOne("approveFind", data2);
+
+        data.put("imageList", dbConnService.selectIdxList("workExperienceFind", idx));
+
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("infos", data);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
   //수상경력 저장
   @Override
   public HashMap awardWinningSave(PTtrainersAwardWinningForm pTtrainersAwardWinningFormsList, List<MultipartFile> request) {
     String imageType = "수상 경력";
     List<HashMap> profileData = test(request, imageType);
+    HashMap approveData = new HashMap();
     String error = null;
     try {
       String convertJson = gson.toJson(pTtrainersAwardWinningFormsList);
@@ -470,7 +504,11 @@ public class PtTrainerServiceImpl implements PtTrainerService {
       System.out.println("---------------");
       System.out.println(profileData);
       dbConnService.insertList("trainerProfileSave", profileData);
-
+      approveData.put("trainerIdx",pTtrainersAwardWinningFormsList.getTarinerIdx());
+      approveData.put("targerIdx" , idx);
+      approveData.put("approvalStatus", "승인대기");
+      approveData.put("notice",imageType);
+      dbConnService.insert("centerApprovedSave", approveData);
     } catch (Exception e) {
       e.printStackTrace();
       error = "데이터 저장 실패.";
@@ -483,6 +521,35 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     rtnVal.put("errorMsg", error);
     return rtnVal;
   }
+  @Override
+  public HashMap awardWinningSelect(Integer idx) {
+    String error = null;
+    HashMap form = new HashMap();
+    List<HashMap> ListData =  new ArrayList<>();
+    try {
+      form.put("trainerIdx",idx);
+//      data2.put("notice","프로필");
+//      data2.put("trainerIdx", idx);
+//      HashMap flag =  dbConnService.selectOne("approveFind", data2);
+      String convertJson = gson.toJson(form);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      ListData = dbConnService.select("AwardWinningFind", data);
+
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("infos", ListData);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
 
   //자격증 저장
   @Override
@@ -490,6 +557,7 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     String imageType = "자격증";
     List<HashMap> profileData = test(request, imageType);
     String error = null;
+    HashMap approveData = new HashMap();
     try {
 
       String convertJson = gson.toJson(pTtrainersQualitificationForm);
@@ -505,7 +573,11 @@ public class PtTrainerServiceImpl implements PtTrainerService {
       System.out.println(profileData);
       dbConnService.insertList("trainerProfileSave", profileData);
 
-
+      approveData.put("trainerIdx",pTtrainersQualitificationForm.getTarinerIdx());
+      approveData.put("targerIdx" , idx);
+      approveData.put("approvalStatus", "승인대기");
+      approveData.put("notice",imageType);
+      dbConnService.insert("centerApprovedSave", approveData);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -520,6 +592,34 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     return rtnVal;
   }
 
+  @Override
+  public HashMap qualitificationSelect(Integer idx) {
+    String error = null;
+    HashMap form = new HashMap();
+    List<HashMap> ListData =  new ArrayList<>();
+    try {
+      form.put("trainerIdx",idx);
+//      data2.put("notice","프로필");
+//      data2.put("trainerIdx", idx);
+//      HashMap flag =  dbConnService.selectOne("approveFind", data2);
+      String convertJson = gson.toJson(form);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      ListData = dbConnService.select("qualitificationFind", data);
+
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터 저장 실패.";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("infos", ListData);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
   //자격사항 삭제
   @Override
   public HashMap qualitificationDelete(DeleteQualitificationForm deleteQualitificationForm) {
