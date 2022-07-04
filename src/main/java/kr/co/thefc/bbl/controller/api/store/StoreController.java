@@ -51,4 +51,15 @@ public class StoreController {
 	)  {
 		return storeService.login(userName,password);
 	}
+
+	@ApiOperation(
+			value = "트레이너 승인"
+			, notes = "트레이너 승인")
+	@PostMapping("store/trainer-approve")
+	public HashMap trainerApprove(
+			@RequestParam String userName,
+			@RequestParam String password
+	)  {
+		return storeService.login(userName,password);
+	}
 }

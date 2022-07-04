@@ -7,7 +7,7 @@ import lombok.Data;
 
 @ApiModel(description = "경력 폼")
 @Data
-public class PtTrainerWorkExperienceForm {
+public class  PtTrainerWorkExperienceForm {
 
         Integer idx = null;
 

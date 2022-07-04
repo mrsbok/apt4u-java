@@ -133,10 +133,21 @@ public class PtTrainerServiceImpl implements PtTrainerService {
   public HashMap selectDetailInformation(Integer idx) {
     String error = null;
     HashMap data = new HashMap();
+    HashMap data2 = new HashMap();
     try {
+      data2.put("notice","프로필");
+      data2.put("trainerIdx", idx);
+      HashMap flag =  dbConnService.selectOne("approveFind", data2);
+      System.out.println(flag);
+      System.out.println("flag");
+      System.out.println("flag");
+      if(Objects.equals(flag.get("flag").toString(), "1")){
+        rtnVal.put("message", "센터 승인후 조회 가능합니다");
+      }else {
+        data.put("trainerDetailInformation", dbConnService.selectIdx("selectDetailInformation", idx));
+        data.put("imageList", dbConnService.selectIdxList("selectTrainerImages", idx));
+      }
 
-      data.put("trainerDetailInformation", dbConnService.selectIdx("selectDetailInformation", idx));
-      data.put("imageList", dbConnService.selectIdxList("selectTrainerImages", idx));
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -379,68 +390,7 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     return fileList;
   }
 
-//프로필 저장
-//  public List<HashMap> s3upload(MultipartFile request, String imageType) {
-//    log.info("####s3upload#####");
-//    HashMap rtnVal = new HashMap();
-//    String error = null;
-//    List fileList = new ArrayList<>();
-//    List filePath = new ArrayList<>();
-//    Iterator itr = request.getFileNames();
-//    if (itr.hasNext()) {
-//      List mpf = request.getFiles((String) itr.next());
-//      for (int i = 0; i < mpf.size(); i++) {
-//        MultipartFile mf = ((MultipartFile) mpf.get(i));
-//        String filename = null;
-//        S3Service.FileGroupType groupType = S3Service.FileGroupType.PT_Trainer;
-//        try {
-//          filename = s3Service.uploadWithUUID(mf, groupType);
-//        } catch (IOException e) {
-//          e.printStackTrace();
-//          error = "파일 업로드 실패!";
-//        }
-//        log.info("file upload to s3 : " + groupType.getValue() + " : " + filename);
-//
-//        S3Object imgFileInfo = s3Service.getFileInfo(groupType.getValue() + filename);
-//        log.info("uploaded image file : " + imgFileInfo.toString());
-//        S3Object imgThumbFileInfo = s3Service.getFileInfo(groupType.getValue() + S3Service.thumbPath + filename);
-//        log.info("uploaded image thumb file : " + imgThumbFileInfo.toString());
-//
-//        log.info("url : " + imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
-//        BufferedImage imgBuf = null;
-//        String base64 = null;
-//        try {
-//          imgBuf = ImageIO.read(imgFileInfo.getObjectContent());
-//          base64 = S3Service.encodeBase64(imgBuf);
-//          rtnVal.put("img_data", base64);
-////                    log.info("base64 : " + base64);
-//        } catch (IOException e) {
-//          e.printStackTrace();
-//          error = "이미지파일 base64 변환 실패!";
-//        }
-//
-//        HashMap infos = new HashMap();
-//        infos.put("filepath", groupType.getValue());
-//        infos.put("filename", filename);
-//        infos.put("imagetype", imageType);
-//        infos.put("fileurl", imgFileInfo.getObjectContent().getHttpRequest().getURI().toString());
-////        infos.put("filedata", base64);
-//        String ext = filename.substring(filename.lastIndexOf('.') + 1);
-//        infos.put("fileext", ext);
-//        fileList.add(infos);
-//        rtnVal.put("infos", infos);
-//      }
-//    }
-//
-//    if (error != null) {
-//      rtnVal.put("result", false);
-//    } else {
-//      rtnVal.put("result", true);
-//    }
-//    rtnVal.put("errorMsg", error);
-//    System.out.println(fileList);
-//    return fileList;
-//  }
+
 
   //프로필 저장
   @Override
@@ -465,8 +415,6 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     return rtnVal;
   }
 
-  //   dbConnService.insertList("trainerAwardWinningSave", ptTrainerDetailForm.pTtrainersAwardWinningFormsList);
-//      dbConnService.insertList("trainerQualitificationSave", ptTrainerDetailForm.pTtrainersQualitificationFormList);
 
   //근무경력저장
   @Override
