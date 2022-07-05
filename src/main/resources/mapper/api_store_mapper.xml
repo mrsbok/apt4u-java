@@ -96,4 +96,12 @@
         where   idx  = #{idx}
     </update>
 
+
+    <select id="storeCoachCount" resultType="java.util.HashMap">
+        select
+            count(affilated_center) as count
+        from pt_trainer_info_basic
+        where
+            affilated_center = #{storeIdx}
+    </select>
 </mapper>

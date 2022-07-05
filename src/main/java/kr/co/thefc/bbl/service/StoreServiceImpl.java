@@ -190,4 +190,31 @@ public class StoreServiceImpl implements StoreService {
     return rtnVal;
   }
 
+  @Override
+  public HashMap storeCoachCount(Integer idx) {
+    String error = null;
+    HashMap idxData = new HashMap<>();
+    HashMap result = new HashMap<>();
+    List<HashMap> listData = new ArrayList();
+    idxData.put("storeIdx" , idx);
+    try {
+      String convertJson = gson.toJson(idxData);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      result =  dbConnService.selectOne("storeCoachCount", data);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "업데이트 실패";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+      rtnVal.put("token", null);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("data", result);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
 }
