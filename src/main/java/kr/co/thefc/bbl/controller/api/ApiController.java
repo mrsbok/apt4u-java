@@ -365,6 +365,20 @@ public class ApiController {
                 HashMap infos = new HashMap();
                 infos.put("usersShoppingBasketProducts", list);
 
+                int totalAmount = 0;
+
+                for(int i=0; i<list.size(); i++) {
+                    int price = Integer.parseInt(list.get(i).get("price").toString());
+                    int discountPrice = Integer.parseInt(list.get(i).get("discountPrice").toString());
+
+                    if(discountPrice > 0) {
+                        totalAmount = totalAmount + discountPrice;
+                    } else {
+                        totalAmount = totalAmount + price;
+                    }
+                }
+                infos.put("totalAmount", totalAmount);
+
                 rtnVal.put("infos", infos);
             }
 
@@ -943,7 +957,7 @@ public class ApiController {
 
     @RequestMapping(value="/buyProduct", method = RequestMethod.POST)
     @ApiOperation(value = "상품 구매",
-        notes = "{\"userTelephone\":\"01012341234\", \"totalPoint\":\"50000\", \"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
+        notes = "{\"userTelephone\":\"01012341234\", \"pointUse\":\"10000\", \"billingMethod\":\"1\", " +
             "\"totalAmount\":\"25000\", \"billingAmount\":\"15000\"," +
             "\n\n\"products\":[\n\n{\"productCategory\":\"1\", \"productIdx\":\"8\", \"price\":\"25000\", " +
             "\"quantity\":\"1\", \"amount\":\"25000\", \"sellerIdx\":\"16\"}\n\n]}" +

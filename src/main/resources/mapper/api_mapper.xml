@@ -255,7 +255,7 @@
             p.name as productName,
             p.price,
             p.discount,
-            p.discount_price as discountPrice,
+            ifnull(p.discount_price, "0") as discountPrice,
             p.store_idx as storeIdx,
             sib.store_name as storeName,
             p.seller_idx as sellerIdx,
