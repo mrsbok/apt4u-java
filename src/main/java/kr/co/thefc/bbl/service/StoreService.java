@@ -15,4 +15,8 @@ public interface StoreService {
 	HashMap emailCheck(String userName);
 	HashMap login(String userName,String password);
 
+	HashMap approveList(Integer Idx);
+
+	HashMap approveUpdate(Integer idx, String notice);
+
 }

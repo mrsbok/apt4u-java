@@ -53,15 +53,30 @@ public class StoreController {
 	}
 
 	@ApiOperation(
-			value = "트레이너 승인"
-			, notes = "트레이너 승인")
-	@PostMapping("store/trainer-approve")
+			value = "업체 승인요청 조회"
+			, notes = "업체 승인요청 조회")
+	@PostMapping("store/trainer-approve-select")
 	public HashMap trainerApprove(
-			@RequestParam String userName,
-			@RequestParam String password
+			HttpServletRequest request
 	)  {
-		return storeService.login(userName,password);
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("storeIdx")));
+
+		return storeService.approveList(idx);
 	}
 
+	@ApiOperation(
+			value = "업체 승인처리"
+			, notes = "업체 승인처리")
+	@PostMapping("store/approval")
+	public HashMap storeApproval(
+			HttpServletRequest request,
+			@RequestParam Integer idx,
+			@RequestParam String notice
+	)  {
+		String token = request.getHeader("token");
+
+		return storeService.approveUpdate(idx,notice);
+	}
 
 }

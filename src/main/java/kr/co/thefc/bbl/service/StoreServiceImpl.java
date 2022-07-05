@@ -135,4 +135,59 @@ public class StoreServiceImpl implements StoreService {
     return rtnVal;
   }
 
+  @Override
+  public HashMap approveList(Integer idx) {
+    String error = null;
+    HashMap idxData = new HashMap<>();
+    List<HashMap> listData = new ArrayList();
+    idxData.put("storeIdx" , idx);
+    try {
+
+      String convertJson = gson.toJson(idxData);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      listData = dbConnService.select("storeApproveFind", data);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "조회실패";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+      rtnVal.put("token", null);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("data", listData);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap approveUpdate(Integer idx, String notice) {
+    String error = null;
+    HashMap idxData = new HashMap<>();
+    List<HashMap> listData = new ArrayList();
+    idxData.put("idx" , idx);
+    idxData.put("notice" , notice);
+    try {
+
+      String convertJson = gson.toJson(idxData);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      dbConnService.update("storeApproveUpdate", data);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "업데이트 실패";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+      rtnVal.put("token", null);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("data", listData);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
 }
