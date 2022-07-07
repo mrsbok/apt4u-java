@@ -53,15 +53,43 @@ public class StoreController {
 	}
 
 	@ApiOperation(
-			value = "트레이너 승인"
-			, notes = "트레이너 승인")
-	@PostMapping("store/trainer-approve")
-	public HashMap trainerApprove(
-			@RequestParam String userName,
-			@RequestParam String password
+			value = "업체 승인요청 조회"
+			, notes = "업체 승인요청 조회")
+	@PostMapping("store/trainer-approve-select")
+	public HashMap storeApproveList(
+			HttpServletRequest request
 	)  {
-		return storeService.login(userName,password);
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("storeIdx")));
+
+		return storeService.approveList(idx);
 	}
 
+	@ApiOperation(
+			value = "업체 승인처리"
+			, notes = "업체 승인처리")
+	@PostMapping("store/approve")
+	public HashMap storeApprove(
+			HttpServletRequest request,
+			@RequestParam Integer idx,
+			@RequestParam String notice
+	)  {
+		String token = request.getHeader("token");
+
+		return storeService.approveUpdate(idx,notice);
+	}
+
+	@ApiOperation(
+			value = "업체 소속 코치"
+			, notes = "업체 소속 코치")
+	@PostMapping("store/coach-count")
+	public HashMap storeCoachCount(
+			HttpServletRequest request
+	)  {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("storeIdx")));
+
+		return storeService.storeCoachCount(idx);
+	}
 
 }

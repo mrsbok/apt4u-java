@@ -216,7 +216,7 @@ public class PtTrainerServiceImpl implements PtTrainerService {
     return rtnVal;
   }
 
-  //소속 센터 변경
+  //센터 인증 요청
   @Override
   public HashMap centerApprovedSave(Integer idx, CenterApproveForm centerApproveForm) {
     String error = null;

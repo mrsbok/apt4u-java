@@ -81,4 +81,27 @@
             st.id  = #{userName};
 
     </select>
+
+    <select id="storeApproveFind" resultType="java.util.HashMap">
+        select
+            *
+        from pt_trainer_center_approved
+           where      affilated_center  = #{storeIdx};
+
+    </select>
+
+    <update id="storeApproveUpdate" parameterType="java.util.HashMap">
+        update pt_trainer_center_approved
+        SET approval_status = '승인완료'
+        where   idx  = #{idx}
+    </update>
+
+
+    <select id="storeCoachCount" resultType="java.util.HashMap">
+        select
+            count(affilated_center) as count
+        from pt_trainer_info_basic
+        where
+            affilated_center = #{storeIdx}
+    </select>
 </mapper>
