@@ -5,49 +5,96 @@
         select now() as now;
     </select>
 
-    <select id="getPTLessionVouchars" resultType="java.util.HashMap">
+    <select id="getPTLessonVouchers" resultType="java.util.HashMap">
         select
             p.idx as productIdx,
             p.name as productName,
-            p.description as productDescription, /** 220602추가 **/
-            ptid.specialty, /** 220602추가 **/
             p.product_type as productType,
+            p.description as productDescription,
             p.price,
             p.discount,
             p.discount_price as discountPrice,
-            p.store_idx as storeIdx,
-            s.store_name as storeName,
+            p.seller_type as sellerType,
             p.seller_idx as sellerIdx,
-            t.pt_trainer_name as sellerName,
-            t.nick_name as sellerNickName, /** 220531추가 **/
-            s.address, /** 220531추가 **/
-            avg(un.user_satisfaction) as userSatisfaction, /** 220531추가, 220602수정 **/
-			pti.image_path as imagePath, /** 220603 추가 **/
-            pti.image_file_name as imageFileName /** 220603 추가 **/
+            avg(un.user_satisfaction) as productSatisfaction
         from
             product as p
-        left join
-            pt_trainer_info_basic as t
-        on
-            p.seller_idx = t.pt_trainer_idx
-        left join
-            pt_trainer_info_details as ptid
-        on
-            t.pt_trainer_idx = ptid.pt_trainer_idx
-        left join
-            stores_info_basic as s
-        on
-            p.store_idx = s.store_idx OR t.affilated_center = s.store_idx
-        left join
-            users_notes as un
-        on
-            p.idx = un.note_target AND un.note_category = #{noteCategory} /** 220602추가 **/
-        left join
-			pt_trainer_images as pti
-		on
-			pti.pt_trainer_idx = ptid.pt_trainer_idx AND pti.main_image_yn = "1" AND pti.image_type = #{imageType} /** 220603 추가 **/
-        group by
-            p.idx, p.name, p.description, ptid.specialty, p.product_type, p.price, p.discount, p.store_idx, s.store_name, p.seller_idx, t.pt_trainer_name, t.nick_name, s.address, pti.image_path, pti.image_file_name
+        LEFT JOIN users_notes as un
+        ON un.note_category = #{noteCategory} AND un.note_target = p.idx
+        WHERE p.closed_sale > current_date() OR p.closed_sale is null
+        GROUP BY p.idx, p.name, p.product_type, p.description, p.price, p.discount, p.discount_price, p.seller_type, p.seller_idx
+    </select>
+
+    <select id="getPTLessonVouchersOfStore" resultType="java.util.HashMap">
+        SELECT
+        	sib.store_name as storeName,
+            sib.president_name as presidentName,
+            sib.address,
+            sib.service_region as serviceRegion,
+            sib.service_local_area as serviceLocalArea,
+            sib.main_telephone as mainTelephone,
+            sib.person_in_charge as personInCharge,
+            sib.contract_number as contractNumber,
+            sib.store_type as storeType,
+        	avg(un.user_satisfaction) as storeSatisfaction
+        FROM stores_info_basic as sib
+        LEFT JOIN users_notes as un
+        ON un.note_category = "1" AND un.note_target = sib.store_idx
+        WHERE sib.store_idx = #{storeIdx};
+    </select>
+
+    <select id="getFitnessGymMainImage" resultType="java.util.HashMap">
+        SELECT
+            fgsi.image_path as imagePath,
+            fgsi.image_file_name as imageFileName
+        FROM fitness_gym_stores_images as fgsi
+        WHERE fgsi.store_idx = #{storeIdx} AND fgsi.main_image_yn = "1"
+    </select>
+    <select id="getFitnessGymImage" resultType="java.util.HashMap">
+        SELECT
+        	group_concat(image_path separator ',') as imagePath,
+        	group_concat(image_file_name separator ',') as imageFileName
+        FROM fitness_gym_stores_images as fgsi
+        WHERE fgsi.store_idx = #{storeIdx} AND fgsi.main_image_yn = "1"
+    </select>
+
+    <select id="getPTLessonVouchersOfPTTrainer" resultType="java.util.HashMap">
+        SELECT
+        	ptib.pt_trainer_name as PTTrainerName,
+            ptib.nick_name as PTTrainerNickname,
+            sib.store_name as storeName,
+            sib.address,
+            ptid.specialty,
+        	pti.image_path as imagePath,
+            pti.image_file_name as imageFileName,
+            avg(un.user_satisfaction) as trainerSatisfaction
+        FROM pt_trainer_info_basic as ptib
+        LEFT JOIN stores_info_basic as sib
+        ON ptib.affilated_center = sib.store_idx
+        LEFT JOIN pt_trainer_info_details as ptid
+        ON ptib.pt_trainer_idx = ptid.pt_trainer_idx
+        LEFT JOIN users_notes as un
+        ON un.note_category = '3' AND un.note_target = ptib.pt_trainer_idx
+        LEFT JOIN pt_trainer_images as pti
+        ON ptib.pt_trainer_idx = pti.pt_trainer_idx AND pti.main_image_yn = '1' AND pti.image_type = #{imageType}
+        WHERE ptib.pt_trainer_idx = #{PTTrainerIdx}
+        GROUP BY ptib.pt_trainer_name, ptib.nick_name, sib.store_name, sib.address,
+                 ptid.specialty, pti.image_path, pti.image_file_name;
+    </select>
+
+    <select id="getPTLessonVoucherDetail" resultType="java.util.HashMap">
+        SELECT
+        	p.idx as productIdx,
+        	p.name as productName,
+        	p.product_type as productType,
+        	p.description as productDescription,
+        	p.price,
+        	p.discount,
+        	p.discount_price as discountPrice,
+        	p.seller_type as sellerType,
+        	p.seller_idx as sellerIdx
+        FROM product as p
+        WHERE p.idx = #{productIdx}
     </select>
 
     <select id="getPTLessionVoucharsDetail" resultType="java.util.HashMap">
@@ -61,6 +108,7 @@
             p.description,
             p.store_idx as storeIdx,
             s.store_name as storeName,
+            p.seller_Type as sellerType,
             p.seller_idx as sellerIdx,
             t.pt_trainer_name as sellerName,
             t.nick_name as sellerNickName, /** 220531추가 **/
@@ -256,15 +304,16 @@
             p.price,
             p.discount,
             ifnull(p.discount_price, "0") as discountPrice,
-            p.store_idx as storeIdx,
+            sib.store_idx as storeIdx,
             sib.store_name as storeName,
+            p.seller_Type as sellerType,
             p.seller_idx as sellerIdx,
             ptib.pt_trainer_name as sellerName,
             ptib.nick_name as sellerNickName /** 220531추가 **/
         from users_shopping_basket as usb
         left join product as p on usb.product_idx = p.idx
-        left join stores_info_basic as sib on p.store_idx = sib.store_idx
-        left join pt_trainer_info_basic as ptib on p.seller_idx = ptib.pt_trainer_idx
+        left join pt_trainer_info_basic as ptib on p.seller_idx = ptib.pt_trainer_idx AND p.seller_type = '2'
+		left join stores_info_basic as sib on (p.seller_idx = sib.store_idx AND p.seller_type = '1') OR (ptib.affilated_center = sib.store_idx)
         where user_idx = #{userIdx}
     </select>
 
@@ -287,8 +336,8 @@
             p.price,
             p.discount,
             p.discount_price as discountPrice,
-            p.store_idx as storeIdx,
             sib.store_name as storeName,
+            p.seller_Type as sellerType,
             p.seller_idx as sellerIdx,
             ptib.pt_trainer_name as sellerName,
             ptib.nick_name as sellerNickName, /** 220531추가 **/
@@ -302,165 +351,13 @@
         left join
             pt_trainer_info_basic as ptib
         on
-            p.seller_idx = ptib.pt_trainer_idx
+            p.seller_idx = ptib.pt_trainer_idx AND p.seller_type = '2'
         left join
             stores_info_basic as sib
         on
-            p.store_idx = sib.store_idx OR ptib.affilated_center = sib.store_idx
+            (p.seller_idx = sib.store_idx AND p.seller_type = '1') OR (ptib.affilated_center = sib.store_idx)
         where
             up.user_idx = #{userIdx} AND up.item_category = #{category}
-    </select>
-
-    <select id="getUserPick_PTTrainers" resultType="java.util.HashMap">
-        select
-            up.item_category as category,
-            ptib.pt_trainer_idx as PTTrainerIdx,
-            ptib.pt_trainer_name as PTTrainerName,
-            ptib.nick_name as nickName, /** 220531추가 **/
-            ptib.gender,
-            ptib.affilated_center as affilatedCenterIdx,
-            sib.store_name as affilatedCenterName,
-            pti.image_path as imagePath,
-            pti.image_file_name as imageFileName
-        from
-            users_pick as up
-        left join
-            pt_trainer_info_basic as ptib
-        on
-            ptib.pt_trainer_idx = up.picked_item
-        left join
-            stores_info_basic as sib
-        on
-            ptib.affilated_center = sib.store_idx
-        left join
-            pt_trainer_info_details as ptid
-        on
-            ptib.pt_trainer_idx = ptid.pt_trainer_idx
-        left join
-			pt_trainer_images as pti
-		on
-			ptib.pt_trainer_idx = pti.pt_trainer_idx AND pti.main_image_yn = "1" AND pti.image_type = #{imageType} /** 220603 추가 **/
-        where
-            up.user_idx = #{userIdx} AND up.item_category = #{category}
-    </select>
-
-    <select id="getUserPick_Stores" resultType="java.util.HashMap">
-        select
-            sib.store_idx as storeIdx,
-            sib.store_name as storeName,
-            sib.main_telephone as mainTelephone,
-            sib.address,
-            fgsid.main_photo as mainPhoto
-        from
-            users_pick as up
-        left join
-            stores_info_basic as sib
-        on
-            up.picked_item = sib.store_idx
-        left join
-            fitness_gym_stores_info_details as fgsid
-        on
-            fgsid.store_idx = sib.store_idx
-        where
-            up.user_idx = #{userIdx} AND up.item_category = #{category}
-    </select>
-
-    <select id="getUsersPickDetail_Product" resultType="java.util.HashMap">
-        select
-            p.idx as productIdx,
-            p.name as productName,
-            p.product_type as productType,
-            p.price,
-            p.discount,
-            p.discount_price as discountPrice,
-            p.description,
-            p.store_idx as storeIdx,
-            s.store_name as storeName,
-            p.seller_idx as sellerIdx,
-            t.pt_trainer_name as sellerName,
-            t.nick_name as sellerNickName, /** 220531추가 **/
-            p.registered_date as registeredDate,
-            pv.voucher_type as voucherType,
-            pv.use_termYN as useTermYN,
-            pv.use_term as useTerm,
-            avg(un.user_satisfaction) as userSatisfaction /** 220531추가, 220602수정 **/
-            /** 사진 정보 추가 예정**/
-        from
-            product as p
-        left join
-            pt_trainer_info_basic as t
-        on
-            p.seller_idx = t.pt_trainer_idx
-        left join
-            stores_info_basic as s
-        on
-            p.store_idx = s.store_idx OR t.affilated_center = s.store_idx
-        left join
-            product_pt_voucher_details as pv
-        on
-            p.idx = pv.idx
-        left join
-            users_notes as un
-        on
-            p.idx = un.note_target AND un.note_category = #{noteCategory}
-        where
-            p.idx = #{pickedItemIdx}
-        group by
-            p.idx, p.name, p.product_type, p.price, p.discount, p.description, p.store_idx, s.store_name, p.seller_idx, t.pt_trainer_name, t.nick_name, p.registered_date, pv.voucher_type, pv.use_termYN, pv.use_term
-    </select>
-
-    <select id="getUsersPickDetail_PTTrainer" resultType="java.util.HashMap">
-        select
-            p.pt_trainer_idx as PTTrainerIdx,
-            p.pt_trainer_name as PTTrainerName,
-            p.nick_name as nickName, /** 220531추가 **/
-            p.gender,
-            ROUND((TO_DAYS(NOW()) -  to_days(STR_TO_DATE(p.birth_day, '%Y%m%d'))) / 365 ) as age,
-            p.affilated_center as affilatedCenterIdx,
-            s.store_name as affilatedCenterName,
-            ptid.introduction,
-            ptid.specialty, /** 220602추가 **/
-            ifnull(ptid.work_experience, 0) as workExperienceCount, /** 220602추가 **/
-            ifnull(ptid.award_winning, 0) as awardWinningCount, /** 220602추가 **/
-            ifnull(ptid.qualification, 0) as qualificationCount, /** 220602추가 **/
-            count(case when pti.pt_trainer_idx = p.pt_trainer_idx AND pti.image_type = #{imageType} then 1 end) as photoCount /** 220602추가 **/
-        from
-            pt_trainer_info_basic as p
-        left join
-            stores_info_basic as s
-        on
-            p.affilated_center = s.store_idx
-        left join
-            pt_trainer_info_details as ptid
-        on
-            p.pt_trainer_idx = ptid.pt_trainer_idx
-        left join /** 220602추가 **/
-            pt_trainer_images as pti
-        on
-            p.pt_trainer_idx = pti.pt_trainer_idx
-        where
-            p.pt_trainer_idx = #{pickedItemIdx}
-    </select>
-
-    <select id="getUsersPickDetail_Store" resultType="java.util.HashMap">
-        select
-            sib.store_idx as storeIdx,
-            sib.store_name as storeName,
-            sib.main_telephone as mainTelephone,
-            sib.address,
-            fgsid.main_photo as mainPhoto,
-            fgsid.use_guide as useGuide,
-            ifnull(fgsid.biz_hour, 0) as bizHour,
-            fgsid.introduction,
-            ifnull(fgsid.programs, 0) as programs
-        from
-            stores_info_basic as sib
-        left join
-            fitness_gym_stores_info_details as fgsid
-        on
-            fgsid.store_idx = sib.store_idx
-        where
-            sib.store_idx = #{pickedItemIdx}
     </select>
 
     <select id="getStoreBizHours" resultType="java.util.HashMap">
@@ -560,8 +457,22 @@
 
     <insert id="insertTransactionDetail">
         insert into
-            transactions_details(transaction_idx, product_category, product_idx, price, quantity, amount, seller_idx, store_idx)
-        values (#{transactionIdx}, #{productCategory}, #{productIdx}, #{price}, #{quantity}, #{amount}, #{sellerIdx, jdbcType=INTEGER}, #{storeIdx, jdbcType=INTEGER})
+            transactions_details(transaction_idx, product_category, product_idx, price, quantity, amount, seller_type, seller_idx)
+        values (#{transactionIdx}, #{productCategory}, #{productIdx}, #{price}, #{quantity}, #{amount}, #{sellerType}, #{sellerIdx})
+    </insert>
+
+    <update id="updateTransaction">
+        update transactions
+        set
+        	billingyn = '1',
+            billing_date = now()
+        where
+        	idx = #{transactionIdx}
+    </update>
+
+    <insert id="insertValidTicket">
+        insert into valid_ticket(transaction_idx, product_idx, consumer_idx, valid_yn)
+        values (#{transactionIdx}, #{productIdx}, #{userIdx}, '1')
     </insert>
 
     <select id="getTransactions" resultType="java.util.HashMap">
@@ -579,8 +490,8 @@
             t.point_use as pointUse, /** 220616 추가 **/
             t.transaction_date as transactionDate,
             p.product_type as productType,
+            p.seller_type as sellerType,
             p.seller_idx as sellerIdx,
-            p.store_idx as storeIdx,
             t.billing_date as billingDate,
             t.billing_method as billingMethod,
             t.billingyn as billingYN, /** 결제 여부 220531 추가 **/
@@ -598,11 +509,11 @@
 		left join
 			pt_trainer_info_basic as ptib
 		on
-			ptib.pt_trainer_idx = td.seller_idx
+			ptib.pt_trainer_idx = td.seller_idx AND p.seller_Type = "2"
 		left join
 			stores_info_basic as sib
 		on
-			ptib.affilated_center = sib.store_idx
+			(p.seller_idx = sib.store_idx AND p.seller_type = "1") or (ptib.affilated_center = sib.store_idx)
         where
             consumer_idx = #{userIdx}
     </select>
@@ -644,11 +555,11 @@
         left join
             pt_trainer_info_basic as ptib
         on
-            ptib.pt_trainer_idx = p.seller_idx
+            ptib.pt_trainer_idx = td.seller_idx AND p.seller_Type = "2"
         left join
             stores_info_basic as sib
         on
-            sib.store_idx = p.store_idx OR ptib.affilated_center = sib.store_idx
+            (p.seller_idx = sib.store_idx AND p.seller_type = "1") or (ptib.affilated_center = sib.store_idx)
         where
             td.transaction_idx = #{transactionIdx}
     </select>
@@ -732,8 +643,8 @@
             t.point_use as pointUse, /** 220616 추가 **/
             t.transaction_date as transactionDate,
             p.product_type as productType,
+            p.seller_Type as sellerType,
             p.seller_idx as sellerIdx,
-            p.store_idx as storeIdx,
             t.billing_date as billingDate,
             t.billing_method as billingMethod,
             t.billingyn as billingYN, /** 결제 여부 220531 추가 **/
@@ -753,11 +664,11 @@
 		left join
 			pt_trainer_info_basic as ptib
 		on
-			ptib.pt_trainer_idx = td.seller_idx
+			ptib.pt_trainer_idx = td.seller_idx AND p.seller_Type = "2"
 		left join
 			stores_info_basic as sib
 		on
-			ptib.affilated_center = sib.store_idx
+			(p.seller_idx = sib.store_idx AND p.seller_type = "1") or (ptib.affilated_center = sib.store_idx)
         where
             consumer_idx = #{userIdx} AND cancelyn = "1"
     </select>
