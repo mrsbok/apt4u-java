@@ -105,5 +105,17 @@ public class PtTrainerForm {
         )
         String nickName;
 
+        @ApiModelProperty(
+            value = "이메일",
+            example = "qwer@gmail.com"
+        )
+        String email;
+
+        @ApiModelProperty(
+            value = "알림",
+            example = "N"
+        )
+        String notifications;
+
 
 }

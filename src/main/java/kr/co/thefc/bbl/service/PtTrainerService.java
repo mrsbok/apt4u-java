@@ -3,7 +3,6 @@ package kr.co.thefc.bbl.service;
 import kr.co.thefc.bbl.model.trainerForm.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.util.HashMap;
 import java.util.List;
@@ -59,4 +58,6 @@ public interface PtTrainerService {
     HashMap transactionSelect(TransactionForm transactionForm);
 
      HashMap emailCheck(String userName);
+     HashMap deleteAccount(DeleteTrainerForm deleteTrainerForm);
+     HashMap completePayment(Integer transactionIdx, Integer trainerIdx);
 }

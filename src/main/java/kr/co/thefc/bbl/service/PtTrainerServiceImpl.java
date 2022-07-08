@@ -835,20 +835,26 @@ public class PtTrainerServiceImpl implements PtTrainerService {
       String convertJson = gson.toJson(loginData);
       HashMap data = gson.fromJson(convertJson, HashMap.class);
       loginData = dbConnService.selectOne("findUser",data) ;
-      if(Objects.equals(loginData.get("password").toString(), new PasswordCryptConverter().convertToDatabaseColumn(password))){
-        String token = new JwtProvider().jwtCreater(
-            Integer.parseInt(loginData.get("idx").toString()),
-            0,
-            0
-        );
-        rtnVal.put("token", token);
-      }else{
+      if(loginData != null) {
+        if (Objects.equals(loginData.get("password").toString(), new PasswordCryptConverter().convertToDatabaseColumn(password))) {
+          String token = new JwtProvider().jwtCreater(
+              Integer.parseInt(loginData.get("idx").toString()),
+              0,
+              0
+          );
+          rtnVal.put("token", token);
+          } else {
+            error = "로그인 실패 패스워드 또는 ID를 확인하여 주십시오";
+          }
+        }else{
         error = "로그인 실패 패스워드 또는 ID를 확인하여 주십시오";
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+      } catch (Exception e) {
+        e.printStackTrace();
         error = "로그인 실패 패스워드 또는 ID를 확인하여 주십시오.";
-    }
+      }
+
+
     if (error != null) {
       rtnVal.put("result", false);
       rtnVal.put("token", null);
@@ -911,6 +917,69 @@ public class PtTrainerServiceImpl implements PtTrainerService {
       rtnVal.put("result", false);
     } else {
       rtnVal.put("result", true);
+//      rtnVal.put("data", data2);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap deleteAccount(DeleteTrainerForm deleteTrainerForm) {
+    String error = null;
+    String message = null;
+    HashMap emailData = new HashMap<>();
+    HashMap result = new HashMap();
+    try {
+      String convertJson = gson.toJson(deleteTrainerForm);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      System.out.println(data);
+      result = dbConnService.selectOne("findTrainer",data) ;
+      System.out.println(data);
+      dbConnService.insert("deleteAccountSave", data);
+      dbConnService.delete("deleteTrainer", data);
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터를 조회하지 못했읍니다";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("data", result);
+//      rtnVal.put("data", data2);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap completePayment(Integer transactionIdx, Integer trainerIdx) {
+    String error = null;
+    String message = null;
+    HashMap requestData = new HashMap<>();
+    HashMap result = new HashMap();
+    requestData.put("transactionIdx" , transactionIdx);
+    requestData.put("trainerIdx", trainerIdx);
+    try {
+      String convertJson = gson.toJson(requestData);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      System.out.println(data);
+      dbConnService.update("completePayment",data) ;
+      System.out.println(data);
+      result = dbConnService.selectOne("findTransaction", data);
+      System.out.println(result);
+      System.out.println("=========");
+      System.out.println(data);
+      dbConnService.insert("ticketValidSave", result);
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터를 조회하지 못했읍니다";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("data", result);
 //      rtnVal.put("data", data2);
     }
     rtnVal.put("errorMsg", error);

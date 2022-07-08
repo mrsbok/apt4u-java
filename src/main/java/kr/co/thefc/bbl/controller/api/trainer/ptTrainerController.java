@@ -399,6 +399,29 @@ public class ptTrainerController {
 ;
 		return ptTrainerService.emailCheck(userName);
 	}
+	@ApiOperation(
+			value = "탈퇴"
+			, notes = "탈퇴")
+	@PostMapping("trainer/account-withdrawal")
+	public HashMap AccountWithdrawal(@RequestBody DeleteTrainerForm deleteTrainerForm,HttpServletRequest request)  {
+		String token = request.getHeader("token");
+		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+		deleteTrainerForm.setUserIdx(result);
+		return ptTrainerService.deleteAccount(deleteTrainerForm);
+	}
+
+
+	@ApiOperation(
+			value = "결제완료"
+			, notes = "결제완료")
+	@PostMapping("trainer/complete-payment")
+	public HashMap CompletePayment(@RequestParam Integer transactionIdx,HttpServletRequest request)  {
+		String token = request.getHeader("token");
+		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+
+		return ptTrainerService.completePayment(transactionIdx,result);
+	}
+
 
 
 }
