@@ -1725,4 +1725,30 @@
         VALUES
             (now(), #{userIdx}, #{savingPointsIseq}, #{subtractionType}, #{subtractionPoint}, #{transactionIdx})
     </insert>
+
+    <select id="getMyPTTrainers" resultType="java.util.HashMap">
+        SELECT distinct
+            p.product_type as productType,
+            p.seller_type as sellerType,
+            p.seller_idx as sellerIdx,
+            ptib.affilated_center as affilatedCenter,
+            ptib.pt_trainer_name as PTTrainerName,
+            ptib.nick_name as nickName,
+            sib.store_name as storeName
+        FROM
+            valid_ticket as vt
+        LEFT JOIN
+            product as p
+        ON
+            vt.product_idx = p.idx
+        LEFT JOIN
+            pt_trainer_info_basic as ptib
+        ON
+            p.seller_type = "2" AND p.seller_idx = ptib.pt_trainer_idx
+        LEFT JOIN
+            stores_info_basic as sib
+        ON
+            (p.seller_type = "1" AND p.seller_idx = sib.store_idx) OR (ptib.affilated_center = sib.store_idx)
+        WHERE vt.consumer_idx = #{userIdx} AND vt.valid_yn = "1"
+    </select>
 </mapper>
