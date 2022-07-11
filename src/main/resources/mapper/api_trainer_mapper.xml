@@ -35,7 +35,10 @@
                 nick_name,
                 phone_number,
                 registered_date,
-                approved_date
+                approved_date,
+                email,
+                program_name,
+                notifications
         )
         VALUES
             (
@@ -49,7 +52,10 @@
                 #{nickName},
                 #{phoneNumber},
                  now(),
-                 now()
+                 now(),
+                #{email},
+                #{programName},
+                #{notifications}
 
             )
     </insert>
@@ -578,4 +584,66 @@
     select * from pt_trainer_qualitification where pt_trainer_idx = #{trainerIdx};
     </select>
 
+
+    <select id="findTrainer" resultType="java.util.HashMap">
+        select * from pt_trainers where idx = #{userIdx};
+    </select>
+
+    <insert id="deleteAccountSave" useGeneratedKeys="true" keyProperty="idx"  parameterType="java.util.HashMap">
+        insert into deleted_pt_trainers(
+            user_idx,
+            id,
+            last_access,
+            deleted_reason,
+            reason_detail,
+            deleted_date
+            )
+        values (
+                   #{userIdx},
+                    #{id},
+                   #{lastAccess},
+                   #{deletedReason},
+                   #{reasonDetail},
+                    now()
+               )
+    </insert>
+
+    <delete id="deleteTrainer" parameterType="java.util.HashMap">
+        delete info,auth,pt from
+                     pt_trainer_info_basic info
+                    left join  pt_trainers pt on  pt.idx = info.pt_trainer_idx
+                    left join pt_trainer_authentication auth on auth.idx = info.pt_trainer_idx
+                    left join pt_trainer_info_details dt on dt.pt_trainer_idx = info.pt_trainer_idx
+        where info.pt_trainer_idx = #{userIdx}
+    </delete>
+
+
+    <update id="completePayment" parameterType="hashmap">
+        UPDATE transactions
+            SET billingyn = 1,billing_date = now()
+        WHERE idx  = #{transactionIdx}
+    </update>
+
+    <select id="findTransaction" resultType="hashmap">
+        select ts.idx as transactionIdx,
+               td.product_idx as productIdx,
+               ts.consumer_idx as consumerIdx
+        from transactions ts left join transactions_details td on td.transaction_idx = ts.idx
+        WHERE ts.idx  = #{transactionIdx}
+    </select>
+
+    <insert id="ticketValidSave" useGeneratedKeys="true" keyProperty="idx"  parameterType="java.util.HashMap">
+        insert into valid_ticket(
+            transaction_idx,
+            product_idx,
+            consumer_idx,
+            valid_yn
+        )
+        values (
+                  #{transactionIdx},
+                  #{productIdx},
+                  #{consumerIdx},
+                  1
+               )
+    </insert>
 </mapper>
