@@ -1233,53 +1233,53 @@ public class ApiController {
         return rtnVal;
     }
 
-    @RequestMapping(value="/getCancelTransactionDetail", method = RequestMethod.POST)
-    @ApiOperation(value = "취소/환불 내역 상세 보기",
-        notes = "{\"transactionIdx\":\"1\"}")
-    public HashMap getCancelTransactionDetail(HttpServletRequest auth, @RequestBody String data) {
-        log.info("####getCancelTransactionDetail##### : " + data);
-
-        HashMap rtnVal = new HashMap();
-        JSONParser parser = new JSONParser();
-        String error = null;
-
-        try{
-            JSONObject jsonData = (JSONObject) parser.parse(data);
-
-            HashMap map = new HashMap();
-            jsonData.forEach((key, value) -> map.put(key,value));
-
-            String token = auth.getHeader("token");
-            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
-
-            map.put("userIdx", idx);
-
-            List<HashMap> list = dbConnService.select("getCancelTransactionDetail", map);
-
-            if(list.isEmpty()) {
-                error = "User index number " + map.get("userIdx") + " and category number " + map.get("category") +  " is not found";
-            } else {
-                HashMap infos = new HashMap();
-                infos.put("CancelTransactions", list);
-
-                rtnVal.put("infos", infos);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            error = "정보를 파싱하지 못했습니다.";
-        }
-
-        if (error!=null) {
-            rtnVal.put("result", false);
-        }
-        else {
-            rtnVal.put("result", true);
-        }
-        rtnVal.put("errorMsg", error);
-
-        return rtnVal;
-    }
+//    @RequestMapping(value="/getCancelTransactionDetail", method = RequestMethod.POST)
+//    @ApiOperation(value = "취소/환불 내역 상세 보기",
+//        notes = "{\"transactionIdx\":\"1\"}")
+//    public HashMap getCancelTransactionDetail(HttpServletRequest auth, @RequestBody String data) {
+//        log.info("####getCancelTransactionDetail##### : " + data);
+//
+//        HashMap rtnVal = new HashMap();
+//        JSONParser parser = new JSONParser();
+//        String error = null;
+//
+//        try{
+//            JSONObject jsonData = (JSONObject) parser.parse(data);
+//
+//            HashMap map = new HashMap();
+//            jsonData.forEach((key, value) -> map.put(key,value));
+//
+//            String token = auth.getHeader("token");
+//            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+//
+//            map.put("userIdx", idx);
+//
+//            List<HashMap> list = dbConnService.select("getCancelTransactionDetail", map);
+//
+//            if(list.isEmpty()) {
+//                error = "User index number " + map.get("userIdx") + " and category number " + map.get("category") +  " is not found";
+//            } else {
+//                HashMap infos = new HashMap();
+//                infos.put("CancelTransactions", list);
+//
+//                rtnVal.put("infos", infos);
+//            }
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            error = "정보를 파싱하지 못했습니다.";
+//        }
+//
+//        if (error!=null) {
+//            rtnVal.put("result", false);
+//        }
+//        else {
+//            rtnVal.put("result", true);
+//        }
+//        rtnVal.put("errorMsg", error);
+//
+//        return rtnVal;
+//    }
 
     @RequestMapping(value="/addUserPTRecords", method = RequestMethod.POST)
     @ApiOperation(value = "개인 운동 일정 등록",
