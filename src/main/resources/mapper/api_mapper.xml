@@ -25,6 +25,33 @@
         GROUP BY p.idx, p.name, p.product_type, p.description, p.price, p.discount, p.discount_price, p.seller_type, p.seller_idx
     </select>
 
+    <select id="searchPTLessonVouchers" resultType="java.util.HashMap">
+        SELECT
+        	p.idx as productIdx,
+        	p.name as productName,
+        	p.product_type as productType,
+        	p.description as productDescription,
+        	p.price,
+        	p.discount,
+        	p.discount_price as discountPrice,
+        	p.seller_type as sellerType,
+        	p.seller_idx as sellerIdx,
+        	avg(un.user_satisfaction) as productSatisfaction
+        FROM product as p
+        LEFT JOIN pt_trainer_info_basic as ptib
+        ON p.seller_type = "2" AND p.seller_idx = ptib.pt_trainer_idx
+        LEFT JOIN stores_info_basic as sib
+        ON (p.seller_type = "1" AND p.seller_idx = sib.store_idx) OR (ptib.affilated_center = sib.store_idx)
+        LEFT JOIN users_notes as un
+        ON un.note_category = #{noteCategory} AND un.note_target = p.idx
+        WHERE
+            REPLACE(ptib.pt_trainer_name, ' ', '') LIKE concat('%',#{keyword},'%')
+            OR REPLACE(ptib.nick_name, ' ', '') LIKE concat('%',#{keyword},'%')
+            OR REPLACE(sib.store_name, ' ', '') LIKE concat('%',#{keyword},'%')
+            OR REPLACE(sib.address, ' ', '') LIKE concat('%',#{keyword},'%')
+        GROUP BY p.idx, p.name, p.product_type, p.description, p.price, p.discount, p.discount_price, p.seller_type, p.seller_idx
+    </select>
+
     <select id="getPTLessonVouchersOfStore" resultType="java.util.HashMap">
         SELECT
         	sib.store_name as storeName,
@@ -95,51 +122,6 @@
         	p.seller_idx as sellerIdx
         FROM product as p
         WHERE p.idx = #{productIdx}
-    </select>
-
-    <select id="getPTLessionVoucharsDetail" resultType="java.util.HashMap">
-        select
-            p.idx as productIdx,
-            p.name as productName,
-            p.product_type as productType,
-            p.price,
-            p.discount,
-            p.discount_price as discountPrice,
-            p.description,
-            p.store_idx as storeIdx,
-            s.store_name as storeName,
-            p.seller_Type as sellerType,
-            p.seller_idx as sellerIdx,
-            t.pt_trainer_name as sellerName,
-            t.nick_name as sellerNickName, /** 220531추가 **/
-            p.registered_date as registeredDate,
-            pv.voucher_type as voucherType,
-            pv.use_termYN as useTermYN,
-            pv.use_term as useTerm,
-            avg(un.user_satisfaction) as userSatisfaction /** 220531추가, 220602수정 **/
-            /** 사진 정보 추가 예정**/
-        from
-            product as p
-        left join
-            pt_trainer_info_basic as t
-        on
-            p.seller_idx = t.pt_trainer_idx
-        left join
-            stores_info_basic as s
-        on
-            p.store_idx = s.store_idx OR t.affilated_center = s.store_idx
-        left join
-            product_pt_voucher_details as pv
-        on
-            p.idx = pv.idx
-        left join
-            users_notes as un
-        on
-            p.idx = un.note_target AND un.note_category = #{noteCategory}
-        where
-            p.idx = #{productIdx}
-        group by
-            p.idx, p.name, p.product_type, p.price, p.discount, p.description, p.store_idx, s.store_name, p.seller_idx, t.pt_trainer_name, t.nick_name, p.registered_date, pv.voucher_type, pv.use_termYN, pv.use_term
     </select>
 
     <select id="getPTTrainers" resultType="java.util.HashMap">
@@ -1047,7 +1029,56 @@
         ON
             un.writer = ui.user_idx
         WHERE
-            note_category = "2" OR note_category = "3" AND un.exposeyn = "1"
+--             note_category = "2" OR note_category = "3" AND
+            un.exposeyn = "1"
+    </select>
+
+    <select id="searchUsersNotes" resultType="java.util.HashMap">
+        SELECT
+            un.idx as noteIdx,
+            un.note_category as noteCategory,
+            un.writer as writerIdx,
+            ui.user_name as writerName,
+            ui.nick_name as writerNickName,
+            un.reg_date as regDate,
+            un.update_date as updateDate,
+            un.user_satisfaction as userSatisfaction,
+            un.hashtag,
+            un.content,
+            un.like_count as likeCount,
+            un.reply_count as replyCount,
+            (   select group_concat(image_path separator ',')
+            from attached_file_management as afm
+            where afm.target_idx = un.idx and afm.category = 1) as imagePath,
+            (   select group_concat(image_file_name separator ',')
+            from attached_file_management as afm
+            where afm.target_idx = un.idx and afm.category = 1) as imageFileName
+        FROM
+            users_notes as un
+        LEFT JOIN
+            product as p
+        ON
+            un.note_category = "2" AND un.note_target = p.idx
+        LEFT JOIN
+            pt_trainer_info_basic as ptib
+        ON
+            (un.note_category = "3" AND un.note_target = ptib.pt_trainer_idx)
+            OR (p.seller_type = "2" AND p.seller_idx = ptib.pt_trainer_idx)
+        LEFT JOIN
+            stores_info_basic as sib
+        ON
+            (un.note_category = "1" AND un.note_target = sib.store_idx)
+            OR (ptib.affilated_center = sib.store_idx)
+        LEFT JOIN
+            users_info as ui
+        ON
+            un.writer = ui.user_idx
+        WHERE
+            REPLACE(ptib.pt_trainer_name, ' ', '') LIKE concat('%',#{keyword},'%')
+            OR REPLACE(ptib.nick_name, ' ', '') LIKE concat('%',#{keyword},'%')
+            OR REPLACE(sib.store_name, ' ', '') LIKE concat('%',#{keyword},'%')
+            OR REPLACE(sib.address, ' ', '') LIKE concat('%',#{keyword},'%')
+            AND un.exposeyn = "1"
     </select>
 
     <select id="getImagesInfo" resultType="java.util.HashMap">
@@ -1734,7 +1765,8 @@
             ptib.affilated_center as affilatedCenter,
             ptib.pt_trainer_name as PTTrainerName,
             ptib.nick_name as nickName,
-            sib.store_name as storeName
+            sib.store_name as storeName,
+            vt.valid_yn as validYN
         FROM
             valid_ticket as vt
         LEFT JOIN
@@ -1749,6 +1781,20 @@
             stores_info_basic as sib
         ON
             (p.seller_type = "1" AND p.seller_idx = sib.store_idx) OR (ptib.affilated_center = sib.store_idx)
-        WHERE vt.consumer_idx = #{userIdx} AND vt.valid_yn = "1"
+        WHERE vt.consumer_idx = #{userIdx}
     </select>
+
+    <delete id="endOfExercise">
+        DELETE vt FROM valid_ticket vt
+        join product as p
+        on p.idx = vt.product_idx
+        WHERE p.seller_idx = #{sellerIdx} AND vt.consumer_idx = #{userIdx};
+    </delete>
+
+    <insert id="sendMessage" parameterType="java.util.HashMap">
+        insert into messages
+            (title, content, sender_type, sender_idx, receiver_type, receiver_idx, send_date_time, message_type, typeIdx)
+        value
+            (#{title}, #{content}, '1', #{userIdx}, #{receiverType}, #{receiverIdx}, now(), #{messageType}, #{typeIdx})
+    </insert>
 </mapper>
