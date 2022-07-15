@@ -183,7 +183,7 @@
     <select id="findEmail" resultType="java.util.HashMap">
         select
             *
-        from users
+        from pt_trainers
         where
             id  = #{username}
     </select>
