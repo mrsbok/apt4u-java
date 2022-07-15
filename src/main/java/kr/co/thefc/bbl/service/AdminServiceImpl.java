@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -148,6 +149,18 @@ public class AdminServiceImpl implements AdminService{
 
         try {
             listData = dbConnService.selectWithoutParam("adminApproveFind");
+
+            for(int i=0; i < listData.size(); i++) {
+              if(listData.get(i).get("approvedDate") != null) {
+                String approvedDate = new SimpleDateFormat("yyyy-MM-dd").format(listData.get(i).get("approvedDate"));
+                listData.get(i).put("approvedDate", approvedDate);
+              }
+
+              if(listData.get(i).get("registeredDate") != null) {
+                String registeredDate = new SimpleDateFormat("yyyy-MM-dd").format(listData.get(i).get("registeredDate"));
+                listData.get(i).put("registeredDate", registeredDate);
+              }
+            }
         } catch (Exception e) {
             e.printStackTrace();
             error = "조회 실패";

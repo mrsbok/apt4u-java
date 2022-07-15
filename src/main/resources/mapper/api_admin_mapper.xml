@@ -69,8 +69,8 @@
             sib.president_name as presidentName,
             sib.store_type as storeType,
             sib.approval_status as approvalStatus,
-            sib.registered_date as registeredDate,
-            sib.approved_date as approvedDate
+            CAST(sib.registered_date AS DATETIME) as registeredDate,
+            CAST(sib.approved_date AS DATETIME) as approvedDate
         FROM stores_info_basic as sib
     </select>
 

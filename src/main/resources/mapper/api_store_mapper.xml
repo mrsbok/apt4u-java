@@ -90,8 +90,8 @@
             ptib.email,
             ptca.notice,
             ptca.approval_status as approvalStatus,
-            ptib.registered_date as registeredDate,
-            ptca.approval_date as approvedDate
+            CAST(ptib.registered_date AS DATETIME) as registeredDate,
+            CAST(ptca.approval_date AS DATETIME) as approvedDate
         from
             pt_trainer_center_approved as ptca
         LEFT JOIN

@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -148,6 +149,17 @@ public class StoreServiceImpl implements StoreService {
       HashMap data = gson.fromJson(convertJson, HashMap.class);
       listData = dbConnService.select("storeApproveFind", data);
 
+      for(int i=0; i < listData.size(); i++) {
+        if(listData.get(i).get("approvedDate") != null) {
+          String approvedDate = new SimpleDateFormat("yyyy-MM-dd").format(listData.get(i).get("approvedDate"));
+          listData.get(i).put("approvedDate", approvedDate);
+        }
+
+        if(listData.get(i).get("registeredDate") != null) {
+          String registeredDate = new SimpleDateFormat("yyyy-MM-dd").format(listData.get(i).get("registeredDate"));
+          listData.get(i).put("registeredDate", registeredDate);
+        }
+      }
     } catch (Exception e) {
       e.printStackTrace();
       error = "조회실패";
