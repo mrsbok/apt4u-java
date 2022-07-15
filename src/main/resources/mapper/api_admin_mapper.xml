@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.onedatatech.bs_hdc.main_mapper">
+    <insert id="adminSave" parameterType="hashmap" useGeneratedKeys="true" keyProperty="idx">
+        INSERT INTO admin(id,last_access)
+        VALUES (#{id},now())
+    </insert>
+
+
+    <insert id="adminAuthenticateSave" parameterType="hashmap">
+        INSERT INTO
+            admin_authentication(
+            admin_idx,
+            password
+        )
+        VALUES
+            (
+                #{idx},
+                #{password}
+            )
+    </insert>
+
+
+    <insert id="adminInfoSave" parameterType="hashmap">
+        INSERT INTO
+            admin_info(
+            admin_idx,
+            registered_date,
+            person_in_charge,
+            contact_number
+        )
+        VALUES
+            (
+                #{idx},
+                now(),
+                #{personInChargeName},
+                #{contactNumber}
+            )
+    </insert>
+
+    <select id="adminCheckId" resultType="java.util.HashMap">
+        select id
+        from admin
+        where id = #{username}
+    </select>
+
+    <select id="adminLogin" resultType="java.util.HashMap">
+        select
+            ad.id,
+            ad.idx,
+            auth.password
+        from admin ad
+            left join admin_authentication auth on auth.admin_idx = ad.idx
+        where
+            ad.id = #{userName};
+    </select>
+
+    <update id="adminLastAccess" parameterType="java.util.HashMap">
+        update admin
+        set last_access = now()
+        where idx = #{idx}
+    </update>
+
+    <select id="adminApproveFind" resultType="java.util.HashMap">
+        SELECT
+            sib.store_idx as storeIdx,
+            sib.store_name as storeName,
+            sib.corp_reg_number as corpRegNumber,
+            sib.president_name as presidentName,
+            sib.store_type as storeType,
+            sib.approval_status as approvalStatus,
+            sib.registered_date as registeredDate,
+            sib.approved_date as approvedDate
+        FROM stores_info_basic as sib
+    </select>
+
+    <update id="adminApproveUpdate" parameterType="java.util.HashMap">
+        update stores_info_basic
+        SET approval_status = "5", approved_date = now()
+        where store_idx = #{storeIdx}
+    </update>
+
+</mapper>

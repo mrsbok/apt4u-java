@@ -1915,7 +1915,7 @@ public class ApiController {
                     list = dbConnService.select("getUsersInfo", map);
 
                     String token = new JwtProvider().jwtCreater(
-                            0, Integer.parseInt(list.get(0).get("userIdx").toString()),0
+                            0, Integer.parseInt(list.get(0).get("userIdx").toString()),0, 0
                     );
 
                     rtnVal.put("token", token);

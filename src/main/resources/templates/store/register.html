@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>STORE REGISTER</title>
+</head>
+<body>
+<h1>업체 회원가입</h1>
+<form id="store_register_form" th:action="@{/api/store/register}" method="post">
+    아이디: <input type="text" name="id"> <br>
+    비밀번호 : <input type="password" name="password"> <br>
+    업체명 : <input type="text" name="storeName" value="위워크"> <br>
+    사업자등록번호 : <input type="text" name="corpRegNumber" value="1234567891"> <br>
+    대표자명 : <input type="text" name="presidentName" value="홍길동"> <br>
+    업태 : <input type="text" name="bizType" value="1"> <br>
+    업종 : <input type="text" name="bizTopic" value="운동"> <br>
+    우편번호 : <input type="text" name="zipCode" value="12345"> <br>
+    주소 : <input type="text" name="address" value="부산광역시 남구 문현동"> <br>
+    서비스지역(시, 도) : <input type="text" name="serviceRegion" value="1"> <br>
+    서비스지역(구, 군) : <input type="text" name="serviceLocalArea" value="1"> <br>
+    대표 전화번호 : <input type="text" name="mainTelephone" value="051-111-2222"> <br>
+    담당자명 : <input type="text" name="personInCharge" value="허균"> <br>
+    담당자 연락처 : <input type="text" name="contactNumber" value="010-1111-1111"> <br>
+    입점 분야 : <input type="text" name="storeType"value="1"> <br>
+    <button onclick="registerAjax()">회원가입</button>
+</form>
+</body>
+</html>
+
+<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+<script>
+    function registerAjax() {
+        event.preventDefault();
+
+        var formSerializeArray = $('#store_register_form').serializeArray();
+        var object = {};
+
+        for(var i=0; i<formSerializeArray.length; i++) {
+            object[formSerializeArray[i]['name']] = formSerializeArray[i]['value'];
+        }
+
+        var json = JSON.stringify(object);
+
+        $.ajax({
+            type: "POST",
+            url: "/api/store/register",
+            data: json,
+            dataType: 'json',
+            processData: false,
+            contentType: 'application/json',
+            cache: false,
+            timeout: 600000,
+            beforeSend:function(rtnVal) {},// 서버 요청 전 호출 되는 함수 return false; 일 경우 요청 중단
+            success:function(rtnVal) {
+                console.log(rtnVal);
+                if (rtnVal.result == true) {
+                    window.location.replace("/store/login");
+                }
+                else {
+                    alert(rtnVal.errorMsg);
+                }
+            },// 요청 완료 시
+            error:function(rtnVal) {
+                alert('API 호출에 실패했습니다.');
+            },// 요청 실패.
+            complete:function(jqXHR) {
+                // alert('complete');
+            }// 요청의 실패, 성공과 상관 없이 완료 될 경우 호출
+        });
+    }
+
+</script>

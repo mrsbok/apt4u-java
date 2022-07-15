@@ -852,7 +852,8 @@ public class PtTrainerServiceImpl implements PtTrainerService {
           String token = new JwtProvider().jwtCreater(
               Integer.parseInt(loginData.get("idx").toString()),
               0,
-              0
+              0,
+                  0
           );
           rtnVal.put("token", token);
           } else {

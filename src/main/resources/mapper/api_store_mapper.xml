@@ -39,8 +39,7 @@
             contract_number,
             store_type,
             approval_status,
-            registered_date,
-            approved_date
+            registered_date
         )
         VALUES
             (
@@ -58,9 +57,8 @@
                 #{personInCharge},
                 #{contactNumber},
                 #{storeType},
-                #{approvalStatus},
-                #{registeredDate},
-                #{approvedDate}
+                '1',
+                now()
             )
     </insert>
 
@@ -84,18 +82,38 @@
 
     <select id="storeApproveFind" resultType="java.util.HashMap">
         select
-            *
-        from pt_trainer_center_approved
-           where      affilated_center  = #{storeIdx};
-
+            ptca.idx,
+            ptca.pt_trainer_idx as PTTrainerIdx,
+            ptib.pt_trainer_name as PTTrainerName,
+            ptib.nick_name as nickname,
+            ptib.phone_number as phoneNumber,
+            ptib.email,
+            ptca.notice,
+            ptca.approval_status as approvalStatus,
+            ptib.registered_date as registeredDate,
+            ptca.approval_date as approvedDate
+        from
+            pt_trainer_center_approved as ptca
+        LEFT JOIN
+            pt_trainer_info_basic as ptib
+        ON
+            ptca.pt_trainer_idx = ptib.pt_trainer_idx
+        where
+            ptca.affilated_center = #{storeIdx}
+        order by ptca.pt_trainer_idx
     </select>
 
     <update id="storeApproveUpdate" parameterType="java.util.HashMap">
         update pt_trainer_center_approved
-        SET approval_status = '승인완료'
-        where   idx  = #{idx}
+        SET approval_status = '승인완료', approval_date = now()
+        where  idx  = #{idx};
     </update>
 
+    <update id="infoApproveUpdate" parameterType="java.util.HashMap">
+        update pt_trainer_info_basic
+        SET approval_status = '5', approved_date = now()
+        WHERE pt_trainer_idx = #{PTTrainerIdx};
+    </update>
 
     <select id="storeCoachCount" resultType="java.util.HashMap">
         select
@@ -103,5 +121,14 @@
         from pt_trainer_info_basic
         where
             affilated_center = #{storeIdx}
+    </select>
+
+    <select id="getStoreName" resultType="java.util.HashMap">
+        SELECT
+        	sib.store_name as storeName
+        FROM
+        	stores_info_basic as sib
+        WHERE
+        	store_idx = #{storeIdx}
     </select>
 </mapper>

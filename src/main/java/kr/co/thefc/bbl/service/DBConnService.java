@@ -21,17 +21,16 @@ public class DBConnService {
     public String selectWithReturnString(String stat_id, HashMap map) {
         return sqlSession.selectOne(NAMESPACE + stat_id, map);
     }
-
     public int selectWithReturnInt(String stat_id, HashMap map) {
         return sqlSession.selectOne(NAMESPACE + stat_id, map);
     }
-
     public List<HashMap> select(String stat_id, HashMap map) {
         return sqlSession.selectList(NAMESPACE + stat_id, map);
     }
     public HashMap selectOne(String stat_id, HashMap map) {
         return sqlSession.selectOne(NAMESPACE + stat_id, map);
     }
+
     public int insertWithReturnInt(String stat_id, HashMap map) {
         int rowcnt = sqlSession.insert(NAMESPACE + stat_id, map);
         System.out.println(map.toString());
@@ -47,16 +46,20 @@ public class DBConnService {
     public int insert(String stat_id, HashMap map) {
         return sqlSession.insert(NAMESPACE + stat_id, map);
     }
-
     public int insertList(String stat_id, List list) {
         return sqlSession.insert(NAMESPACE + stat_id, list);
     }
+
     public HashMap selectIdx(String stat_id, Integer idx) {
         return sqlSession.selectOne(NAMESPACE + stat_id, idx);
     }
     public List<HashMap> selectIdxList(String stat_id, Integer idx) {
         return sqlSession.selectList(NAMESPACE + stat_id, idx);
     }
+    public List<HashMap> selectWithoutParam(String stat_id) {
+        return sqlSession.selectList(NAMESPACE + stat_id);
+    }
+
     public int update(String stat_id, HashMap map) {
         return sqlSession.update (NAMESPACE + stat_id, map);
     }

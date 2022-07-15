@@ -114,7 +114,8 @@ public class StoreServiceImpl implements StoreService {
         String token = new JwtProvider().jwtCreater(
             0,
             0,
-            Integer.parseInt(loginData.get("idx").toString())
+            Integer.parseInt(loginData.get("idx").toString()),
+                0
         );
         rtnVal.put("token", token);
       }else{
@@ -163,17 +164,20 @@ public class StoreServiceImpl implements StoreService {
   }
 
   @Override
-  public HashMap approveUpdate(Integer idx, String notice) {
+  public HashMap approveUpdate(Integer idx) {
     String error = null;
     HashMap idxData = new HashMap<>();
     List<HashMap> listData = new ArrayList();
     idxData.put("idx" , idx);
-    idxData.put("notice" , notice);
     try {
 
       String convertJson = gson.toJson(idxData);
       HashMap data = gson.fromJson(convertJson, HashMap.class);
       dbConnService.update("storeApproveUpdate", data);
+
+//      if(notice.equals("프로필")) {
+//        dbConnService.update("infoApproveUpdate", data);
+//      }
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -214,6 +218,37 @@ public class StoreServiceImpl implements StoreService {
       rtnVal.put("data", result);
     }
     rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
+  public HashMap storeName(Integer idx) {
+    String error = null;
+
+    HashMap idxData = new HashMap();
+    HashMap result = new HashMap();
+    idxData.put("storeIdx", idx);
+
+    try {
+      String convertJson = gson.toJson(idxData);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+
+      result = dbConnService.selectOne("getStoreName", data);
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "조회 실패";
+    }
+
+    if(error != null) {
+      rtnVal.put("result", false);
+      rtnVal.put("token", null);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("data", result);
+    }
+
+    rtnVal.put("errorMsg", error);
+
     return rtnVal;
   }
 

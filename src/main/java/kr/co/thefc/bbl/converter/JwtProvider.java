@@ -12,7 +12,7 @@ import javax.lang.model.type.NullType;
 public class JwtProvider {
 
 	public String tokenKey  = "bbl";
-	public String jwtCreater(Integer trainerIdx, Integer userIdx,Integer storeIdx){
+	public String jwtCreater(Integer trainerIdx, Integer userIdx,Integer storeIdx, Integer adminIdx){
 		//토큰 생성시간
 		LocalDateTime createDate = LocalDateTime.now();
 
@@ -24,6 +24,7 @@ public class JwtProvider {
 				"trainerIdx" , trainerIdx,
 				"userIdx" , userIdx,
 				"storeIdx" , storeIdx,
+				"adminIdx", adminIdx,
 				"createdDate" , createDate.format(DateTimeFormatter.ISO_DATE_TIME)
 		);
 

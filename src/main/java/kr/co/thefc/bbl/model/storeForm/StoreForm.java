@@ -126,23 +126,13 @@ public class StoreForm {
         @ApiModelProperty(
             value = "입점 승인 상태",
             example = "1",
-            dataType = "int",
-            required = true
+            dataType = "int"
         )
         Byte approvalStatus;
 
         @ApiModelProperty(
             value = "입점 신청일",
-            example = "2022-06-01",
-            required = true
+            example = "2022-06-01"
         )
         String registeredDate;
-
-        @ApiModelProperty(
-            value = "입점 승인일",
-            example = "2022-06-02",
-            required = true
-        )
-        String approvedDate;
-
 }

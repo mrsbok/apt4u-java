@@ -17,7 +17,9 @@ public interface StoreService {
 
 	HashMap approveList(Integer Idx);
 
-	HashMap approveUpdate(Integer idx, String notice);
+	HashMap approveUpdate(Integer idx);
 	HashMap storeCoachCount(Integer idx);
+
+	HashMap storeName(Integer idx);
 
 }

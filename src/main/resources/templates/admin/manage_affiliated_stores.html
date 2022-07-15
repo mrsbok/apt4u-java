@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>STORE MANAGEMENT</title>
+</head>
+<body>
+<h1>소속 업체 관리</h1>
+<div id="demo">
+    <table id="storeList" border="1">
+        <tr>
+            <th>번호</th>
+            <th>업체명</th>
+            <th>사업자등록번호</th>
+            <th>대표자명</th>
+            <th>입점분야</th>
+            <th>입점승인상태</th>
+            <th>입점신청일</th>
+            <th>입점승인일</th>
+            <th>승인</th>
+        </tr>
+    </table>
+</div>
+</body>
+</html>
+
+<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+<script>
+    var token;
+
+    jQuery(document).ready(function () {
+        token = localStorage.getItem('token');
+
+        test_manage_stores();
+    });
+
+    function test_manage_stores() {
+        $.ajax({
+            type: "post",
+            url: "/api/admin/store-approve-select",
+            contentType: 'application/json; charset=utf-8',
+            dataType : 'json',
+            beforeSend: function (rtnVal){
+                rtnVal.setRequestHeader("token", token);
+            },
+            success:function (rtnVal) {
+                console.log(rtnVal.data);
+
+                if(rtnVal.result == true) {
+                    var str = "";
+
+                    $.each(rtnVal.data, function (index, item) {
+                        str += "<tr id='"+index+"'>"
+                        str += "<td>"+item.storeIdx+"</td>"
+                        str += "<td>"+item.storeName+"</td>"
+                        str += "<td>"+item.corpRegNumber+"</td>"
+                        str += "<td>"+item.presidentName+"</td>"
+                        str += "<td>"+item.storeType+"</td>"
+                        str += "<td id='status_"+index+"'>"+item.approvalStatus+"</td>"
+                        str += "<td>"+item.registeredDate+"</td>"
+                        str += "<td>"+item.approvedDate+"</td>"
+                        str += "<td><button onclick='approveAjax("+item.storeIdx+")' id='btn_"+index+"'>승인</button></td>"
+                        str += "</tr>"
+                    });
+                    $("#storeList").append(str);
+
+                    var btnSize = $("[id^=btn]").length;
+
+                    for(var i=0; i<btnSize; i++) {
+                        var status_str = "#status_" + i;
+                        var btn = "#btn_"+i;
+
+                        if($(status_str).text() == '1') {
+                            $(status_str).text("승인대기");
+                        } else {
+                            $(status_str).text("승인완료");
+                            $(btn).attr('disabled', true);
+                        }
+                    }
+                }
+            },
+            error : function () {
+                alert("error");
+            }
+        });
+    }
+
+    function approveAjax(data) {
+        $.ajax({
+            type: "POST",
+            url: "/api/admin/approve?storeIdx="+data,
+            processData: false,
+            contentType: false,
+            cache: false,
+            timeout: 600000,
+            beforeSend:function(rtnVal) {
+                rtnVal.setRequestHeader("token", token);
+            },// 서버 요청 전 호출 되는 함수 return false; 일 경우 요청 중단
+            success:function(rtnVal) {
+                console.log(rtnVal);
+                if (rtnVal.result == true) {
+                    window.location.replace("/admin/manage_affiliated_stores");
+                }
+                else {
+                    alert(rtnVal.errorMsg);
+                }
+            },// 요청 완료 시
+            error:function(rtnVal) {
+                alert('API 호출에 실패했습니다.');
+            },// 요청 실패.
+            complete:function(jqXHR) {
+                // alert('complete');
+            }// 요청의 실패, 성공과 상관 없이 완료 될 경우 호출
+        });
+    }
+</script>

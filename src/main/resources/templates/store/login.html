@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>STORE LOGIN</title>
+</head>
+<body>
+<h1>업체 로그인</h1>
+<form id="store_login_form" th:action="@{/api/store/login}" method="post">
+    아이디: <input type="text" name="userName"> <br>
+    비밀번호 : <input type="password" name="password"> <br>
+    <button onclick="loginAjax()">로그인</button>
+</form>
+</body>
+</html>
+
+<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+<script>
+    function loginAjax() {
+        event.preventDefault();
+
+        var form = $('#store_login_form')[0];
+        // Create an FormData object
+        var data = new FormData(form);
+
+        $.ajax({
+            type: "POST",
+            url: "/api/store/login",
+            data: data,
+            processData: false,
+            contentType: false,
+            cache: false,
+            timeout: 600000,
+            beforeSend:function(rtnVal) {},// 서버 요청 전 호출 되는 함수 return false; 일 경우 요청 중단
+            success:function(rtnVal) {
+                console.log(rtnVal);
+                if (rtnVal.result == true) {
+                    localStorage.setItem('token', rtnVal.token);
+
+                    window.location.replace("/store/manage_affiliated_trainers");
+                }
+                else {
+                    alert(rtnVal.errorMsg);
+                }
+            },// 요청 완료 시
+            error:function(rtnVal) {
+                alert('API 호출에 실패했습니다.');
+            },// 요청 실패.
+            complete:function(jqXHR) {
+                // alert('complete');
+            }// 요청의 실패, 성공과 상관 없이 완료 될 경우 호출
+        });
+    }
+
+</script>

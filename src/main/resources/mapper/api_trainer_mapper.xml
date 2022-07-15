@@ -28,14 +28,12 @@
                 pt_trainer_idx,
                 pt_trainer_name,
                 affilated_center,
-                approval_status,
                 birth_day,
                 el_das,
                 gender,
                 nick_name,
                 phone_number,
                 registered_date,
-                approved_date,
                 email,
                 program_name,
                 notifications
@@ -45,13 +43,11 @@
                 #{idx},
                 #{ptTrainerName},
                 #{affilatedCenter},
-                #{approvalstatus},
                 #{brithDay},
                 #{elDas},
                 #{gender},
                 #{nickName},
                 #{phoneNumber},
-                 now(),
                  now(),
                 #{email},
                 #{programName},
@@ -142,7 +138,6 @@
         pt_trainer_idx,
         affilated_center,
         approval_status,
-        approval_date,
         notice,
         target_idx
         )
@@ -151,7 +146,6 @@
             #{trainerIdx},
             #{affiliateCenter},
             #{approvalStatus},
-            now(),
             #{notice},
             #{targetIdx}
         )

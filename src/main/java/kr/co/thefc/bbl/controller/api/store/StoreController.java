@@ -71,12 +71,11 @@ public class StoreController {
 	@PostMapping("store/approve")
 	public HashMap storeApprove(
 			HttpServletRequest request,
-			@RequestParam Integer idx,
-			@RequestParam String notice
+			@RequestParam Integer idx
 	)  {
 		String token = request.getHeader("token");
 
-		return storeService.approveUpdate(idx,notice);
+		return storeService.approveUpdate(idx);
 	}
 
 	@ApiOperation(
@@ -90,6 +89,19 @@ public class StoreController {
 		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("storeIdx")));
 
 		return storeService.storeCoachCount(idx);
+	}
+
+	@ApiOperation(
+			value = "업체 이름"
+			, notes = "업체 이름")
+	@PostMapping("store/getInfo")
+	public HashMap storeName(
+			HttpServletRequest request
+	)  {
+		String token = request.getHeader("token");
+		int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("storeIdx")));
+
+		return storeService.storeName(idx);
 	}
 
 }
