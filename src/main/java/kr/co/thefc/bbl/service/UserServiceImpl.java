@@ -18,6 +18,50 @@ import java.util.List;
 public class UserServiceImpl implements UserService{
     @Autowired
     private DBConnService dbConnService;
+
+    @Override
+    public List<HashMap> getPTLessonVoucherSellerInfo(List<HashMap> list, HashMap map) {
+        try {
+            if(!list.isEmpty()) {
+                HashMap data = new HashMap();
+                HashMap temp = new HashMap();
+
+                for (int i = 0; i < list.size(); i++) {
+                    if ("1".equals(list.get(i).get("sellerType").toString())) {
+                        // 업체정보
+                        map.put("storeIdx", list.get(i).get("sellerIdx"));
+
+                        data = dbConnService.selectOne("getPTLessonVouchersOfStore", map);
+
+                        if ("1".equals(data.get("storeType").toString())) {
+                            //storeType이 1(fitnessGym)이면
+                            temp = dbConnService.selectOne("getFitnessGymMainImage", map);
+
+                            if (temp != null) {
+                                data.put("imagePath", temp.get("imagePath"));
+                                data.put("imageFileName", temp.get("imageFileName"));
+                            }
+
+                            list.get(i).put("storeInfo", data);
+                        }
+                    } else if ("2".equals(list.get(i).get("sellerType").toString())) {
+                        // PT트레이너 정보
+                        map.put("PTTrainerIdx", list.get(i).get("sellerIdx"));
+
+                        data = dbConnService.selectOne("getPTLessonVouchersOfPTTrainer", map);
+
+                        list.get(i).put("PTTrainerInfo", data);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
     public HashMap getPTTrainerDetail(HashMap map) {
         HashMap data = new HashMap();
         String error = null;
@@ -127,6 +171,13 @@ public class UserServiceImpl implements UserService{
         }
 
         return temp;
+    }
+
+    @Override
+    public String phoneFormat(String number) {
+        String regEx = "(\\d{3})(\\d{3,4})(\\d{4})";
+
+        return number.replaceAll(regEx, "$1-$2-$3");
     }
 
 }

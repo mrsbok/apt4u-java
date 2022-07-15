@@ -57,11 +57,10 @@ public class ApiController {
     @RequestMapping(value="/getPTLessonVouchers", method = RequestMethod.POST)
     @ApiOperation(value = "PT 상품 목록 조회",
             notes = "")
-    public HashMap getPTLessonVouchers(HttpServletRequest auth) {
+    public HashMap getPTLessonVouchers() {
         log.info("####getPTLessonVouchers#####");
 
         HashMap rtnVal = new HashMap();
-        JSONParser parser = new JSONParser();
         String error = null;
 
         try {
@@ -74,43 +73,15 @@ public class ApiController {
             map.put("imageType", "프로필");
 
             List<HashMap> list = dbConnService.select("getPTLessonVouchers", map);
+
             if(list.isEmpty()) {
-                error = "PT 상품 목록을 가져올 수 없습니다.";
+                error = "PT 상품 목록을 찾을 수 없습니다.";
             } else {
                 HashMap infos = new HashMap();
-                HashMap data = new HashMap();
-                HashMap temp = new HashMap();
 
-                for(int i=0; i<list.size(); i++) {
-                    if("1".equals(list.get(i).get("sellerType").toString())) {
-                        // 업체정보
-                        map.put("storeIdx", list.get(i).get("sellerIdx"));
-
-                        data = dbConnService.selectOne("getPTLessonVouchersOfStore", map);
-
-                        if("1".equals(data.get("storeType").toString())) {
-                            //storeType이 1(fitnessGym)이면
-                            temp = dbConnService.selectOne("getFitnessGymMainImage", map);
-
-                            if(temp != null) {
-                                data.put("imagePath", temp.get("imagePath"));
-                                data.put("imageFileName", temp.get("imageFileName"));
-                            }
-
-                            list.get(i).put("storeInfo", data);
-                        }
-                    } else if("2".equals(list.get(i).get("sellerType").toString())) {
-                        // PT트레이너 정보
-                        map.put("PTTrainerIdx", list.get(i).get("sellerIdx"));
-
-                        data = dbConnService.selectOne("getPTLessonVouchersOfPTTrainer", map);
-
-                        list.get(i).put("PTTrainerInfo", data);
-                    }
-                }
+                list = userService.getPTLessonVoucherSellerInfo(list, map);
 
                 infos.put("products", list);
-
                 rtnVal.put("infos", infos);
             }
 
@@ -119,12 +90,67 @@ public class ApiController {
             error = "정보를 파싱하지 못했습니다.";
         }
 
-        if (error!=null) {
+        if (error !=null) {
             rtnVal.put("result", false);
         }
         else {
             rtnVal.put("result", true);
         }
+
+        rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
+
+    @RequestMapping(value="/searchPTLessonVouchers", method = RequestMethod.POST)
+    @ApiOperation(value = "PT 상품 검색",
+            notes = "{\"keyword\":\"홍길동\"}")
+    public HashMap searchPTLessonVouchers(@RequestBody String data) {
+        log.info("####searchPTLessonVouchers#####");
+
+        HashMap rtnVal = new HashMap();
+        String error = null;
+        JSONParser parser = new JSONParser();
+
+        try {
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+
+            if(jsonData.isEmpty()) {
+                error = "Data is empty";
+            } else {
+                jsonData.forEach((key, value) -> map.put(key,value));
+
+                // category 1:store, 2:product, 3:trainer
+                map.put("noteCategory", "2");
+                // 프로필, 근무경력, 수상경력, 자격증 등등
+                map.put("imageType", "프로필");
+
+                List<HashMap> list = dbConnService.select("searchPTLessonVouchers", map);
+
+                if(list.isEmpty()) {
+                    error = "PT 상품 목록을 찾을 수 없습니다.";
+                } else {
+                    HashMap infos = new HashMap();
+
+                    list = userService.getPTLessonVoucherSellerInfo(list, map);
+
+                    infos.put("products", list);
+                    rtnVal.put("infos", infos);
+                }
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error !=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+
         rtnVal.put("errorMsg", error);
 
         return rtnVal;
@@ -814,8 +840,7 @@ public class ApiController {
             "\"quantity\":\"1\", \"amount\":\"25000\", \"sellerType\":\"1\", \"sellerIdx\":\"16\"}\n\n]}" +
             "\n\nbillingMethod 1: 무통장입금, 2: 신용/체크카드, 3: 카카오페이, 4: 삼성페이, 5: 페이코, 6: 토스" +
             "\n\nproductCategory 1: PTVoucher, ... " +
-            "\n\nproducts: 여러 개의 데이터가 될 수 있음" +
-            "\n\nsellerIdx와 storeIdx 중 하나의 데이터가 필요")
+            "\n\nproducts: 여러 개의 데이터가 될 수 있음")
     public HashMap buyProduct(@RequestBody String data, HttpServletRequest auth) {
         log.info("####buyProduct##### : " + data);
 
@@ -880,6 +905,34 @@ public class ApiController {
 
                         // 카드 결제 실패 시 재시도
                     }
+                }
+
+                // 구매 완료 알림 메세지 전송(유저 휴대폰번호)
+                for(int i=0; i<arr.size(); i++) {
+                    JSONObject obj = (JSONObject) arr.get(i);
+                    obj.forEach((key, value) -> map.put(key, value));
+
+                    HashMap product = dbConnService.selectOne("getPTLessonVoucherDetail", map);
+                    HashMap user = dbConnService.selectOne("getUsersInfo", map);
+
+                    if("1".equals(product.get("productType").toString())) {//productType = 1 (상품 타입이 PTVoucher이면)
+                        map.put("title", "PT 이용권 구매 알림");
+                        map.put("content",
+                                "[ "+user.get("userName")+" ] 회원님이 PT 이용권을 구매하셨습니다. \n"
+                                +user.get("userName")+" 회원님의 휴대폰 번호는 " + userService.phoneFormat(map.get("userTelephone").toString()) + "입니다.");
+                        map.put("receiverType", "3");
+                        map.put("receiverIdx", map.get("sellerIdx"));
+                        map.put("messageType", "5");
+                        map.put("typeIdx", map.get("transactionIdx"));
+
+                        result = dbConnService.insert("sendMessage", map);
+                        if(result == 0) {
+                            error = "INSERT message FAILED";
+                        }
+                    }
+
+
+
                 }
             } else {
                 error = "transaction insert failed";
@@ -1926,6 +1979,50 @@ public class ApiController {
             rtnVal.put("infos", infos);
 
         } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+        rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="searchUsersNotes", method = RequestMethod.POST)
+    @ApiOperation(value = "PT톡 검색",
+        notes = "{\"keyword\":\"홍길동\"}")
+    public HashMap searchUsersNotes(@RequestBody String data) {
+        log.info("####searchUsersNotes#####");
+
+        HashMap rtnVal = new HashMap();
+        String error = null;
+        JSONParser parser = new JSONParser();
+
+        try{
+            JSONObject jsonData = (JSONObject) parser.parse(data);
+            HashMap map = new HashMap();
+
+            if(jsonData.isEmpty()) {
+                error = "Data is empty";
+            } else {
+                jsonData.forEach((key, value) -> map.put(key,value));
+
+                List<HashMap> list = dbConnService.select("searchUsersNotes", map);
+                HashMap infos = new HashMap();
+
+                if(list.isEmpty()) {
+                    error = "PT톡 목록을 불러올 수 없습니다.";
+                } else {
+                    infos.put("usersNote", list);
+                    rtnVal.put("infos", infos);
+                }
+            }
+        } catch (ParseException e) {
             e.printStackTrace();
             error = "정보를 파싱하지 못했습니다.";
         }
@@ -4077,35 +4174,95 @@ public class ApiController {
         return rtnVal;
     }
 
-//    @RequestMapping(value="myPTTrainers", method = RequestMethod.POST)
-//    @ApiOperation(value = "마이 페이지 - 트레이너관리",
-//            notes = "{\"oldPassword\":\"12345\", \"newPassword\":\"67890\"}")
-//    public HashMap myPTTrainers(HttpServletRequest auth) {
-//        log.info("####myPTTrainers#####");
-//
-//        HashMap rtnVal = new HashMap();
-//        String error = null;
-//
-//        try{
-//            HashMap map = new HashMap();
-//            HashMap infos = new HashMap();
-//
-//            String token = auth.getHeader("token");
-//            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
-//
-//            map.put("userIdx", idx);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            error = "정보를 파싱하지 못했습니다.";
-//        }
-//
-//        if (error!=null) {
-//            rtnVal.put("result", false);
-//        }
-//        else {
-//            rtnVal.put("result", true);
-//        }
-//           rtnVal.put("errorMsg", error);
-//        return rtnVal;
-//    }
+    @RequestMapping(value="myPTTrainers", method = RequestMethod.POST)
+    @ApiOperation(value = "마이 페이지 - 트레이너관리",
+            notes = "")
+    public HashMap myPTTrainers(HttpServletRequest auth) {
+        log.info("####myPTTrainers#####");
+
+        HashMap rtnVal = new HashMap();
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            List<HashMap> list = dbConnService.select("getMyPTTrainers", map);
+
+            if(list.isEmpty()) {
+                error = "나의 트레이너를 찾을 수 없습니다.";
+            } else {
+                infos.put("myTrainers", list);
+            }
+
+            rtnVal.put("infos", infos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+        return rtnVal;
+    }
+
+    @RequestMapping(value="endOfExercise", method = RequestMethod.POST)
+    @ApiOperation(value = "마이 페이지 - 트레이너관리 - 운동 종료 신청",
+            notes = "{\"sellerIdx\":\"1\"}")
+    public HashMap endOfExercise(HttpServletRequest auth, @RequestBody String Data) {
+        log.info("####endOfExercise#####");
+
+        HashMap rtnVal = new HashMap();
+        String error = null;
+
+        try{
+            HashMap map = new HashMap();
+            HashMap infos = new HashMap();
+
+            String token = auth.getHeader("token");
+            int idx = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("userIdx")));
+
+            map.put("userIdx", idx);
+
+            HashMap user = dbConnService.selectOne("getUsersInfo", map);
+
+            int result = dbConnService.delete("endOfExercise", map);
+
+            if(result == 0) {
+                error = "트레이너 운동 종료 신청 실패";
+            } else {
+                String userName = user.get("userName").toString();
+
+                map.put("title", "운동 종료신청");
+                map.put("content", "[ "+userName+" ] 회원님이 운동종료 신청하셨습니다.");
+                map.put("receiverType", "3");
+                map.put("receiverIdx", map.get("sellerIdx"));
+                map.put("messageType", "2");
+//                map.put("typeIdx", "트랜잭션인덱스");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            error = "정보를 파싱하지 못했습니다.";
+        }
+
+        if (error!=null) {
+            rtnVal.put("result", false);
+        }
+        else {
+            rtnVal.put("result", true);
+        }
+           rtnVal.put("errorMsg", error);
+
+        return rtnVal;
+    }
 }
