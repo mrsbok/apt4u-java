@@ -393,10 +393,7 @@ public class ptTrainerController {
 			value = "이메일 중복확인"
 			, notes = "이메일 중복확인")
 	@PostMapping("trainer/email-check")
-	public HashMap emailcheck(@RequestParam String userName,HttpServletRequest request)  {
-		String token = request.getHeader("token");
-		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
-;
+	public HashMap emailcheck(@RequestParam String userName)  {
 		return ptTrainerService.emailCheck(userName);
 	}
 	@ApiOperation(
