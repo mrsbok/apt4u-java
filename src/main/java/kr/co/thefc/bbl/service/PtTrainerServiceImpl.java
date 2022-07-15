@@ -38,6 +38,7 @@ public class PtTrainerServiceImpl implements PtTrainerService {
   @Override
   public HashMap trainerSave(PtTrainerForm ptTrainerForm) {
     String error = null;
+    HashMap approveData = new HashMap();
     try {
       ptTrainerForm.setPassword(
           new PasswordCryptConverter()
@@ -46,9 +47,20 @@ public class PtTrainerServiceImpl implements PtTrainerService {
       );
       String convertJson = gson.toJson(ptTrainerForm);
       HashMap data = gson.fromJson(convertJson, HashMap.class);
-      dbConnService.insert("trainerSave", data);
+       dbConnService.insert("trainerSave", data);
       dbConnService.insert("trainerInfoSave", data);
       dbConnService.insert("trainerAuthenticate", data);
+      System.out.println(data);
+      System.out.println(data);
+      System.out.println(ptTrainerForm);
+      Double converter = (Double) data.get("idx");
+      Long idx = Math.round(converter);
+      approveData.put("trainerIdx",Integer.parseInt(String.valueOf(idx)));
+      approveData.put("approvalStatus", "승인대기");
+      approveData.put("targetIdx", null);
+      approveData.put("affiliateCenter", ptTrainerForm.getAffilatedCenter());
+      approveData.put("notice","센터승인");
+      dbConnService.insert("centerApprovedSave", approveData);
     } catch (Exception e) {
       e.printStackTrace();
       error = "데이터 저장 실패.";
