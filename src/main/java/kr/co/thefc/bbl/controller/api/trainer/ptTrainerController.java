@@ -419,6 +419,16 @@ public class ptTrainerController {
 		return ptTrainerService.completePayment(transactionIdx,result);
 	}
 
+	@ApiOperation(
+			value = "센터 승인 여부"
+			, notes = "header에 토큰만 전송하면 됨, flag = 1(승인대기) 2(승인완료")
+	@PostMapping("trainer/approve-center")
+	public HashMap ApproveCenter(HttpServletRequest request)  {
+		String token = request.getHeader("token");
+		int result = Integer.parseInt(String.valueOf(Jwts.parser().setSigningKey(new JwtProvider().tokenKey.getBytes()).parseClaimsJws(token).getBody().get("trainerIdx")));
+
+		return ptTrainerService.approveCenterSelect(result);
+	}
 
 
 }

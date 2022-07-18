@@ -1000,6 +1000,40 @@ public class PtTrainerServiceImpl implements PtTrainerService {
   }
 
   @Override
+  public HashMap approveCenterSelect(Integer trainerIdx) {
+    String error = null;
+    String message = null;
+    HashMap requestData = new HashMap<>();
+    HashMap result = new HashMap();
+    requestData.put("trainerIdx", trainerIdx);
+    requestData.put("notice", "센터승인");
+    try {
+      String convertJson = gson.toJson(requestData);
+      HashMap data = gson.fromJson(convertJson, HashMap.class);
+      result = dbConnService.selectOne("approveFind", data);
+
+      if(result == null){
+        error = "승인요청된 데이터가 없습니다";
+      }
+      System.out.println(result);
+      System.out.println(result);
+      System.out.println(result);
+    } catch (Exception e) {
+      e.printStackTrace();
+      error = "데이터를 조회하지 못했읍니다";
+    }
+    if (error != null) {
+      rtnVal.put("result", false);
+    } else {
+      rtnVal.put("result", true);
+      rtnVal.put("data", result);
+//      rtnVal.put("data", data2);
+    }
+    rtnVal.put("errorMsg", error);
+    return rtnVal;
+  }
+
+  @Override
   public HashMap userPtRecordSelect(UserPtRecordForm UserPtRecordForm) {
     String error = null;
     HashMap data2 = new HashMap<>();

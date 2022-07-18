@@ -60,4 +60,5 @@ public interface PtTrainerService {
      HashMap emailCheck(String userName);
      HashMap deleteAccount(DeleteTrainerForm deleteTrainerForm);
      HashMap completePayment(Integer transactionIdx, Integer trainerIdx);
+     HashMap approveCenterSelect(Integer trainerIdx);
 }
